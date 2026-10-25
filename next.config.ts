@@ -21,8 +21,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Stop `next dev` writing an AGENTS.md when it detects an AI agent. CLAUDE.md is our one agent file.
   agentRules: false,
-  async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+  // Next expects a promise here. Nothing is awaited, so return a resolved one rather than
+  // marking the function async (SonarLint and typescript-eslint flag an async with no await).
+  headers() {
+    return Promise.resolve([{ source: "/:path*", headers: securityHeaders }]);
   },
   // Tailwind v4 runs as a Turbopack loader for CSS (the create-next-app default).
   turbopack: {

@@ -33,7 +33,7 @@ export type ApiResult<T> =
   | { kind: "declined"; message: string | undefined }
   | { kind: "conflict"; message: string | undefined };
 
-export type ApiCall = {
+export interface ApiCall {
   // The name a reviewer uses in ?mockFail=<endpoint>:<kind>.
   endpoint: MockEndpoint;
   // The cart group type for checkout, so ?mockFail=checkout@package:500 can target one group.
@@ -41,7 +41,7 @@ export type ApiCall = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   // Sent as JSON.
   body?: unknown;
-};
+}
 
 // After this long with no reply we give up and report "network". Built from the mockDelay cap,
 // with room for the 300 to 800 ms latency, so a slow-state demo never turns into a timeout.
@@ -103,13 +103,13 @@ async function resultFromResponse<T>(response: Response): Promise<ApiResult<T>> 
   if (!response.ok) return { kind: "server", status: response.status };
 
   try {
-    // JSON.parse is untyped, which is why it can be assigned to T. We trust the shape here
-    // because the mock API mirrors api-types.ts; the feature's mapper turns it into UI types.
-    // An endpoint that answers with no body (204, or a 200 with nothing in it) must be called
-    // as fetchApi<null>, because that is what comes back.
     const text = await response.text();
-    const data: T = text === "" ? null : JSON.parse(text);
-    return { kind: "ok", data };
+    const body: unknown = text === "" ? null : JSON.parse(text);
+    // The one cast in the fetch layer. We trust the body is T because the mock API mirrors
+    // api-types.ts, and the feature's mapper is where the shape turns into UI types.
+    // An endpoint that answers with no body (204, or a 200 with nothing in it) must be called
+    // as fetchApi<null>, because null is what comes back.
+    return { kind: "ok", data: body as T };
   } catch {
     // A 2xx that isn't JSON means something broke on the server side.
     return { kind: "server", status: response.status };

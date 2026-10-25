@@ -7,7 +7,9 @@ describe("cn", () => {
   });
 
   it("drops false, null and undefined so conditional classes read naturally", () => {
-    const isActive = false;
-    expect(cn("rounded", isActive && "bg-primary", null, undefined)).toBe("rounded");
+    const tabClasses = (isActive: boolean) =>
+      cn("rounded", isActive && "bg-primary", null, undefined);
+    expect(tabClasses(false)).toBe("rounded");
+    expect(tabClasses(true)).toBe("rounded bg-primary");
   });
 });

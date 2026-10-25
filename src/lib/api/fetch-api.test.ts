@@ -16,14 +16,16 @@ function setPageUrl(pathAndSearch: string) {
 // Stands in for a mock endpoint, built from the real server helpers (minus the latency), so these
 // tests check the client against the real wire format. fetchApi always calls fetch with a URL.
 // The type names init too, so tests can read the options fetch was called with.
-const fakeServer = vi.fn<(url: URL, init?: RequestInit) => Promise<Response>>(async (url) => {
+const fakeServer = vi.fn<(url: URL, init?: RequestInit) => Promise<Response>>((url) => {
   const { status } = readForwardedMockParams(url.searchParams);
-  return status === undefined ? Response.json({ hello: "world" }) : fakeFailureResponse(status);
+  return Promise.resolve(
+    status === undefined ? Response.json({ hello: "world" }) : fakeFailureResponse(status),
+  );
 });
 
 function requestedUrl(call: number): URL {
   const url = fakeServer.mock.calls[call]?.[0];
-  if (url === undefined) throw new Error(`fetch was not called ${call + 1} times`);
+  if (url === undefined) throw new Error(`fetch was not called ${String(call + 1)} times`);
   return url;
 }
 
@@ -183,25 +185,24 @@ describe("fetchApi", () => {
     const { fetchApi } = await loadFetchApi();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => {
-        throw error;
-      }),
+      vi.fn(() => Promise.reject(error)),
     );
 
     expect(await fetchApi("/api/mock/cart", { endpoint: "cart" })).toEqual({ kind: "network" });
   });
 });
 
-describe("fetchApi turns each HTTP status into a result kind", () => {
-  async function resultFor(response: Response) {
-    const { fetchApi } = await loadFetchApi();
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => response),
-    );
-    return fetchApi("/api/mock/cart", { endpoint: "cart" });
-  }
+// Calls fetchApi once with fetch answering this exact response.
+async function resultFor(response: Response) {
+  const { fetchApi } = await loadFetchApi();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => Promise.resolve(response)),
+  );
+  return fetchApi("/api/mock/cart", { endpoint: "cart" });
+}
 
+describe("fetchApi turns each HTTP status into a result kind", () => {
   it("201 is ok", async () => {
     expect(await resultFor(Response.json({ orderId: "o1" }, { status: 201 }))).toEqual({
       kind: "ok",

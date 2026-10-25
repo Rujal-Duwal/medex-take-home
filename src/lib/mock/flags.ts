@@ -38,7 +38,7 @@ const FAKE_STATUSES = ["500", "402", "409"] as const;
 export type FakeStatus = (typeof FAKE_STATUSES)[number];
 export type MockFailKind = FakeStatus | "network";
 
-export type MockFailRule = {
+export interface MockFailRule {
   // The rule as typed, for example "checkout@package:500:once". Used to remember a fired :once
   // rule. Two identical rules share this text, so they fire once between them, which is fine.
   text: string;
@@ -47,25 +47,29 @@ export type MockFailRule = {
   group: string | undefined;
   kind: MockFailKind;
   once: boolean;
-};
+}
 
-export type MockFlags = {
+export interface MockFlags {
   delayMs: number;
   failRules: MockFailRule[];
   offline: boolean;
-};
+}
 
 // Long enough to show a slow state, short enough that a typo like 300000 doesn't hang the page.
 export const MAX_DELAY_MS = 20_000;
 
-// .some instead of .includes: TypeScript won't let a plain string be passed to .includes on a
-// list of literal names. These guards also tell TypeScript the string is one of the names.
+// The same lists typed as plain strings. TypeScript won't pass a plain string to .includes on a
+// list of literal names, but widening the list like this needs no cast.
+const endpointNames: readonly string[] = MOCK_ENDPOINTS;
+const fakeStatusValues: readonly string[] = FAKE_STATUSES;
+
+// These guards also tell TypeScript the string is one of the names.
 function isMockEndpoint(name: string): name is MockEndpoint {
-  return MOCK_ENDPOINTS.some((endpoint) => endpoint === name);
+  return endpointNames.includes(name);
 }
 
 function isFakeStatus(value: string): value is FakeStatus {
-  return FAKE_STATUSES.some((status) => status === value);
+  return fakeStatusValues.includes(value);
 }
 
 function isMockFailKind(value: string): value is MockFailKind {

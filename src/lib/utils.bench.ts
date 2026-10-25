@@ -1,4 +1,4 @@
-import { test } from "vitest";
+import { expect, test } from "vitest";
 import { cn } from "./utils";
 
 // Sample benchmark that proves `npm run bench` works.
@@ -9,8 +9,10 @@ test("cn merges a button's classes with an override", async ({ bench }) => {
   // Vitest turns imports into getters; a local reference keeps that cost out of the numbers.
   // https://vitest.dev/guide/benchmarking#module-runner-overhead
   const merge = cn;
-  const isDisabled = false;
+  const base = "inline-flex h-8 items-center px-2.5 text-sm";
+  // Check once that the call being timed gives the right answer, so the numbers mean something.
+  expect(merge(base, "px-4")).toBe("inline-flex h-8 items-center text-sm px-4");
   await bench("cn", () => {
-    merge("inline-flex h-8 items-center px-2.5 text-sm", "px-4", isDisabled && "opacity-50");
+    merge(base, "px-4");
   }).run();
 });
