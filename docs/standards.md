@@ -13,6 +13,13 @@ If a link is dead, search for the page title on the same site. Do not switch to 
 | ADR overview | Background and tooling | https://adr.github.io/ |
 | C4 model | Levels used in `docs/ARCHITECTURE.md` (context, containers, components) | https://c4model.com/ |
 | Statecharts | Checkout and booking state machines | https://statecharts.dev/ |
+| Functional core, imperative shell | Pure business logic, side effects at the edges | https://www.destroyallsoftware.com/screencasts/catalog/functional-core-imperative-shell |
+| Anti-corruption layer | `mappers.ts` between the API and the UI | https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer |
+| Presentation, domain, data layering | Direction of dependencies | https://martinfowler.com/bliki/PresentationDomainDataLayering.html |
+| Feature-based project structure | `src/features/<task>/` | https://github.com/alan2207/bulletproof-react |
+| Practical test pyramid | Testing levels in `docs/ARCHITECTURE.md` section 8 | https://martinfowler.com/articles/practical-test-pyramid.html |
+
+The full architecture style, with every pattern and interview answers, is in `docs/ARCHITECTURE.md` section 0.
 
 ## Framework and language
 
@@ -88,6 +95,13 @@ If a link is dead, search for the page title on the same site. Do not switch to 
 
 | Standard | Used for | Link |
 |---|---|---|
+| typescript-eslint shared configs | `strictTypeChecked`, `stylisticTypeChecked` (ADR 0012) | https://typescript-eslint.io/users/configs/ |
+| eslint-plugin-sonarjs | Sonar's code-quality rules in ESLint, so CI matches SonarQube for IDE (ADR 0012) | https://www.npmjs.com/package/eslint-plugin-sonarjs |
+| SonarQube for IDE (SonarLint) | Editor checks; its rules are a superset of the plugin's | https://docs.sonarsource.com/sonarqube-developer-tools/sonarqube-for-vs-code/using/rules |
+| Sonar way rule metadata | Which rules the editor's default profile turns on, for `eslint.sonar-way.mjs` (ADR 0012) | https://github.com/SonarSource/SonarJS |
+| eslint-plugin-unicorn | The unicorn rules Sonar way uses (ADR 0012) | https://github.com/sindresorhus/eslint-plugin-unicorn |
+| eslint-plugin-testing-library | The Testing Library rules Sonar way uses, test files only (ADR 0012) | https://github.com/testing-library/eslint-plugin-testing-library |
+| eslint-plugin-promise | The one promise rule Sonar way uses (ADR 0012) | https://github.com/eslint-community/eslint-plugin-promise |
 | Vitest | Unit tests and benchmarks | https://vitest.dev/guide/ |
 | Testing Library guiding principles | Test what the user sees, not internals | https://testing-library.com/docs/guiding-principles |
 | React Testing Library | Component tests | https://testing-library.com/docs/react-testing-library/intro/ |

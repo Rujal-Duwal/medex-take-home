@@ -4,6 +4,38 @@ How the MedEx take-home is put together, and why. Written in the spirit of the C
 
 Read this before starting a work package. Update it in the same commit when a package changes the structure.
 
+## 0. Architecture style
+
+**In one sentence:** a feature-based modular monolith on the Next.js App Router, where each feature has a functional core (pure, tested business logic) inside an imperative shell (fetching, React state, the URL, storage), with a mapping layer at the API edge acting as an anti-corruption layer. It is documented with the C4 model and Architecture Decision Records.
+
+| Named pattern | What it means here | Where to see it | Study |
+|---|---|---|---|
+| Modular monolith | One deployable app, split into modules (features) with clear boundaries, not micro-frontends | `src/features/services`, `cart`, `booking`; shared code in `src/lib` | https://martinfowler.com/bliki/MonolithFirst.html |
+| Feature-based folders | Code grouped by feature, not by file type; a feature owns its api, types, mappers, logic and components | `src/features/<task>/` | https://github.com/alan2207/bulletproof-react (see `docs/project-structure.md`) and https://feature-sliced.design/ |
+| Layered (presentation, domain, data) | UI, business rules and data access kept apart; dependencies point one way | Section 3 below | https://martinfowler.com/bliki/PresentationDomainDataLayering.html |
+| Functional core, imperative shell | Decisions live in pure functions; side effects (fetch, clock, storage, DOM) live in a thin outer shell that calls them | `engine.ts`, `pricing.ts`, `slots.ts` (core); hooks and components (shell) | https://www.destroyallsoftware.com/screencasts/catalog/functional-core-imperative-shell |
+| Anti-corruption layer | Raw API shapes are translated once into our own UI types, so messy or changing API data can't leak into the UI | `mappers.ts` in each feature | https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer |
+| Ports and adapters (light) | The UI depends on `api.ts` functions, not on how data is fetched; swapping the mock for MedEx's real API changes the adapter, not the features | `features/*/api.ts`, `src/lib/mock` | https://alistair.cockburn.us/hexagonal-architecture/ |
+| Server-first rendering | Server Components render the first view; Client Components take over where interaction is needed | `/services` page reads `searchParams` on the server | https://nextjs.org/docs/app/getting-started/server-and-client-components |
+| URL as state | Shareable view state lives in the URL, not in a store | Task 1 URL codec | https://nextjs.org/docs/app/api-reference/file-conventions/page |
+| Finite state machine | Checkout moves through named states with allowed transitions only | Task 2 checkout reducer | https://statecharts.dev/ |
+| Idempotency keys | Retrying a request can never create a second order | Task 2 checkout | https://docs.stripe.com/api/idempotent_requests |
+| Test pyramid | Many fast unit tests on the core, few component tests, manual and optional end-to-end on top | Section 8 below | https://martinfowler.com/articles/practical-test-pyramid.html |
+| C4 model and ADRs | How the architecture is documented | This file and `docs/adr/` | https://c4model.com/ and https://adr.github.io/ |
+
+### How to explain it in an interview
+
+**The 30-second answer.** "It's one Next.js app, organised by feature. Each feature has three rings: a mapping layer that turns MedEx's API shapes into our own types, a core of pure functions that hold every business rule (pricing, facets, slots, checkout transitions), and a thin shell of hooks and components that does the fetching and rendering. The rules are pure, so they're fast to test against every awkward case in the data, and the shell is thin, so the UI stays simple. The big decisions are written up as ADRs."
+
+**Likely follow-up questions**
+
+- *Why not micro-frontends?* Three small features, one team of one, one deploy. Micro-frontends solve team and deploy independence problems we don't have; they would add build and runtime cost for nothing. A modular monolith keeps the option open, since each feature folder is already self-contained.
+- *Why no Redux or Zustand?* Each kind of state has a natural home: filters in the URL, cart lines in a reducer, checkout attempts in `localStorage`, selections in component state (table in section 5). A global store would duplicate the URL in Task 1 and add indirection everywhere else.
+- *What would change with a real backend?* Delete `src/app/api/mock` and `src/lib/mock`, point each `api.ts` at the real endpoints, keep the mappers. The core and the UI don't change. Facet counting might move to the server if the catalogue grew far beyond 3,200 services (ADR 0006).
+- *Isn't this just clean architecture or hexagonal?* It borrows the key idea, dependencies point inwards to pure rules, but stays light: no interfaces, classes or dependency injection containers, because TypeScript functions and modules already give us the seams we need, and the code has to be explainable live.
+- *Where is the domain logic?* In the pure files of each feature: `pricing.ts`, `engine.ts`, `url-codec.ts` (Task 1); subtotals, `quantity-queue.ts`, the checkout reducer, merge (Task 2); `time-zone.ts`, `slots.ts`, availability (Task 3).
+- *How do you stop the rules leaking into components?* Components receive mapped UI types only, ESLint blocks imports from `data/`, and the reviewer checks for business rules in components.
+
 ## 1. Context
 
 ```mermaid
