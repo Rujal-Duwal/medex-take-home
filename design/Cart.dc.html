@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9ECEA;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#16201E;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+a{color:#1F5F5B}a:hover{color:#16201E}
+:focus-visible{outline:2px solid #1F5F5B;outline-offset:2px}
+@keyframes mxPulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</helmet>
+<div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px;width:max-content">
+  <header style="display:flex;flex-direction:column;gap:12px;max-width:960px">
+    <nav aria-label="Design files" style="display:flex;gap:20px;font-size:14px;line-height:20px">
+      <a href="Tokens.dc.html">Tokens &amp; components</a>
+      <a href="Services.dc.html">/services</a>
+      <strong>/cart</strong>
+      <a href="Booking.dc.html">/booking</a>
+    </nav>
+    <h1 style="margin:0;font-size:30px;line-height:38px;font-weight:600">/cart · Multi-provider cart and split checkout</h1>
+    <p style="margin:0;font-size:16px;line-height:24px;color:#5B6663;text-wrap:pretty">“I put a lab test from one clinic, a facial from a spa, and a check-up package from a hospital in my cart. Then I tried to pay.” Live: steppers (push Liver Function Profile past 10 to see the rollback), duration picker, per-group payment, Remove, and checkout. The facial's first payment always fails so the partial-failure result can be tried end to end.</p>
+  </header>
+
+  <div style="display:flex;gap:48px;align-items:flex-start">
+    <!-- DESKTOP -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">DESKTOP · 1440</div>
+      <div data-screen-label="Cart desktop" style="width:1440px;background:#FAFAF8;border-radius:12px;box-shadow:0 1px 2px rgba(22,32,30,.06),0 8px 32px rgba(22,32,30,.08);overflow:hidden">
+        <div style="height:64px;display:flex;align-items:center;gap:40px;padding:0 48px;background:#FFFFFF;border-bottom:1px solid #E1E5E2">
+          <span style="font-size:20px;font-weight:600;letter-spacing:-0.01em;color:#1F5F5B">MedEx</span>
+          <nav style="display:flex;gap:8px;flex:1">
+            <a href="Services.dc.html" style="height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;color:#5B6663;text-decoration:none">Services</a>
+            <a href="#" aria-current="page" style="height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;font-weight:500;color:#16201E;text-decoration:none;box-shadow:inset 0 -2px 0 #1F5F5B">{{ cartLabel }}</a>
+          </nav>
+          <span style="font-size:15px;color:#3D4744">Priya S.</span>
+        </div>
+
+        <sc-if value="{{ offline }}">
+          <div role="status" style="display:flex;gap:12px;align-items:center;justify-content:center;background:#FFF4DB;border-bottom:1px solid #EBD39A;padding:12px 48px">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A4B00" stroke-width="2" stroke-linecap="round"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.8M12 20h.01"></path></svg>
+            <p style="margin:0;font-size:15px;color:#5A3800"><strong>You're offline.</strong> Your cart is saved on this device. You can check out when you're back online.</p>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCart }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:32px 48px 64px;display:flex;flex-direction:column;gap:24px">
+            <div style="display:flex;align-items:baseline;gap:16px">
+              <h1 style="margin:0;font-size:30px;line-height:38px;font-weight:600">Your cart</h1>
+              <span style="font-size:16px;color:#5B6663">{{ cartMeta }}</span>
+            </div>
+            <sc-if value="{{ showMerge }}">
+              <div role="status" style="display:flex;gap:16px;align-items:flex-start;background:#E6F0EE;border:1px solid #BFD6D2;border-radius:12px;padding:16px 20px">
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                  <strong style="font-size:16px">Welcome back. We merged the cart from your earlier visit. 4 changes:</strong>
+                  <ul style="margin:0;padding-left:20px;font-size:15px;line-height:24px">
+                    <li>Liver Function Profile: you had 2 here and 3 before. We kept the higher, 3.</li>
+                    <li>Thyroid Function Test was added from your earlier visit.</li>
+                    <li>Signature Facial: we applied the 90 min option you chose.</li>
+                    <li>Vitamin B12 at Lakeview is no longer available and was removed.</li>
+                  </ul>
+                </div>
+                <button type="button" onClick="{{ dismissMerge }}" style="height:44px;padding:0 14px;border:1px solid #1F5F5B;border-radius:8px;background:#FFFFFF;color:#1F5F5B;font-size:15px;font-weight:500;cursor:pointer">Got it</button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isEmpty }}">
+              <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:56px 32px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+                <h2 style="margin:0;font-size:20px;font-weight:600">Your cart is empty</h2>
+                <p style="margin:0;font-size:16px;color:#5B6663">Find a check-up, lab test or treatment and add it here.</p>
+                <a href="Services.dc.html" style="height:44px;display:flex;align-items:center;padding:0 18px;border-radius:8px;background:#1F5F5B;color:#FFFFFF;font-size:15px;font-weight:500;text-decoration:none">Browse services</a>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ hasGroups }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;gap:32px;align-items:flex-start">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:20px">
+                  <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+                    <section aria-labelledby="{{ g.hid }}" style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;overflow:hidden">
+                      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:16px 24px;background:#F6F7F6;border-bottom:1px solid #E1E5E2">
+                        <div style="display:flex;align-items:baseline;gap:12px"><h2 id="{{ g.hid }}" style="margin:0;font-size:20px;line-height:28px;font-weight:600">{{ g.name }}</h2><span style="font-size:14px;color:#5B6663">{{ g.meta }}</span></div>
+                        <span style="font-size:14px;font-weight:500;color:#3D4744">{{ g.orderLabel }}</span>
+                      </div>
+                      <div style="padding:0 24px">
+                        <sc-for list="{{ g.provs }}" as="pv">
+                          <div style="padding:16px 0 4px;border-bottom:1px solid #E1E5E2">
+                            <div style="display:flex;align-items:baseline;gap:10px;padding-bottom:4px">
+                              <span style="font-size:16px;font-weight:600">{{ pv.name }}</span>
+                              <span style="font-size:14px;color:#5B6663">{{ pv.place }} · prices in {{ pv.cur }}</span>
+                            </div>
+                            <sc-for list="{{ pv.lines }}" as="l">
+                              <div style="padding:14px 0;border-top:1px solid #F1F3F1;display:flex;flex-direction:column;gap:10px">
+                                <sc-if value="{{ l.live }}" hint-placeholder-val="{{ true }}">
+                                  <div style="display:grid;grid-template-columns:minmax(0,1fr) 132px 200px;gap:24px;align-items:start">
+                                    <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                                      <span style="font-size:16px;line-height:24px;font-weight:500">{{ l.title }}</span>
+                                      <span style="font-size:14px;color:#5B6663;font-variant-numeric:tabular-nums">{{ l.unitText }}<sc-if value="{{ l.origEach }}"> <s><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Original price </span>{{ l.origEach }}</s></sc-if></span>
+                                      <sc-if value="{{ l.isDur }}">
+                                        <div role="radiogroup" aria-label="Duration (required)" style="display:flex;flex-direction:column;gap:8px;padding-top:8px">
+                                          <span style="font-size:14px;font-weight:600">Duration <span style="font-weight:400;color:#5B6663">(required)</span></span>
+                                          <div style="display:flex;gap:8px">
+                                            <sc-for list="{{ l.durOpts }}" as="o">
+                                              <button type="button" role="radio" aria-checked="{{ o.selected }}" onClick="{{ o.pick }}" style="min-height:48px;display:flex;align-items:center;gap:10px;padding:0 16px 0 12px;border:1px solid {{ o.border }};border-radius:8px;background:{{ o.bg }};cursor:pointer" style-hover="border-color:#1F5F5B">
+                                                <span style="width:18px;height:18px;border-radius:50%;border:1.5px solid {{ o.border }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ o.selected }}"><span style="width:8px;height:8px;border-radius:50%;background:#1F5F5B"></span></sc-if></span>
+                                                <span style="font-size:15px;font-weight:500">{{ o.label }}</span><span style="font-size:15px;color:#3D4744;font-variant-numeric:tabular-nums">{{ o.price }}</span>
+                                              </button>
+                                            </sc-for>
+                                          </div>
+                                        </div>
+                                      </sc-if>
+                                    </div>
+                                    <div role="group" aria-label="{{ l.qtyAria }}" style="display:flex;align-items:center;justify-content:space-between;border:1px solid #8C9693;border-radius:8px;height:44px;background:#FFFFFF">
+                                      <button type="button" aria-label="Decrease quantity" disabled="{{ l.decDisabled }}" onClick="{{ l.dec }}" style="width:44px;height:42px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ l.decColor }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                                      <span aria-live="polite" style="font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;opacity:{{ l.qtyOpacity }}">{{ l.qty }}</span>
+                                      <button type="button" aria-label="Increase quantity" onClick="{{ l.inc }}" style="width:44px;height:42px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+                                    </div>
+                                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right">
+                                      <sc-if value="{{ l.hasTotal }}"><strong style="font-size:16px;line-height:24px;font-weight:600;font-variant-numeric:tabular-nums">{{ l.totalText }}</strong></sc-if>
+                                      <sc-if value="{{ l.durMissing }}"><span style="font-size:14px;line-height:20px;color:#7A4B00;font-weight:500">Choose a duration to see the price</span></sc-if>
+                                      <button type="button" onClick="{{ l.remove }}" style="min-height:32px;border:0;background:none;padding:0;font-size:14px;color:#3D4744;text-decoration:underline;cursor:pointer">Remove</button>
+                                    </div>
+                                  </div>
+                                  <sc-if value="{{ l.hasMsg }}">
+                                    <div role="alert" style="display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:8px;background:#FFF4DB;font-size:14px;color:#5A3800">
+                                      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A4B00" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4M12 16h.01"></path></svg>{{ l.msg }}
+                                    </div>
+                                  </sc-if>
+                                </sc-if>
+                                <sc-if value="{{ l.gone }}">
+                                  <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;margin:0 -8px;border:1px dashed #8C9693;border-radius:8px;background:#F1F3F1">
+                                    <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+                                      <div style="display:flex;align-items:center;gap:10px">
+                                        <span style="font-size:16px;font-weight:500;color:#3D4744">{{ l.title }}</span>
+                                        <span style="display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;background:#16201E;color:#FFFFFF;font-size:12px;font-weight:500"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M5.7 5.7l12.6 12.6"></path></svg>No longer available</span>
+                                      </div>
+                                      <span style="font-size:14px;color:#3D4744">{{ l.goneText }}</span>
+                                    </div>
+                                    <button type="button" onClick="{{ l.remove }}" style="height:44px;padding:0 18px;border:1px solid #16201E;border-radius:8px;background:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#E1E5E2">Remove</button>
+                                  </div>
+                                </sc-if>
+                              </div>
+                            </sc-for>
+                          </div>
+                        </sc-for>
+                        <div style="padding:14px 0 18px;display:flex;flex-direction:column;gap:4px">
+                          <sc-for list="{{ g.subtotals }}" as="a">
+                            <div style="display:flex;justify-content:space-between;font-size:16px;line-height:24px"><span style="color:#3D4744">{{ a.label }}</span><strong style="font-weight:600;font-variant-numeric:tabular-nums">{{ a.amount }}</strong></div>
+                          </sc-for>
+                          <sc-if value="{{ g.needsDur }}"><div style="display:flex;justify-content:space-between;font-size:16px;line-height:24px"><span style="color:#3D4744">Subtotal</span><span style="color:#7A4B00;font-weight:500">Choose a duration to see the price</span></div></sc-if>
+                        </div>
+                      </div>
+                    </section>
+                  </sc-for>
+                </div>
+
+                <aside aria-labelledby="sum-h" style="width:400px;flex:none;position:sticky;top:24px;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:20px 24px 24px">
+                  <h2 id="sum-h" style="margin:0;font-size:20px;line-height:28px;font-weight:600">{{ ordersTitle }}</h2>
+                  <p style="margin:4px 0 0;font-size:14px;line-height:20px;color:#5B6663;text-wrap:pretty">Each group is booked and paid on its own. Prices stay in each provider's currency, so there is no combined total.</p>
+                  <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+                    <div style="margin-top:16px;padding-top:16px;border-top:1px solid #E1E5E2;display:flex;flex-direction:column;gap:12px">
+                      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px;font-weight:600">{{ g.name }}</span><span style="font-size:13px;color:#5B6663">{{ g.orderLabel }}</span></div>
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <sc-for list="{{ g.subtotals }}" as="a">
+                          <div style="display:flex;justify-content:space-between;font-size:15px;line-height:22px"><span style="color:#5B6663">{{ a.cur }}</span><strong style="font-weight:600;font-variant-numeric:tabular-nums">{{ a.amount }}</strong></div>
+                        </sc-for>
+                        <sc-if value="{{ g.needsDur }}"><span style="font-size:15px;color:#7A4B00;font-weight:500">Choose a duration to see the price</span></sc-if>
+                      </div>
+                      <div role="radiogroup" aria-label="{{ g.payAria }}" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        <sc-for list="{{ g.payOpts }}" as="o">
+                          <button type="button" role="radio" aria-checked="{{ o.selected }}" onClick="{{ o.pick }}" style="min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid {{ o.border }};border-radius:8px;background:{{ o.bg }};font-size:15px;cursor:pointer;text-align:left">
+                            <span style="width:18px;height:18px;border-radius:50%;border:1.5px solid {{ o.border }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ o.selected }}"><span style="width:8px;height:8px;border-radius:50%;background:#1F5F5B"></span></sc-if></span>{{ o.label }}
+                          </button>
+                        </sc-for>
+                      </div>
+                      <button type="button" disabled="{{ g.blocked }}" onClick="{{ g.checkout }}" style="height:44px;border:1px solid {{ g.btnBorder }};border-radius:8px;background:{{ g.btnBg }};color:{{ g.btnColor }};font-size:15px;font-weight:600;cursor:{{ g.btnCursor }}">{{ g.btnLabel }}</button>
+                      <sc-if value="{{ g.reason }}"><p style="margin:-4px 0 0;font-size:14px;line-height:20px;color:#3D4744">{{ g.reason }}</p></sc-if>
+                    </div>
+                  </sc-for>
+                  <div style="margin-top:20px;padding:14px 16px;border-radius:10px;background:#F6F7F6;display:flex;flex-direction:column;gap:10px">
+                    <h3 style="margin:0;font-size:15px;line-height:22px;font-weight:600">Payment summary by currency</h3>
+                    <sc-for list="{{ payRows }}" as="p" hint-placeholder-count="3">
+                      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+                        <span style="display:flex;flex-direction:column"><span style="font-size:15px;font-weight:500">{{ p.cur }}</span><span style="font-size:13px;line-height:18px;color:#3D4744">{{ p.orders }}</span></span>
+                        <strong style="font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap">{{ p.amount }}</strong>
+                      </div>
+                    </sc-for>
+                    <sc-if value="{{ payNote }}"><p style="margin:0;font-size:13px;line-height:18px;color:#7A4B00;font-weight:500">{{ payNote }}</p></sc-if>
+                    <p style="margin:0;font-size:13px;line-height:18px;color:#3D4744">No grand total. Each currency is charged separately.</p>
+                  </div>
+                  <div style="margin-top:20px;padding-top:20px;border-top:1px solid #E1E5E2;display:flex;flex-direction:column;gap:8px">
+                    <button type="button" disabled="{{ allDisabled }}" onClick="{{ checkoutAll }}" style="height:48px;border:0;border-radius:8px;background:{{ allBg }};color:{{ allColor }};font-size:16px;font-weight:600;cursor:pointer">{{ allLabel }}</button>
+                    <sc-if value="{{ allNote }}"><p style="margin:0;font-size:14px;line-height:20px;color:#3D4744;text-align:center">{{ allNote }}</p></sc-if>
+                  </div>
+                </aside>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isResult }}">
+          <div style="padding:40px 48px 72px;display:flex;justify-content:center">
+            <div style="width:760px;display:flex;flex-direction:column;gap:20px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <h1 aria-live="polite" style="margin:0;font-size:30px;line-height:38px;font-weight:600">{{ res.headline }}</h1>
+                <p style="margin:0;font-size:16px;line-height:24px;color:#3D4744">{{ res.sub }}</p>
+              </div>
+              <sc-for list="{{ res.cards }}" as="r">
+                <section style="background:#FFFFFF;border:1px solid {{ r.border }};border-radius:12px;overflow:hidden">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 20px;background:{{ r.tint }}">
+                    <h2 style="margin:0;font-size:18px;font-weight:600">{{ r.name }}</h2>
+                    <span style="display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;background:{{ r.badgeBg }};color:{{ r.badgeColor }};font-size:14px;font-weight:600">
+                      <sc-if value="{{ r.isPaid }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+                      <sc-if value="{{ r.isFailed }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></sc-if>
+                      <sc-if value="{{ r.isBooked }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg></sc-if>
+                      {{ r.badge }}
+                    </span>
+                  </div>
+                  <div style="padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px">
+                    <sc-if value="{{ r.isWorking }}">
+                      <div aria-busy="true" style="display:flex;flex-direction:column;gap:10px">
+                        <div style="width:60%;height:16px;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.4s ease-in-out infinite"></div>
+                        <div style="width:40%;height:16px;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.4s ease-in-out infinite"></div>
+                        <sc-if value="{{ r.slow }}"><p role="status" style="margin:4px 0 0;font-size:15px;line-height:22px;font-weight:500">Still confirming your payment. Don't close this page.</p></sc-if>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ r.hasDetail }}"><p style="margin:0;font-size:16px;line-height:24px">{{ r.detail }}</p></sc-if>
+                    <sc-for list="{{ r.amounts }}" as="a"><div style="display:flex;justify-content:space-between;font-size:15px"><span style="color:#5B6663">{{ a.cur }}</span><strong style="font-weight:600;font-variant-numeric:tabular-nums">{{ a.amount }}</strong></div></sc-for>
+                    <sc-if value="{{ r.isFailed }}">
+                      <div style="display:flex;flex-direction:column;gap:12px;padding-top:4px">
+                        <div style="display:flex;gap:10px;align-items:center">
+                          <button type="button" disabled="{{ r.retryDisabled }}" onClick="{{ r.retry }}" style="height:44px;padding:0 20px;border:0;border-radius:8px;background:#1F5F5B;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#184C49">Try again</button>
+                          <button type="button" onClick="{{ r.payClinic }}" style="height:44px;padding:0 16px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;font-weight:500;cursor:pointer">Pay at clinic instead</button>
+                        </div>
+                        <p style="margin:0;font-size:14px;line-height:20px;color:#3D4744">Trying again is safe. It uses the same order, {{ r.order }}, so you can't be charged twice.</p>
+                      </div>
+                    </sc-if>
+                  </div>
+                </section>
+              </sc-for>
+              <sc-if value="{{ res.hasRemaining }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;border:1px solid #E1E5E2;border-radius:12px;background:#FFFFFF">
+                  <span style="font-size:15px">{{ res.remaining }}</span>
+                  <button type="button" onClick="{{ backToCart }}" style="height:44px;padding:0 16px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;font-weight:500;cursor:pointer">Back to cart</button>
+                </div>
+              </sc-if>
+              <button type="button" onClick="{{ resetDemo }}" style="align-self:flex-start;min-height:44px;border:0;background:none;padding:0;font-size:14px;color:#5B6663;text-decoration:underline;cursor:pointer">Reset prototype</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- MOBILE -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">MOBILE · 375</div>
+      <div data-screen-label="Cart mobile" style="width:375px;height:812px;position:relative;background:#FAFAF8;border-radius:28px;border:1px solid #D3D9D6;box-shadow:0 8px 32px rgba(22,32,30,.1);overflow:hidden;display:flex;flex-direction:column">
+        <div style="height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#FFFFFF;border-bottom:1px solid #E1E5E2">
+          <span style="font-size:18px;font-weight:600;color:#1F5F5B">MedEx</span>
+          <span style="font-size:15px;font-weight:500">{{ cartLabel }}</span>
+        </div>
+        <sc-if value="{{ offline }}">
+          <div role="status" style="flex:none;background:#FFF4DB;border-bottom:1px solid #EBD39A;padding:10px 16px;font-size:14px;line-height:20px;color:#5A3800"><strong>You're offline.</strong> You can check out when you're back online.</div>
+        </sc-if>
+        <div style="flex:1;overflow:auto">
+          <sc-if value="{{ isCart }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
+              <div><h1 style="margin:0;font-size:24px;line-height:32px;font-weight:600">Your cart</h1><p style="margin:4px 0 0;font-size:15px;line-height:22px;color:#3D4744">{{ ordersTitle }}. Each is paid on its own, in the provider's currency.</p></div>
+              <sc-if value="{{ isEmpty }}">
+                <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:32px 20px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center"><strong style="font-size:18px">Your cart is empty</strong><a href="Services.dc.html" style="height:44px;display:flex;align-items:center;padding:0 16px;border-radius:8px;background:#1F5F5B;color:#FFFFFF;text-decoration:none;font-weight:500">Browse services</a></div>
+              </sc-if>
+              <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+                <section style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;overflow:hidden">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;padding:12px 16px;background:#F6F7F6;border-bottom:1px solid #E1E5E2"><h2 style="margin:0;font-size:18px;font-weight:600">{{ g.name }}</h2><span style="font-size:13px;font-weight:500;color:#3D4744">{{ g.orderLabel }}</span></div>
+                  <div style="padding:0 16px">
+                    <sc-for list="{{ g.provs }}" as="pv">
+                      <div style="padding:12px 0 0">
+                        <div style="font-size:15px;font-weight:600">{{ pv.name }}</div>
+                        <div style="font-size:13px;color:#5B6663">{{ pv.place }} · prices in {{ pv.cur }}</div>
+                        <sc-for list="{{ pv.lines }}" as="l">
+                          <div style="padding:12px 0;border-bottom:1px solid #F1F3F1;display:flex;flex-direction:column;gap:8px">
+                            <sc-if value="{{ l.live }}">
+                              <span style="font-size:16px;font-weight:500">{{ l.title }}</span>
+                              <span style="font-size:14px;color:#5B6663;font-variant-numeric:tabular-nums">{{ l.unitText }}<sc-if value="{{ l.origEach }}"> <s>{{ l.origEach }}</s></sc-if></span>
+                              <sc-if value="{{ l.isDur }}">
+                                <div role="radiogroup" aria-label="Duration (required)" style="display:flex;flex-direction:column;gap:6px">
+                                  <sc-for list="{{ l.durOpts }}" as="o">
+                                    <button type="button" role="radio" aria-checked="{{ o.selected }}" onClick="{{ o.pick }}" style="min-height:48px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid {{ o.border }};border-radius:8px;background:{{ o.bg }};text-align:left">
+                                      <span style="width:18px;height:18px;border-radius:50%;border:1.5px solid {{ o.border }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ o.selected }}"><span style="width:8px;height:8px;border-radius:50%;background:#1F5F5B"></span></sc-if></span>
+                                      <span style="flex:1;font-size:15px;font-weight:500">{{ o.label }}</span><span style="font-size:15px;font-variant-numeric:tabular-nums">{{ o.price }}</span>
+                                    </button>
+                                  </sc-for>
+                                </div>
+                              </sc-if>
+                              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                                <div role="group" aria-label="{{ l.qtyAria }}" style="display:flex;align-items:center;border:1px solid #8C9693;border-radius:8px;height:44px;width:124px;justify-content:space-between">
+                                  <button type="button" aria-label="Decrease quantity" disabled="{{ l.decDisabled }}" onClick="{{ l.dec }}" style="width:44px;height:42px;border:0;background:none;display:flex;align-items:center;justify-content:center;color:{{ l.decColor }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                                  <span style="font-weight:600;font-variant-numeric:tabular-nums;opacity:{{ l.qtyOpacity }}">{{ l.qty }}</span>
+                                  <button type="button" aria-label="Increase quantity" onClick="{{ l.inc }}" style="width:44px;height:42px;border:0;background:none;display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+                                </div>
+                                <div style="text-align:right">
+                                  <sc-if value="{{ l.hasTotal }}"><strong style="font-weight:600;font-variant-numeric:tabular-nums">{{ l.totalText }}</strong></sc-if>
+                                  <sc-if value="{{ l.durMissing }}"><span style="font-size:14px;color:#7A4B00;font-weight:500">Choose a duration<br>to see the price</span></sc-if>
+                                </div>
+                              </div>
+                              <sc-if value="{{ l.hasMsg }}"><div role="alert" style="padding:8px 12px;border-radius:8px;background:#FFF4DB;font-size:14px;line-height:20px;color:#5A3800">{{ l.msg }}</div></sc-if>
+                              <button type="button" onClick="{{ l.remove }}" style="align-self:flex-start;min-height:44px;border:0;background:none;padding:0;font-size:14px;color:#3D4744;text-decoration:underline">Remove</button>
+                            </sc-if>
+                            <sc-if value="{{ l.gone }}">
+                              <div style="display:flex;flex-direction:column;gap:8px;padding:12px;border:1px dashed #8C9693;border-radius:8px;background:#F1F3F1">
+                                <span style="align-self:flex-start;padding:2px 8px;border-radius:6px;background:#16201E;color:#FFFFFF;font-size:12px;font-weight:500">No longer available</span>
+                                <span style="font-size:16px;font-weight:500;color:#3D4744">{{ l.title }}</span>
+                                <span style="font-size:14px;line-height:20px;color:#3D4744">{{ l.goneText }}</span>
+                                <button type="button" onClick="{{ l.remove }}" style="height:44px;border:1px solid #16201E;border-radius:8px;background:#FFFFFF;font-size:15px;font-weight:600">Remove</button>
+                              </div>
+                            </sc-if>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-for>
+                    <div style="padding:12px 0;display:flex;flex-direction:column;gap:10px">
+                      <sc-for list="{{ g.subtotals }}" as="a"><div style="display:flex;justify-content:space-between;font-size:15px"><span style="color:#3D4744">{{ a.label }}</span><strong style="font-weight:600;font-variant-numeric:tabular-nums">{{ a.amount }}</strong></div></sc-for>
+                      <sc-if value="{{ g.needsDur }}"><span style="font-size:15px;color:#7A4B00;font-weight:500">Choose a duration to see the price</span></sc-if>
+                      <div role="radiogroup" aria-label="{{ g.payAria }}" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        <sc-for list="{{ g.payOpts }}" as="o">
+                          <button type="button" role="radio" aria-checked="{{ o.selected }}" onClick="{{ o.pick }}" style="min-height:44px;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid {{ o.border }};border-radius:8px;background:{{ o.bg }};font-size:15px;text-align:left">
+                            <span style="width:18px;height:18px;border-radius:50%;border:1.5px solid {{ o.border }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ o.selected }}"><span style="width:8px;height:8px;border-radius:50%;background:#1F5F5B"></span></sc-if></span>{{ o.label }}
+                          </button>
+                        </sc-for>
+                      </div>
+                      <button type="button" disabled="{{ g.blocked }}" onClick="{{ g.checkout }}" style="height:44px;border:1px solid {{ g.btnBorder }};border-radius:8px;background:{{ g.btnBg }};color:{{ g.btnColor }};font-size:15px;font-weight:600">{{ g.btnLabel }}</button>
+                      <sc-if value="{{ g.reason }}"><p style="margin:0;font-size:14px;line-height:20px;color:#3D4744">{{ g.reason }}</p></sc-if>
+                    </div>
+                  </div>
+                </section>
+              </sc-for>
+              <sc-if value="{{ hasGroups }}">
+                <div style="padding:14px 16px;border-radius:12px;background:#FFFFFF;border:1px solid #E1E5E2;display:flex;flex-direction:column;gap:10px">
+                  <h2 style="margin:0;font-size:16px;font-weight:600">Payment summary by currency</h2>
+                  <sc-for list="{{ payRows }}" as="p">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+                      <span style="display:flex;flex-direction:column"><span style="font-size:15px;font-weight:500">{{ p.cur }}</span><span style="font-size:13px;line-height:18px;color:#3D4744">{{ p.orders }}</span></span>
+                      <strong style="font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap">{{ p.amount }}</strong>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ payNote }}"><p style="margin:0;font-size:13px;line-height:18px;color:#7A4B00;font-weight:500">{{ payNote }}</p></sc-if>
+                  <p style="margin:0;font-size:13px;line-height:18px;color:#3D4744">No grand total. Each currency is charged separately.</p>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isResult }}">
+            <div style="padding:20px 16px;display:flex;flex-direction:column;gap:14px">
+              <h1 style="margin:0;font-size:22px;line-height:30px;font-weight:600">{{ res.headline }}</h1>
+              <p style="margin:0;font-size:15px;line-height:22px;color:#3D4744">{{ res.sub }}</p>
+              <sc-for list="{{ res.cards }}" as="r">
+                <section style="background:#FFFFFF;border:1px solid {{ r.border }};border-radius:12px;overflow:hidden">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 16px;background:{{ r.tint }}"><strong style="font-size:16px">{{ r.name }}</strong><span style="padding:2px 10px;border-radius:999px;background:{{ r.badgeBg }};color:{{ r.badgeColor }};font-size:13px;font-weight:600">{{ r.badge }}</span></div>
+                  <div style="padding:12px 16px 16px;display:flex;flex-direction:column;gap:10px">
+                    <sc-if value="{{ r.isWorking }}"><div style="height:14px;width:70%;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.4s ease-in-out infinite"></div><sc-if value="{{ r.slow }}"><p style="margin:0;font-size:15px;font-weight:500">Still confirming your payment. Don't close this page.</p></sc-if></sc-if>
+                    <sc-if value="{{ r.hasDetail }}"><p style="margin:0;font-size:15px;line-height:22px">{{ r.detail }}</p></sc-if>
+                    <sc-if value="{{ r.isFailed }}">
+                      <button type="button" disabled="{{ r.retryDisabled }}" onClick="{{ r.retry }}" style="height:44px;border:0;border-radius:8px;background:#1F5F5B;color:#FFFFFF;font-size:15px;font-weight:600">Try again</button>
+                      <p style="margin:0;font-size:14px;line-height:20px;color:#3D4744">Trying again is safe. It uses the same order, {{ r.order }}, so you can't be charged twice.</p>
+                    </sc-if>
+                  </div>
+                </section>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ mobileBar }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:none;padding:12px 16px 20px;background:#FFFFFF;border-top:1px solid #E1E5E2;box-shadow:0 -4px 16px rgba(22,32,30,.06);display:flex;flex-direction:column;gap:6px">
+            <button type="button" disabled="{{ allDisabled }}" onClick="{{ checkoutAll }}" style="height:48px;border:0;border-radius:8px;background:{{ allBg }};color:{{ allColor }};font-size:16px;font-weight:600">{{ allLabel }}</button>
+            <sc-if value="{{ allNote }}"><span style="font-size:13px;line-height:18px;color:#3D4744;text-align:center">{{ allNote }}</span></sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- VARIANTS -->
+    <div style="width:420px;display:flex;flex-direction:column;gap:28px">
+      <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">STATES</div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Guest cart merged after sign-in</div>
+        <div role="status" style="background:#E6F0EE;border:1px solid #BFD6D2;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px">
+          <strong style="font-size:16px;line-height:22px">Welcome back. We merged the cart from your earlier visit. 4 changes:</strong>
+          <ul style="margin:0;padding-left:20px;font-size:15px;line-height:22px;display:flex;flex-direction:column;gap:4px">
+            <li>Liver Function Profile: you had 2 here and 3 before. We kept the higher, 3.</li>
+            <li>Thyroid Function Test was added from your earlier visit.</li>
+            <li>Signature Facial: we applied the 90 min option you chose.</li>
+            <li>Vitamin B12 at Lakeview is no longer available and was removed.</li>
+          </ul>
+          <button type="button" style="align-self:flex-start;height:44px;padding:0 14px;border:1px solid #1F5F5B;border-radius:8px;background:#FFFFFF;color:#1F5F5B;font-size:15px;font-weight:500">Got it</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Quantity change rolled back</div>
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <div><div style="font-size:16px;font-weight:500">Liver Function Profile</div><div style="font-size:14px;color:#5B6663">559.00 THB each</div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid #8C9693;border-radius:8px;height:44px;width:124px"><span style="width:44px;text-align:center;font-size:18px">−</span><strong>10</strong><span style="width:44px;text-align:center;font-size:18px">+</span></div>
+          </div>
+          <div role="alert" style="display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:8px;background:#FFF4DB;font-size:14px;color:#5A3800">Couldn't change quantity: up to 10 per test.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Empty cart</div>
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+          <strong style="font-size:18px">Your cart is empty</strong>
+          <p style="margin:0;font-size:15px;color:#5B6663">Find a check-up, lab test or treatment and add it here.</p>
+          <span style="height:44px;display:flex;align-items:center;padding:0 16px;border-radius:8px;background:#1F5F5B;color:#FFFFFF;font-size:15px;font-weight:500">Browse services</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Offline</div>
+        <div role="status" style="display:flex;gap:12px;align-items:flex-start;background:#FFF4DB;border:1px solid #EBD39A;border-radius:10px;padding:12px 16px">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A4B00" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.8M12 20h.01"></path></svg>
+          <p style="margin:0;font-size:15px;line-height:22px;color:#5A3800"><strong>You're offline.</strong> Your cart is saved on this device. You can check out when you're back online.</p>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+          <span style="height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #D3D9D6;border-radius:8px;background:#F1F3F1;color:#3D4744;font-weight:600">Check out lab tests</span>
+          <span style="font-size:14px;color:#3D4744">You're offline. Checkout will be available when you reconnect.</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Slow checkout</div>
+        <div aria-busy="true" style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F6F7F6"><strong>Wellness</strong><span style="padding:2px 10px;border-radius:999px;background:#E1E5E2;font-size:13px;font-weight:600">Confirming</span></div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+            <div style="height:14px;width:70%;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.4s ease-in-out infinite"></div>
+            <p role="status" style="margin:0;font-size:15px;line-height:22px;font-weight:500">Still confirming your payment. Don't close this page.</p>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Payment summary · per currency, no grand total</div>
+        <div style="padding:14px 16px;border-radius:12px;background:#FFFFFF;border:1px solid #E1E5E2;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><span style="display:flex;flex-direction:column"><span style="font-size:15px;font-weight:500">THB</span><span style="font-size:13px;line-height:18px;color:#3D4744">Covers 3 separate orders: Lab tests, Wellness, Packages</span></span><strong style="font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap">18,947.00 THB</strong></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><span style="display:flex;flex-direction:column"><span style="font-size:15px;font-weight:500">NPR</span><span style="font-size:13px;line-height:18px;color:#3D4744">Covers 1 order: Lab tests</span></span><strong style="font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap">12,520.00 NPR</strong></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><span style="display:flex;flex-direction:column"><span style="font-size:15px;font-weight:500">INR</span><span style="font-size:13px;line-height:18px;color:#3D4744">Covers 1 order: Packages</span></span><strong style="font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap">23,009.50 INR</strong></div>
+          <p style="margin:0;font-size:13px;line-height:18px;color:#3D4744">No grand total. Each currency is charged separately.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Unavailable items</div>
+        <section aria-labelledby="ua-h" style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;overflow:hidden">
+          <div style="padding:12px 16px;background:#F1F3F1;border-bottom:1px solid #E1E5E2;display:flex;flex-direction:column;gap:2px">
+            <h3 id="ua-h" style="margin:0;font-size:16px;font-weight:600">No longer available (1)</h3>
+            <span style="font-size:14px;line-height:20px;color:#3D4744">These won't be checked out. Remove them to tidy your cart.</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 16px">
+            <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:500;color:#3D4744">Vitamin D (25-OH)</span><span style="font-size:14px;color:#3D4744">Sukhumvit Lab Centre stopped offering this test.</span></div>
+            <button type="button" aria-label="Remove Vitamin D (25-OH)" style="height:44px;padding:0 18px;border:1px solid #16201E;border-radius:8px;background:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#E1E5E2">Remove</button>
+          </div>
+        </section>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Page reloaded mid-checkout · checking your order</div>
+        <section aria-busy="true" style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F6F7F6"><strong style="font-size:16px">Wellness · Order #MX-48214</strong><span style="padding:2px 10px;border-radius:999px;background:#E1E5E2;font-size:13px;font-weight:600">Checking</span></div>
+          <div style="padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px">
+            <h3 role="status" style="margin:0;font-size:17px;line-height:24px;font-weight:600">Checking your order</h3>
+            <p style="margin:0;font-size:15px;line-height:22px">The page reloaded while this payment was in progress. We're checking with the payment provider whether it went through.</p>
+            <div style="height:14px;width:60%;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.4s ease-in-out infinite"></div>
+            <span style="height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #D3D9D6;border-radius:8px;background:#F1F3F1;color:#3D4744;font-size:15px;font-weight:600">Try again</span>
+            <p style="margin:0;font-size:14px;line-height:20px;color:#3D4744">Paying again is turned off until we know the result, so you can't be charged twice.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Cart&quot;,&quot;Checkout result&quot;],&quot;default&quot;:&quot;Cart&quot;,&quot;tsType&quot;:&quot;'Cart' | 'Checkout result'&quot;},&quot;offline&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;mergeNotice&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const PROV={sukhumvit:{name:'Sukhumvit Lab Centre',place:'Bangkok, Thailand',cur:'THB'},ktmdx:{name:'Kathmandu Diagnostics',place:'Kathmandu, Nepal',cur:'NPR'},lotus:{name:'Lotus Day Spa',place:'Bangkok, Thailand',cur:'THB'},riverside:{name:'Riverside International Hospital',place:'Bangkok, Thailand',cur:'THB'},lakeview:{name:'Lakeview Multispeciality Hospital',place:'Pune, India',cur:'INR'}};
+const G=[
+{id:'lab',name:'Lab tests',btn:'Check out lab tests',max:10,maxMsg:'up to 10 per test',order:'#MX-48213',lines:[
+ {id:'lfp',title:'Liver Function Profile',prov:'sukhumvit',price:559,qty:3},
+ {id:'vitd',title:'Vitamin D (25-OH)',prov:'sukhumvit',price:1150,qty:1,gone:true},
+ {id:'ebp',title:'Extended Blood Panel',prov:'ktmdx',price:8400,qty:1},
+ {id:'tft',title:'Thyroid Function Test',prov:'ktmdx',price:2060,qty:2}]},
+{id:'wellness',name:'Wellness',btn:'Check out wellness',max:4,maxMsg:'up to 4 people per booking',order:'#MX-48214',lines:[
+ {id:'sf',title:'Signature Facial',prov:'lotus',durs:[{min:60,price:1800},{min:90,price:2040}],qty:1}]},
+{id:'packages',name:'Packages',btn:'Check out packages',max:4,maxMsg:'up to 4 per package',order:'#MX-48215',lines:[
+ {id:'ehc',title:'Executive Health Check (Male)',prov:'riverside',price:5970.6,orig:6200,qty:1},
+ {id:'ccp',title:'Comprehensive Cardiac Package',prov:'riverside',price:9259.4,orig:10890,qty:1},
+ {id:'mhc',title:'Master Health Check',prov:'lakeview',price:11504.75,orig:12783.06,qty:2}]}];
+const fmt=(n,d=2)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const initLines=()=>Object.fromEntries(G.flatMap(g=>g.lines.map(l=>[l.id,{qty:l.qty,removed:false,msg:null,pending:false}])));
+const PRESET={lab:{status:'paid'},wellness:{status:'failed'},packages:{status:'booked'}};
+
+class Component extends DCLogic {
+  state={lines:initLines(),dur:null,pay:{lab:'card',wellness:'card',packages:'clinic'},results:null,attempts:0,mergeDismissed:false};
+  timers=[];
+  componentWillUnmount(){this.timers.forEach(clearTimeout);}
+  later(fn,ms){this.timers.push(setTimeout(fn,ms));}
+  setLine(id,patch){this.setState(s=>({lines:{...s.lines,[id]:{...s.lines[id],...patch}}}));}
+  changeQty(g,l,delta){
+    const cur=this.state.lines[l.id].qty,next=cur+delta;
+    if(next<1)return;
+    const offline=!!this.props.offline;
+    this.setLine(l.id,{qty:next,pending:true,msg:null});
+    this.later(()=>{
+      if(offline)this.setLine(l.id,{qty:cur,pending:false,msg:"Couldn't change quantity: you're offline. We kept it at "+cur+"."});
+      else if(next>g.max)this.setLine(l.id,{qty:cur,pending:false,msg:`Couldn't change quantity: ${g.maxMsg}.`});
+      else this.setLine(l.id,{pending:false});
+    },550);
+  }
+  amounts(g){
+    const st=this.state,by={};
+    for(const l of g.lines){const ls=st.lines[l.id];if(ls.removed||l.gone)continue;const cur=PROV[l.prov].cur;let unit=l.price;if(l.durs){const d=l.durs.find(x=>x.min===st.dur);if(!d)return null;unit=d.price;}by[cur]=(by[cur]||0)+unit*ls.qty;}
+    return Object.entries(by).map(([cur,v])=>({key:cur,v,c:cur,cur:`In ${cur}`,label:`Subtotal in ${cur}`,amount:`${fmt(v)} ${cur}`}));
+  }
+  checkout(ids){
+    const attempt=this.state.attempts;
+    const r={...(this.state.results||{})};
+    ids.forEach(id=>r[id]={status:'working',slow:false});
+    this.setState({results:r,attempts:attempt+1});
+    this.later(()=>this.setState(s=>{const n={...s.results};ids.forEach(id=>{if(n[id]&&n[id].status==='working')n[id]={...n[id],slow:true};});return{results:n};}),1300);
+    this.later(()=>this.setState(s=>{const n={...s.results};ids.forEach(id=>{n[id]={status:id==='wellness'&&attempt===0&&s.pay.wellness==='card'?'failed':(s.pay[id]==='clinic'?'booked':'paid')};});return{results:n};}),2600);
+  }
+  retry(id){
+    this.setState(s=>({results:{...s.results,[id]:{status:'working',slow:true}}}));
+    this.later(()=>this.setState(s=>({results:{...s.results,[id]:{status:s.pay[id]==='clinic'?'booked':'paid'}}})),2800);
+  }
+  renderVals(){
+    const st=this.state,offline=!!this.props.offline;
+    const forced=this.props.view==='Checkout result'&&!st.results;
+    const results=forced?PRESET:st.results;
+    const dur=forced?90:st.dur;
+    const live=G.map(g=>({g,lines:g.lines.filter(l=>!st.lines[l.id].removed)})).filter(x=>x.lines.length);
+    const totalLines=live.reduce((a,x)=>a+x.lines.length,0);
+    const groups=live.map(({g,lines},gi)=>{
+      const provIds=[...new Set(lines.map(l=>l.prov))];
+      const amts=this.amounts(g);
+      const needsDur=amts===null;
+      const goneCount=lines.filter(l=>l.gone).length;
+      const provs=provIds.map(pid=>({key:pid,...PROV[pid],lines:lines.filter(l=>l.prov===pid).map(l=>{
+        const ls=st.lines[l.id],cur=PROV[pid].cur;
+        let unit=l.price,orig=l.orig;let dmiss=false;
+        if(l.durs){const d=l.durs.find(x=>x.min===dur);if(d)unit=d.price;else dmiss=true;}
+        return{key:l.id,title:l.title,gone:!!l.gone,live:!l.gone,isDur:!!l.durs,
+          durOpts:(l.durs||[]).map(d=>{const sel=dur===d.min;return{key:d.min,label:`${d.min} min`,price:`${fmt(d.price,0)} ${cur}`,selected:sel,bg:sel?'#E6F0EE':'#FFFFFF',border:sel?'#1F5F5B':'#8C9693',pick:()=>this.setState({dur:d.min})};}),
+          unitText:dmiss?'Price depends on the duration you choose':`${fmt(unit)} ${cur} each`,origEach:orig?`${fmt(orig)} ${cur}`:null,
+          hasTotal:!dmiss,durMissing:dmiss,totalText:`${fmt(unit*ls.qty)} ${cur}`,
+          qty:ls.qty,qtyAria:`Quantity for ${l.title}`,qtyOpacity:ls.pending?0.45:1,decDisabled:ls.qty<=1,decColor:ls.qty<=1?'#8C9693':'#16201E',
+          inc:()=>this.changeQty(g,l,1),dec:()=>this.changeQty(g,l,-1),hasMsg:!!ls.msg,msg:ls.msg,
+          goneText:`${PROV[pid].name} has stopped offering this. It can't be checked out.`,
+          remove:()=>this.setLine(l.id,{removed:true})};
+      })}));
+      const r=results&&results[g.id];
+      const done=r&&r.status!=='failed';
+      let reason=null;
+      if(offline)reason="You're offline. Checkout will be available when you reconnect.";
+      else if(needsDur)reason='Choose a duration for Signature Facial first.';
+      else if(goneCount)reason=`${goneCount} unavailable item won't be included.`;
+      const blocked=offline||needsDur||!!done;
+      const pay=st.pay[g.id];
+      return{key:g.id,id:g.id,hid:`grp-${g.id}`,name:g.name,orderLabel:`Order ${gi+1} of ${live.length}`,
+        meta:`${lines.length} ${lines.length===1?'item':'items'} from ${provIds.length} ${provIds.length===1?'provider':'providers'}`,
+        provs,subtotals:amts||[],needsDur,ready:!blocked,
+        payAria:`How to pay for ${g.name.toLowerCase()}`,
+        payOpts:[['card','Card'],['clinic','Pay at clinic']].map(([id,label])=>{const sel=pay===id;return{key:id,label,selected:sel,bg:sel?'#E6F0EE':'#FFFFFF',border:sel?'#1F5F5B':'#8C9693',pick:()=>this.setState(s=>({pay:{...s.pay,[g.id]:id}}))};}),
+        blocked,btnLabel:pay==='clinic'?g.btn.replace('Check out','Book'):g.btn,
+        btnBg:blocked?'#F1F3F1':'#FFFFFF',btnColor:blocked?'#3D4744':'#1F5F5B',btnBorder:blocked?'#D3D9D6':'#1F5F5B',btnCursor:blocked?'not-allowed':'pointer',
+        reason,checkout:()=>this.checkout([g.id])};
+    });
+    const byCur={};
+    groups.forEach(g=>g.subtotals.forEach(a=>{const x=byCur[a.c]||(byCur[a.c]={v:0,names:[]});x.v+=a.v;x.names.push(g.name);}));
+    const payRows=['THB','NPR','INR'].filter(c=>byCur[c]).map(c=>{const x=byCur[c],n=x.names.length;return{key:c,cur:c,amount:`${fmt(x.v)} ${c}`,orders:`Covers ${n===1?'1 order':n+' separate orders'}: ${x.names.join(', ')}`};});
+    const durGroups=groups.filter(g=>g.needsDur).map(g=>g.name);
+    const payNote=durGroups.length?`${durGroups.join(', ')} isn't included until you choose a duration.`:null;
+    const ready=groups.filter(g=>g.ready);
+    const notReady=groups.filter(g=>!g.ready);
+    const allDisabled=!ready.length;
+    let allNote=null;
+    if(offline)allNote="You're offline. Checkout will be available when you reconnect.";
+    else if(notReady.length&&ready.length)allNote=`${notReady.map(g=>g.name).join(', ')} ${notReady.length===1?'isn\'t':'aren\'t'} ready yet and will stay in your cart.`;
+    const isResult=!!results;
+    let res={cards:[]};
+    if(isResult){
+      const ids=Object.keys(results);
+      const cards=G.filter(g=>ids.includes(g.id)).map(g=>{
+        const r=results[g.id],pay=st.pay[g.id];
+        const amts=(this.amounts(g)||[]);
+        const pv=[...new Set(g.lines.filter(l=>!l.gone&&!st.lines[l.id].removed).map(l=>PROV[l.prov].name))];
+        const base={key:g.id,name:g.name,order:g.order,isPaid:false,isFailed:false,isBooked:false,isWorking:false,slow:false,amounts:[],hasDetail:true,retryDisabled:offline};
+        if(r.status==='working')return{...base,isWorking:true,slow:r.slow,hasDetail:false,badge:'Confirming',badgeBg:'#E1E5E2',badgeColor:'#16201E',tint:'#F6F7F6',border:'#E1E5E2'};
+        if(r.status==='paid')return{...base,isPaid:true,badge:'Paid',badgeBg:'#1E6B3A',badgeColor:'#FFFFFF',tint:'#E8F4EC',border:'#B9DCC4',detail:`Order ${g.order}. Your card was charged:`,amounts:amts.map(a=>({...a,cur:a.cur.replace('In ','Charged in ')}))};
+        if(r.status==='booked')return{...base,isBooked:true,badge:'Booked, pay at clinic',badgeBg:'#1F5F5B',badgeColor:'#FFFFFF',tint:'#E6F0EE',border:'#BFD6D2',detail:`Order ${g.order}. Nothing was charged. Pay on the day at ${pv.join(' and ')}:`,amounts:amts.map(a=>({...a,cur:a.cur.replace('In ','To pay in ')}))};
+        return{...base,isFailed:true,badge:'Payment failed',badgeBg:'#B42318',badgeColor:'#FFFFFF',tint:'#FDECEA',border:'#F2C4BF',detail:'Your payment didn\'t go through and you were not charged. Your choices are saved.',retry:()=>this.retry(g.id),payClinic:()=>{this.setState(s=>({pay:{...s.pay,[g.id]:'clinic'}}));this.retry(g.id);}};
+      });
+      const ok=cards.filter(c=>c.isPaid||c.isBooked).length,failed=cards.filter(c=>c.isFailed).length,working=cards.filter(c=>c.isWorking).length;
+      const remainingGroups=groups.filter(g=>!ids.includes(g.id));
+      res={cards,
+        headline:working?'Placing your orders':(failed?`${ok} of ${cards.length} orders went through`:(cards.length===1?'Your order went through':`All ${cards.length} orders went through`)),
+        sub:working?'Each order is handled on its own. You can see each result below.':(failed?`${failed===1?'One payment':'Some payments'} didn't go through. You were not charged for ${failed===1?'it':'them'}.`:'We sent the details to your email.'),
+        hasRemaining:remainingGroups.length>0,remaining:`Still in your cart: ${remainingGroups.map(g=>g.name).join(', ')}`};
+    }
+    return{
+      payRows,payNote,
+      offline,isCart:!isResult,isResult,res,groups,hasGroups:groups.length>0,isEmpty:!groups.length,
+      cartLabel:`Cart (${totalLines})`,cartMeta:`${totalLines} ${totalLines===1?'item':'items'}`,
+      ordersTitle:groups.length===1?"You'll pay in 1 order":`You'll pay in ${groups.length} separate orders`,
+      showMerge:!!this.props.mergeNotice&&!st.mergeDismissed,dismissMerge:()=>this.setState({mergeDismissed:true}),
+      allDisabled,allLabel:`Check out all ready groups (${ready.length})`,allNote,allBg:allDisabled?'#E1E5E2':'#1F5F5B',allColor:allDisabled?'#3D4744':'#FFFFFF',
+      checkoutAll:()=>this.checkout(ready.map(g=>g.id)),
+      mobileBar:!isResult&&groups.length>0,
+      backToCart:()=>this.setState({results:null}),
+      resetDemo:()=>this.setState({lines:initLines(),dur:null,results:null,attempts:0,pay:{lab:'card',wellness:'card',packages:'clinic'}})
+    };
+  }
+}
+</script>
+</body>
+</html>

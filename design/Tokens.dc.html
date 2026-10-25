@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF8;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#16201E;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1F5F5B}a:hover{color:#16201E}
+:focus-visible{outline:2px solid #1F5F5B;outline-offset:2px}
+</style>
+</helmet>
+<div style="max-width:1240px;margin:0 auto;padding:48px 32px 96px;display:flex;flex-direction:column;gap:48px">
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <nav aria-label="Design files" style="display:flex;gap:20px;flex-wrap:wrap;font-size:14px">
+      <strong>Tokens &amp; components</strong>
+      <a href="Services.dc.html">/services</a>
+      <a href="Cart.dc.html">/cart</a>
+      <a href="Booking.dc.html">/booking</a>
+    </nav>
+    <h1 style="margin:0;font-size:30px;line-height:38px;font-weight:600">MedEx · Tokens and components</h1>
+    <p style="margin:0;max-width:760px;font-size:16px;line-height:24px;color:#3D4744;text-wrap:pretty">Everything maps to shadcn/ui CSS variables and Tailwind defaults. Light theme only. Contrast ratios are WCAG 2.x, measured against white unless noted.</p>
+  </header>
+
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:20px;font-weight:600">Colour</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+      <sc-for list="{{ colors }}" as="c" hint-placeholder-count="12">
+        <div style="display:flex;gap:12px;align-items:stretch;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:10px;padding:10px">
+          <div style="width:56px;flex:none;border-radius:6px;background:{{ c.hex }};border:1px solid rgba(22,32,30,.08);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:{{ c.sample }}">Aa</div>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+            <code style="font:500 13px/18px 'IBM Plex Mono',monospace">{{ c.v }}</code>
+            <span style="font:400 13px/18px 'IBM Plex Mono',monospace;color:#3D4744">{{ c.hex }}</span>
+            <span style="font-size:13px;line-height:18px;color:#16201E">{{ c.use }}</span>
+            <span style="font-size:12px;line-height:16px;color:#3D4744">{{ c.ratio }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <ul style="margin:0;padding-left:20px;font-size:14px;line-height:22px;color:#3D4744;max-width:900px">
+      <li>Status is never colour alone: every state carries a word (“Paid”, “Booked”, “No longer available”) and usually an icon. Unavailable days are struck through as well as grey.</li>
+      <li>Disabled options keep 4.5:1 text (muted-foreground) so the “(0)” count stays readable. Disabled is shown by a lighter control border and <code>cursor: not-allowed</code>, not by opacity.</li>
+      <li><code>--input</code> (3.05:1) is for form-control borders, which need 3:1. <code>--border</code> is for dividers and card edges only.</li>
+    </ul>
+  </section>
+
+  <section style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:32px">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h2 style="margin:0;font-size:20px;font-weight:600">Type</h2>
+      <p style="margin:0;font-size:14px;line-height:22px;color:#3D4744">IBM Plex Sans 400/500/600. Load IBM Plex Sans Thai and IBM Plex Sans Devanagari as fallbacks for local-script provider names. Use <code>tabular-nums</code> on every price, quantity and time.</p>
+      <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:10px">
+        <sc-for list="{{ types }}" as="t" hint-placeholder-count="7">
+          <div style="display:grid;grid-template-columns:120px 150px minmax(0,1fr);gap:12px;align-items:baseline;padding:12px 16px;border-bottom:1px solid #F1F3F1">
+            <code style="font:500 13px 'IBM Plex Mono',monospace">{{ t.tw }}</code>
+            <span style="font:400 13px 'IBM Plex Mono',monospace;color:#3D4744">{{ t.spec }}</span>
+            <span style="font-size:{{ t.size }};line-height:{{ t.lh }};font-weight:{{ t.w }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.sample }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin:0;font-size:14px;line-height:22px;color:#3D4744">Body copy is 16px on mobile and desktop. Filter labels, line items and slot times never go below 16px; 14px is for secondary lines; 12px is only for badges.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h2 style="margin:0;font-size:20px;font-weight:600">Spacing, radius, elevation</h2>
+      <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:14px;color:#3D4744">Tailwind default 4px scale. Used steps:</span>
+        <sc-for list="{{ space }}" as="s">
+          <div style="display:flex;align-items:center;gap:12px"><code style="width:56px;font:500 13px 'IBM Plex Mono',monospace">{{ s.tw }}</code><span style="height:12px;width:{{ s.px }};background:#1F5F5B;border-radius:2px"></span><span style="font-size:13px;color:#3D4744">{{ s.use }}</span></div>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <sc-for list="{{ radii }}" as="r">
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:center;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:10px;padding:12px 6px">
+            <span style="width:44px;height:44px;border:2px solid #1F5F5B;border-radius:{{ r.px }};background:#E6F0EE"></span>
+            <code style="font:500 12px 'IBM Plex Mono',monospace">{{ r.tw }}</code>
+            <span style="font-size:12px;color:#3D4744;text-align:center">{{ r.use }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px">
+        <strong style="font-size:15px">Focus ring</strong>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+          <span style="height:44px;display:flex;align-items:center;padding:0 16px;border-radius:8px;background:#1F5F5B;color:#FFFFFF;font-weight:600;outline:2px solid #1F5F5B;outline-offset:2px">Check out</span>
+          <span style="height:44px;display:flex;align-items:center;padding:0 16px;border-radius:8px;border:1px solid #8C9693;background:#FFFFFF;font-weight:500;outline:2px solid #1F5F5B;outline-offset:2px">Card</span>
+          <span style="width:20px;height:20px;border-radius:50%;background:#FFFFFF;border:2px solid #1F5F5B;outline:2px solid #1F5F5B;outline-offset:2px"></span>
+        </div>
+        <code style="font:400 12px/18px 'IBM Plex Mono',monospace;color:#3D4744;word-break:break-word">focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background</code>
+        <span style="font-size:13px;line-height:18px;color:#3D4744">2px ring, 2px offset, 7.1:1 against the page. Applied to every interactive element, including calendar days, slots, chips and the switch.</span>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:10px;padding:16px;font-size:13px;line-height:20px;color:#3D4744">
+        <strong style="color:#16201E;font-size:15px">Hit targets and elevation</strong><br>Every control is at least 44×44px (<code>h-11</code>); primary actions are 48px (<code>h-12</code>). Cards are flat with a 1px border; only popovers and menus get <code>shadow-lg</code>, and sticky mobile footers a soft top shadow.
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:20px;font-weight:600">Price, rating and status display</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px">
+      <sc-for list="{{ rules }}" as="r">
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:13px;font-weight:600;color:#3D4744">{{ r.rule }}</span>
+          <span style="font-size:16px;font-variant-numeric:tabular-nums">
+            <sc-if value="{{ r.final }}"><strong style="font-weight:600;color:{{ r.color }}">{{ r.final }}</strong></sc-if>
+            <sc-if value="{{ r.orig }}"> <s style="font-size:14px;color:#5B6663">{{ r.orig }}</s></sc-if>
+            <sc-if value="{{ r.plain }}"><span>{{ r.plain }}</span></sc-if>
+          </span>
+          <span style="font-size:13px;line-height:18px;color:#3D4744">{{ r.note }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <h2 style="margin:0;font-size:20px;font-weight:600">globals.css</h2>
+      <pre style="margin:0;padding:16px 18px;background:#16201E;color:#E6F0EE;border-radius:10px;font:400 12.5px/19px 'IBM Plex Mono',monospace;overflow:auto;white-space:pre">{{ css }}</pre>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <h2 style="margin:0;font-size:20px;font-weight:600">Tailwind v4 theme mapping</h2>
+      <pre style="margin:0;padding:16px 18px;background:#16201E;color:#E6F0EE;border-radius:10px;font:400 12.5px/19px 'IBM Plex Mono',monospace;overflow:auto;white-space:pre">{{ tw }}</pre>
+      <p style="margin:0;font-size:13px;line-height:20px;color:#3D4744">On Tailwind v3, put the same names under <code>theme.extend.colors</code> as <code>var(--name)</code>, and set <code>fontFamily.sans</code> to the Plex stack.</p>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:20px;font-weight:600">shadcn components per screen</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px">
+      <sc-for list="{{ screens }}" as="s">
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+          <strong style="font-size:16px">{{ s.name }}</strong>
+          <sc-for list="{{ s.items }}" as="i">
+            <div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;font-size:14px;line-height:20px;padding-top:8px;border-top:1px solid #F1F3F1">
+              <code style="font:500 13px/20px 'IBM Plex Mono',monospace;color:#1F5F5B">{{ i.c }}</code>
+              <span style="color:#3D4744">{{ i.u }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const colors=[
+['--background','#FAFAF8','Page background','#16201E','foreground on it 16.0:1'],
+['--card / --popover','#FFFFFF','Cards, panels, menus','#16201E','foreground 16.7:1'],
+['--foreground','#16201E','Body text, headings','#FFFFFF','16.7:1'],
+['--text-secondary','#3D4744','Secondary lines, notes','#FFFFFF','9.6:1'],
+['--muted-foreground','#5B6663','Meta text, counts, “your time”, struck prices','#FFFFFF','5.96:1 · 5.7:1 on background · 5.3:1 on muted'],
+['--primary','#1F5F5B','Primary buttons, selected states, links','#FFFFFF','white on it 7.4:1'],
+['--secondary','#E6F0EE','Chips, selected option fill, info notes','#1F5F5B','primary text on it 6.3:1'],
+['--muted / --accent','#F1F3F1','Hover rows, unavailable days, disabled fill','#16201E','foreground on it 14.8:1'],
+['--border','#E1E5E2','Dividers and card edges (decorative)','#16201E','not used for controls'],
+['--input','#8C9693','Input, checkbox, stepper and slot borders','#FFFFFF','3.05:1 (non-text, needs 3:1)'],
+['--ring','#1F5F5B','Focus ring','#FFFFFF','7.1:1 on background'],
+['--destructive','#B42318','Payment failed badge, errors','#FFFFFF','white on it 6.6:1'],
+['--destructive-soft','#FDECEA','Error alert fill','#8F1C13','#8F1C13 title on it 8.1:1'],
+['--success','#1E6B3A','Paid badge, Free','#FFFFFF','white on it 6.5:1'],
+['--success-soft','#E8F4EC','Paid result card header','#1E6B3A','success text on it 5.8:1'],
+['--warning','#7A4B00','Needs action: duration missing, rollback','#FFFFFF','7.0:1 on white'],
+['--warning-soft','#FFF4DB','Offline, 409 and rollback alert fill','#5A3800','#5A3800 text on it 9.7:1'],
+['--skeleton','#E4E8E6','Skeleton blocks (animate-pulse)','#16201E','decorative']
+].map(([v,hex,use,sample,ratio])=>({key:v,v,hex,use,sample,ratio}));
+const types=[
+['text-3xl','30/38 · 600','Riverside International Hospital','30px','38px',600],
+['text-2xl','24/32 · 600','Your cart (mobile H1)','24px','32px',600],
+['text-xl','20/28 · 600','42 services from 4 providers','20px','28px',600],
+['text-lg','18/28 · 600','Slot time 10:40 · card titles','18px','28px',600],
+['text-base','16/24 · 400–600','Executive Health Check (Male)','16px','24px',400],
+['text-sm','14/20 · 400–500','Bangkok, Thailand · 09:25 your time','14px','20px',400],
+['text-xs','12/16 · 500','Badges only: Home test available','12px','16px',500]
+].map(([tw,spec,sample,size,lh,w])=>({key:tw,tw,spec,sample,size,lh,w}));
+const space=[['1','4px','icon gaps'],['2','8px','chips, slot grid'],['3','12px','field label to control'],['4','16px','card padding (mobile), stacks'],['6','24px','card padding (desktop), columns'],['8','32px','filter panel to results'],['12','48px','page gutter (desktop)']].map(([tw,px,use])=>({key:tw,tw:`${tw}`,px,use}));
+const radii=[['rounded-sm','4px','checkbox'],['rounded-md','6px','badges'],['rounded-lg','8px','--radius · inputs, buttons, slots'],['rounded-xl','12px','cards, panels']].map(([tw,px,use])=>({key:tw,tw,px,use}));
+const rules=[
+{rule:'Discount',final:'5,970.60 THB',orig:'6,200.00 THB',note:'Final bold, original struck through beside it. Screen readers hear “Original price 6,200.00 THB”.',color:'#16201E'},
+{rule:'Wellness before duration',plain:'From 1,800 THB · 60 min',note:'Never 0. In the cart: “Choose a duration to see the price”.'},
+{rule:'Zero price',final:'Free',note:'Any 0.00 shows “Free”, in success green plus the word.',color:'#1E6B3A'},
+{rule:'Several currencies',plain:'1,677.00 THB / 12,520.00 NPR',note:'One line per currency. Never summed, no exchange rates, no grand total.'},
+{rule:'Amount format',plain:'23,009.50 INR',note:'Intl.NumberFormat("en-US", 2 decimals) + space + ISO code after the number.'},
+{rule:'Rating',plain:'★ 4.7 (1,203 reviews)',note:'No rating: “New, no reviews yet” as a neutral badge. No empty stars.'},
+{rule:'Two time zones',plain:'10:40 · 09:25 your time',note:'Provider time large, customer time small in muted-foreground. Add weekday when the day differs: “18:00 Sun your time”.'},
+{rule:'Loading and errors',plain:'Skeleton · “Try again”',note:'Skeletons only, no spinners. Every error has Try again. Offline and slow get a plain banner.'}
+].map((r,i)=>({key:i,final:null,orig:null,plain:null,color:'#16201E',...r}));
+const css=`:root {
+  --background: #FAFAF8;
+  --foreground: #16201E;
+  --card: #FFFFFF;
+  --card-foreground: #16201E;
+  --popover: #FFFFFF;
+  --popover-foreground: #16201E;
+  --primary: #1F5F5B;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E6F0EE;
+  --secondary-foreground: #1F5F5B;
+  --muted: #F1F3F1;
+  --muted-foreground: #5B6663;
+  --accent: #F1F3F1;
+  --accent-foreground: #16201E;
+  --destructive: #B42318;
+  --destructive-foreground: #FFFFFF;
+  --border: #E1E5E2;
+  --input: #8C9693;
+  --ring: #1F5F5B;
+  --radius: 0.5rem;
+
+  /* MedEx additions */
+  --text-secondary: #3D4744;
+  --success: #1E6B3A;
+  --success-soft: #E8F4EC;
+  --warning: #7A4B00;
+  --warning-soft: #FFF4DB;
+  --destructive-soft: #FDECEA;
+  --skeleton: #E4E8E6;
+}`;
+const tw=`@theme inline {
+  --font-sans: "IBM Plex Sans", "IBM Plex Sans Thai",
+    "IBM Plex Sans Devanagari", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-text-secondary: var(--text-secondary);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-skeleton: var(--skeleton);
+
+  --radius-sm: calc(var(--radius) - 4px); /* 4px  */
+  --radius-md: calc(var(--radius) - 2px); /* 6px  */
+  --radius-lg: var(--radius);             /* 8px  */
+  --radius-xl: calc(var(--radius) + 4px); /* 12px */
+}`;
+const screens=[
+{name:'Shared',items:[['Button','primary, outline, ghost, link; h-11 min, h-12 for main actions'],['Badge','service type (outline), status, “New, no reviews yet” (secondary)'],['Alert','offline, slow, error with Try again, info notes'],['Skeleton','all loading states'],['Separator','card sections'],['Card','provider cards, cart groups, summary, confirm panel']]},
+{name:'/services',items:[['Input','search, price min/max'],['Checkbox','service type, subcategory, provider options with counts'],['Collapsible','category → subcategory tree'],['Command + Popover','provider searchable multi-select (Command list inline)'],['Select','city or country, with counts and disabled 0 options'],['RadioGroup','pick a currency (THB / NPR / INR) before price'],['Slider','price range, two thumbs, keyboard ±500'],['Switch','Available as a home test'],['Button (secondary, X icon)','active filter chips + Clear all'],['DropdownMenu','sort, DropdownMenuRadioGroup; price items disabled until one currency'],['Pagination','results pages'],['Sheet (full height)','mobile filters, sticky footer “Show 42 results” + Clear'],['Accordion','mobile filter sections']]},
+{name:'/cart',items:[['Card','one per service-type group = one order'],['RadioGroup','required duration; Card / Pay at clinic per group'],['Button (icon) ×2','quantity stepper (custom QtyStepper, optimistic + rollback)'],['Alert (warning)','“Couldn\'t change quantity…”, merge notice, offline'],['Badge','No longer available; Paid / Payment failed / Booked'],['Skeleton','“Still confirming your payment” state']]},
+{name:'/booking',items:[['RadioGroup','specialist picker'],['Button (icon) ×2','people stepper 1–4'],['Calendar','react-day-picker; modifiers closed / holiday / full / past; 90-day range'],['Tooltip','reason on hover or focus of an unavailable day (aria-disabled, still focusable)'],['ToggleGroup (single)','slot grid, grouped Morning / Afternoon / Evening; booked items disabled'],['Alert','partial-hours note, 409 with 3 closest times, offline'],['Card','confirm panel; reschedule old → new comparison']]},
+{name:'Small custom components',items:[['PriceTag','final, struck original, From…, Free'],['CurrencyTotals','one row per currency, never summed'],['DualTime','provider time + “your time”, adds weekday if different'],['FilterOption','control + label + live count, disabled at 0 unless selected']]}
+].map(s=>({key:s.name,name:s.name,items:s.items.map(([c,u])=>({key:c,c,u}))}));
+class Component extends DCLogic {
+  renderVals(){return{colors,types,space,radii,rules,css,tw,screens};}
+}
+</script>
+</body>
+</html>

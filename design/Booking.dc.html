@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9ECEA;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#16201E;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+a{color:#1F5F5B}a:hover{color:#16201E}
+:focus-visible{outline:2px solid #1F5F5B;outline-offset:2px}
+@keyframes mxPulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</helmet>
+<div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px;width:max-content">
+  <header style="display:flex;flex-direction:column;gap:12px;max-width:960px">
+    <nav aria-label="Design files" style="display:flex;gap:20px;font-size:14px;line-height:20px">
+      <a href="Tokens.dc.html">Tokens &amp; components</a>
+      <a href="Services.dc.html">/services</a>
+      <a href="Cart.dc.html">/cart</a>
+      <strong>/booking</strong>
+    </nav>
+    <h1 style="margin:0;font-size:30px;line-height:38px;font-weight:600">/booking · Appointment booking across time zones</h1>
+    <p style="margin:0;font-size:16px;line-height:24px;color:#5B6663;text-wrap:pretty">“I live in Kathmandu. I'm booking a check-up at a hospital in Bangkok for when I travel there next month. Which time is the appointment, mine or theirs?” Live: specialist, people, calendar (hover, focus or click a grey day for its reason), slots and confirm. Tweaks switch to Reschedule, simulate “Someone just booked this slot” or an unknown result, go offline, or show a customer whose day differs (Los Angeles, Auckland). Pick Dr. N. Rana on a Thursday for the hours note.</p>
+  </header>
+
+  <div style="display:flex;gap:48px;align-items:flex-start">
+    <!-- DESKTOP -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">DESKTOP · 1440</div>
+      <div data-screen-label="Booking desktop" style="width:1440px;background:#FAFAF8;border-radius:12px;box-shadow:0 1px 2px rgba(22,32,30,.06),0 8px 32px rgba(22,32,30,.08);overflow:hidden">
+        <div style="height:64px;display:flex;align-items:center;gap:40px;padding:0 48px;background:#FFFFFF;border-bottom:1px solid #E1E5E2">
+          <span style="font-size:20px;font-weight:600;letter-spacing:-0.01em;color:#1F5F5B">MedEx</span>
+          <nav style="display:flex;gap:8px;flex:1">
+            <a href="Services.dc.html" style="height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;color:#5B6663;text-decoration:none">Services</a>
+            <a href="Cart.dc.html" style="height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;color:#5B6663;text-decoration:none">Cart</a>
+          </nav>
+          <span style="font-size:15px;color:#3D4744">Priya S.</span>
+        </div>
+        <sc-if value="{{ offline }}">
+          <div role="status" style="display:flex;gap:12px;align-items:center;justify-content:center;background:#FFF4DB;border-bottom:1px solid #EBD39A;padding:12px 48px">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A4B00" stroke-width="2" stroke-linecap="round"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.8M12 20h.01"></path></svg>
+            <p style="margin:0;font-size:15px;color:#5A3800"><strong>You're offline.</strong> You can still look at times, but they may be out of date. Confirming needs a connection.</p>
+          </div>
+        </sc-if>
+
+        <div style="padding:32px 48px 64px;display:flex;flex-direction:column;gap:24px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:32px">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <span style="font-size:14px;font-weight:500;color:#5B6663">{{ modeEyebrow }}</span>
+              <h1 style="margin:0;font-size:30px;line-height:38px;font-weight:600">Riverside International Hospital</h1>
+              <span style="font-size:16px;color:#3D4744">Bangkok, Thailand</span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;max-width:560px;padding:12px 16px;border-radius:10px;background:#E6F0EE;border:1px solid #BFD6D2">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F5F5B" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              <p style="margin:0;font-size:15px;line-height:22px">{{ tzNote }}</p>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:440px minmax(0,1fr) 360px;gap:24px;align-items:start">
+            <!-- left -->
+            <div style="display:flex;flex-direction:column;gap:20px">
+              <div role="radiogroup" aria-labelledby="sp-h" style="display:flex;flex-direction:column;gap:8px">
+                <div id="sp-h" style="font-size:14px;font-weight:600">Specialist</div>
+                <sc-for list="{{ specs }}" as="s" hint-placeholder-count="2">
+                  <button type="button" role="radio" aria-checked="{{ s.selected }}" onClick="{{ s.pick }}" style="min-height:60px;display:flex;align-items:center;gap:12px;padding:0 16px;border:1px solid {{ s.border }};border-radius:10px;background:{{ s.bg }};text-align:left;cursor:pointer" style-hover="border-color:#1F5F5B">
+                    <span style="width:18px;height:18px;border-radius:50%;border:1.5px solid {{ s.border }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ s.selected }}"><span style="width:8px;height:8px;border-radius:50%;background:#1F5F5B"></span></sc-if></span>
+                    <span style="display:flex;flex-direction:column"><span style="font-size:16px;font-weight:600">{{ s.name }}</span><span style="font-size:14px;color:#5B6663">{{ s.dept }}</span></span>
+                  </button>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #E1E5E2;border-radius:10px;background:#FFFFFF">
+                <div style="display:flex;flex-direction:column"><span id="ppl-h" style="font-size:16px;font-weight:600">People</span><span style="font-size:14px;color:#5B6663">1 to 4 people</span></div>
+                <div role="group" aria-labelledby="ppl-h" style="display:flex;align-items:center;border:1px solid #8C9693;border-radius:8px;height:44px;width:136px;justify-content:space-between">
+                  <button type="button" aria-label="Fewer people" disabled="{{ pplDecDis }}" onClick="{{ pplDec }}" style="width:44px;height:42px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ pplDecColor }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                  <span aria-live="polite" style="font-size:16px;font-weight:600">{{ people }}</span>
+                  <button type="button" aria-label="More people" disabled="{{ pplIncDis }}" onClick="{{ pplInc }}" style="width:44px;height:42px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ pplIncColor }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+                </div>
+              </div>
+
+              <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                  <button type="button" aria-label="Previous month" disabled="{{ cal.prevDis }}" onClick="{{ cal.prev }}" style="width:44px;height:44px;border:1px solid #E1E5E2;border-radius:8px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ cal.prevColor }}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 6-6 6 6 6"></path></svg></button>
+                  <h2 aria-live="polite" style="margin:0;font-size:18px;font-weight:600">{{ cal.title }}</h2>
+                  <button type="button" aria-label="Next month" disabled="{{ cal.nextDis }}" onClick="{{ cal.next }}" style="width:44px;height:44px;border:1px solid #E1E5E2;border-radius:8px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ cal.nextColor }}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"></path></svg></button>
+                </div>
+                <div role="grid" aria-label="{{ cal.title }}" style="display:flex;flex-direction:column;gap:4px">
+                  <div role="row" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+                    <sc-for list="{{ cal.dows }}" as="w"><span role="columnheader" style="text-align:center;font-size:13px;font-weight:500;color:#5B6663;padding:4px 0">{{ w.l }}</span></sc-for>
+                  </div>
+                  <sc-for list="{{ cal.weeks }}" as="wk" hint-placeholder-count="5">
+                    <div role="row" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+                      <sc-for list="{{ wk.days }}" as="c">
+                        <div role="gridcell" style="position:relative">
+                          <sc-if value="{{ c.blank }}"><span style="display:block;height:56px"></span></sc-if>
+                          <sc-if value="{{ c.real }}">
+                            <button type="button" aria-disabled="{{ c.ariaDis }}" aria-pressed="{{ c.selected }}" aria-label="{{ c.aria }}" onClick="{{ c.pick }}" onMouseEnter="{{ c.tipOn }}" onMouseLeave="{{ tipOff }}" onFocus="{{ c.tipOn }}" onBlur="{{ tipOff }}" style="width:100%;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid {{ c.border }};border-radius:8px;background:{{ c.bg }};color:{{ c.color }};cursor:{{ c.cursor }};padding:0">
+                              <span style="font-size:16px;line-height:20px;font-weight:{{ c.weight }};text-decoration:{{ c.deco }}">{{ c.d }}</span>
+                              <span style="font-size:12px;line-height:14px;color:{{ c.subColor }}">{{ c.tag }}</span>
+                            </button>
+                            <sc-if value="{{ c.showTip }}"><div role="tooltip" style="position:absolute;bottom:62px;left:50%;transform:translateX(-50%);z-index:20;white-space:nowrap;background:#16201E;color:#FFFFFF;font-size:13px;line-height:18px;padding:6px 10px;border-radius:6px">{{ c.reason }}</div></sc-if>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                </div>
+                <ul aria-label="Calendar legend" style="list-style:none;margin:16px 0 0;padding:12px 0 0;border-top:1px solid #E1E5E2;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px">
+                  <sc-for list="{{ legend }}" as="lg">
+                    <li style="display:flex;align-items:center;gap:8px;font-size:13px;line-height:18px;color:#16201E">
+                      <span style="width:32px;height:28px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid {{ lg.border }};border-radius:6px;background:{{ lg.bg }};color:{{ lg.color }};font-size:13px;font-weight:{{ lg.weight }};text-decoration:{{ lg.deco }}">{{ lg.n }}</span>{{ lg.label }}
+                    </li>
+                  </sc-for>
+                </ul>
+              </div>
+            </div>
+
+            <!-- slots -->
+            <section aria-labelledby="slots-h" style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:20px 24px 24px;display:flex;flex-direction:column;gap:20px">
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <h2 id="slots-h" style="margin:0;font-size:20px;line-height:28px;font-weight:600">{{ slotsTitle }}</h2>
+                <span style="font-size:14px;color:#5B6663">{{ slotsSub }}</span>
+              </div>
+              <sc-if value="{{ noDate }}"><p style="margin:0;font-size:16px;color:#3D4744">Pick a day in the calendar to see times.</p></sc-if>
+              <sc-for list="{{ periods }}" as="pd" hint-placeholder-count="3">
+                <div role="group" aria-label="{{ pd.label }}" style="display:flex;flex-direction:column;gap:10px">
+                  <div style="font-size:14px;font-weight:600;color:#3D4744">{{ pd.label }}</div>
+                  <sc-if value="{{ pd.has }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px">
+                      <sc-for list="{{ pd.slots }}" as="s" hint-placeholder-count="6">
+                        <button type="button" aria-pressed="{{ s.selected }}" disabled="{{ s.disabled }}" aria-label="{{ s.aria }}" onClick="{{ s.pick }}" style="min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px {{ s.borderStyle }} {{ s.border }};border-radius:8px;background:{{ s.bg }};cursor:{{ s.cursor }};padding:6px 4px" style-hover="border-color:#1F5F5B">
+                          <span style="font-size:18px;line-height:24px;font-weight:600;font-variant-numeric:tabular-nums;color:{{ s.color }}">{{ s.time }}</span>
+                          <span style="font-size:13px;line-height:16px;color:{{ s.subColor }};font-weight:{{ s.subWeight }}">{{ s.sub }}</span>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ pd.emptyText }}"><p style="margin:0;font-size:15px;color:#3D4744">{{ pd.emptyText }}</p></sc-if>
+                  <sc-if value="{{ pd.note }}">
+                    <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:8px;background:#F1F3F1">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D4744" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+                      <p style="margin:0;font-size:14px;line-height:20px">{{ pd.note }}</p>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </section>
+
+            <!-- confirm -->
+            <aside aria-labelledby="cf-h" style="position:sticky;top:24px;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:20px 24px 24px;display:flex;flex-direction:column;gap:16px">
+              <h2 id="cf-h" style="margin:0;font-size:20px;line-height:28px;font-weight:600">{{ cf.title }}</h2>
+              <sc-if value="{{ cf.isDone }}">
+                <div role="status" style="display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:10px;background:#E8F4EC;border:1px solid #B9DCC4">
+                  <strong style="display:flex;align-items:center;gap:6px;font-size:16px;color:#1E6B3A"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>{{ cf.doneTitle }}</strong>
+                  <span style="font-size:15px;line-height:22px">We've sent the details to your email.</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ cf.isConflict }}">
+                <div role="alert" style="display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:10px;background:#FFF4DB;border:1px solid #EBD39A">
+                  <strong style="font-size:16px;color:#5A3800">Someone just booked this slot</strong>
+                  <span style="font-size:14px;line-height:20px;color:#16201E">Your other choices are saved. These are the closest free times:</span>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <sc-for list="{{ cf.alts }}" as="a">
+                      <button type="button" onClick="{{ a.pick }}" style="min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;cursor:pointer;text-align:left" style-hover="border-color:#1F5F5B">
+                        <span style="font-size:15px;font-weight:600">{{ a.label }}</span><span style="font-size:13px;color:#5B6663">{{ a.yours }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ cf.isUnknown }}">
+                <div role="status" aria-busy="true" style="display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:10px;background:#F6F7F6;border:1px solid #E1E5E2">
+                  <strong style="font-size:16px">Checking your booking</strong>
+                  <span style="font-size:14px;line-height:20px">We didn't get a reply in time. We're checking with the hospital whether it went through.</span>
+                  <div style="height:12px;width:60%;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.4s ease-in-out infinite"></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ cf.isResched }}">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <span style="font-size:13px;font-weight:600;color:#3D4744">Your change</span>
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:6px;align-items:center">
+                    <div style="display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;background:#F6F7F6;border:1px dashed #8C9693;align-self:stretch">
+                      <span style="font-size:12px;font-weight:600;color:#3D4744">From</span>
+                      <span style="font-size:14px;font-weight:500">{{ cf.fromDay }}</span>
+                      <span style="font-size:18px;line-height:24px;font-weight:600;font-variant-numeric:tabular-nums;color:#3D4744">{{ cf.fromTime }}</span>
+                      <span style="font-size:13px;line-height:18px;color:#5B6663">{{ cf.fromYours }}</span>
+                    </div>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3D4744" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                    <div style="display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;background:#E6F0EE;border:1px solid #1F5F5B;align-self:stretch">
+                      <span style="font-size:12px;font-weight:600;color:#1F5F5B">To</span>
+                      <span style="font-size:14px;font-weight:500">{{ cf.toDay }}</span>
+                      <span style="font-size:18px;line-height:24px;font-weight:600;font-variant-numeric:tabular-nums">{{ cf.toTime }}</span>
+                      <span style="font-size:13px;line-height:18px;color:#3D4744">{{ cf.toYours }}</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <dl style="margin:0;display:grid;grid-template-columns:96px 1fr;gap:12px 12px;font-size:15px;line-height:22px">
+                <dt style="color:#5B6663">Date</dt><dd style="margin:0;font-weight:500">{{ cf.date }}</dd>
+                <dt style="color:#5B6663">Time</dt>
+                <dd style="margin:0;display:flex;flex-direction:column"><span style="font-size:18px;font-weight:600;font-variant-numeric:tabular-nums">{{ cf.bkk }}</span><span style="font-size:14px;color:#5B6663">{{ cf.yours }}</span></dd>
+                <dt style="color:#5B6663">Specialist</dt><dd style="margin:0;font-weight:500">{{ cf.spec }}</dd>
+                <dt style="color:#5B6663">People</dt><dd style="margin:0;font-weight:500">{{ cf.people }}</dd>
+              </dl>
+              <sc-if value="{{ cf.showBtn }}" hint-placeholder-val="{{ true }}">
+                <button type="button" disabled="{{ cf.disabled }}" onClick="{{ confirm }}" style="height:48px;border:0;border-radius:8px;background:{{ cf.btnBg }};color:{{ cf.btnColor }};font-size:16px;font-weight:600;cursor:{{ cf.cursor }}">{{ cf.btnLabel }}</button>
+              </sc-if>
+              <sc-if value="{{ cf.reason }}"><p style="margin:-6px 0 0;font-size:14px;line-height:20px;color:#3D4744">{{ cf.reason }}</p></sc-if>
+              <sc-if value="{{ cf.isDone }}"><button type="button" onClick="{{ again }}" style="height:44px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;font-weight:500;cursor:pointer">Make a change</button></sc-if>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">MOBILE · 375</div>
+      <div data-screen-label="Booking mobile" style="width:375px;height:812px;position:relative;background:#FAFAF8;border-radius:28px;border:1px solid #D3D9D6;box-shadow:0 8px 32px rgba(22,32,30,.1);overflow:hidden;display:flex;flex-direction:column">
+        <div style="height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#FFFFFF;border-bottom:1px solid #E1E5E2">
+          <span style="font-size:18px;font-weight:600;color:#1F5F5B">MedEx</span>
+          <span style="font-size:15px;color:#3D4744">Priya S.</span>
+        </div>
+        <sc-if value="{{ offline }}"><div role="status" style="flex:none;background:#FFF4DB;border-bottom:1px solid #EBD39A;padding:10px 16px;font-size:14px;line-height:20px;color:#5A3800"><strong>You're offline.</strong> Confirming needs a connection.</div></sc-if>
+        <div style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:13px;font-weight:500;color:#5B6663">{{ modeEyebrow }}</span>
+            <h1 style="margin:0;font-size:22px;line-height:28px;font-weight:600">Riverside International Hospital</h1>
+            <span style="font-size:15px;color:#3D4744">Bangkok, Thailand</span>
+          </div>
+          <p style="margin:0;padding:10px 12px;border-radius:10px;background:#E6F0EE;border:1px solid #BFD6D2;font-size:14px;line-height:20px">{{ tzNote }}</p>
+          <div role="radiogroup" aria-label="Specialist" style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ specs }}" as="s">
+              <button type="button" role="radio" aria-checked="{{ s.selected }}" onClick="{{ s.pick }}" style="min-height:56px;display:flex;align-items:center;gap:12px;padding:0 14px;border:1px solid {{ s.border }};border-radius:10px;background:{{ s.bg }};text-align:left">
+                <span style="width:18px;height:18px;border-radius:50%;border:1.5px solid {{ s.border }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ s.selected }}"><span style="width:8px;height:8px;border-radius:50%;background:#1F5F5B"></span></sc-if></span>
+                <span style="display:flex;flex-direction:column"><span style="font-size:15px;font-weight:600">{{ s.name }}</span><span style="font-size:13px;color:#5B6663">{{ s.dept }}</span></span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:15px;font-weight:600">People</span>
+            <div role="group" aria-label="People" style="display:flex;align-items:center;border:1px solid #8C9693;border-radius:8px;height:44px;width:136px;justify-content:space-between;background:#FFFFFF">
+              <button type="button" aria-label="Fewer people" disabled="{{ pplDecDis }}" onClick="{{ pplDec }}" style="width:44px;height:42px;border:0;background:none;display:flex;align-items:center;justify-content:center;color:{{ pplDecColor }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+              <span style="font-weight:600">{{ people }}</span>
+              <button type="button" aria-label="More people" disabled="{{ pplIncDis }}" onClick="{{ pplInc }}" style="width:44px;height:42px;border:0;background:none;display:flex;align-items:center;justify-content:center;color:{{ pplIncColor }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+            </div>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <button type="button" aria-label="Previous month" disabled="{{ cal.prevDis }}" onClick="{{ cal.prev }}" style="width:44px;height:44px;border:0;background:none;display:flex;align-items:center;justify-content:center;color:{{ cal.prevColor }}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 6-6 6 6 6"></path></svg></button>
+              <strong style="font-size:16px">{{ cal.title }}</strong>
+              <button type="button" aria-label="Next month" disabled="{{ cal.nextDis }}" onClick="{{ cal.next }}" style="width:44px;height:44px;border:0;background:none;display:flex;align-items:center;justify-content:center;color:{{ cal.nextColor }}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"></path></svg></button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">
+              <sc-for list="{{ cal.dows }}" as="w"><span style="text-align:center;font-size:12px;font-weight:500;color:#5B6663;padding:2px 0">{{ w.s }}</span></sc-for>
+            </div>
+            <sc-for list="{{ cal.weeks }}" as="wk">
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:2px">
+                <sc-for list="{{ wk.days }}" as="c">
+                  <sc-if value="{{ c.blank }}"><span style="height:44px"></span></sc-if>
+                  <sc-if value="{{ c.real }}">
+                    <button type="button" aria-disabled="{{ c.ariaDis }}" aria-pressed="{{ c.selected }}" aria-label="{{ c.aria }}" onClick="{{ c.mPick }}" style="height:44px;border:1px solid {{ c.border }};border-radius:8px;background:{{ c.bg }};color:{{ c.color }};font-size:15px;font-weight:{{ c.weight }};text-decoration:{{ c.deco }};padding:0">{{ c.d }}</button>
+                  </sc-if>
+                </sc-for>
+              </div>
+            </sc-for>
+            <p aria-live="polite" style="margin:10px 2px 0;font-size:13px;line-height:18px;color:#3D4744">{{ mTip }}</p>
+          </div>
+          <sc-if value="{{ cf.isConflict }}">
+            <div role="alert" style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:10px;background:#FFF4DB;border:1px solid #EBD39A">
+              <strong style="font-size:15px;color:#5A3800">Someone just booked this slot</strong>
+              <span style="font-size:14px;line-height:20px">Your other choices are saved. Closest free times:</span>
+              <sc-for list="{{ cf.alts }}" as="a"><button type="button" onClick="{{ a.pick }}" style="min-height:48px;display:flex;justify-content:space-between;align-items:center;padding:0 12px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF"><strong style="font-size:15px">{{ a.label }}</strong><span style="font-size:13px;color:#5B6663">{{ a.yours }}</span></button></sc-for>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:14px;padding-bottom:8px">
+            <strong style="font-size:17px">{{ slotsTitle }}</strong>
+            <sc-for list="{{ periods }}" as="pd">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <span style="font-size:14px;font-weight:600;color:#3D4744">{{ pd.label }}</span>
+                <sc-if value="{{ pd.has }}">
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+                    <sc-for list="{{ pd.slots }}" as="s">
+                      <button type="button" aria-pressed="{{ s.selected }}" disabled="{{ s.disabled }}" aria-label="{{ s.aria }}" onClick="{{ s.pick }}" style="min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px {{ s.borderStyle }} {{ s.border }};border-radius:8px;background:{{ s.bg }};padding:4px 2px">
+                        <span style="font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;color:{{ s.color }}">{{ s.time }}</span>
+                        <span style="font-size:12px;line-height:15px;color:{{ s.subColor }};text-align:center">{{ s.sub }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ pd.emptyText }}"><p style="margin:0;font-size:14px;color:#3D4744">{{ pd.emptyText }}</p></sc-if>
+                <sc-if value="{{ pd.note }}"><p style="margin:0;padding:10px 12px;border-radius:8px;background:#F1F3F1;font-size:13px;line-height:18px">{{ pd.note }}</p></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex:none;padding:12px 16px 20px;background:#FFFFFF;border-top:1px solid #E1E5E2;box-shadow:0 -4px 16px rgba(22,32,30,.06);display:flex;flex-direction:column;gap:8px">
+          <sc-if value="{{ cf.isDone }}"><span role="status" style="font-size:15px;font-weight:600;color:#1E6B3A">{{ cf.doneTitle }}</span></sc-if>
+          <sc-if value="{{ cf.isResched }}">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr);gap:4px;align-items:center">
+              <div style="display:flex;flex-direction:column;padding:6px 10px;border-radius:8px;background:#F6F7F6;border:1px dashed #8C9693"><span style="font-size:11px;font-weight:600;color:#3D4744">From</span><span style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:#3D4744">{{ cf.fromShort }}</span></div>
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3D4744" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+              <div style="display:flex;flex-direction:column;padding:6px 10px;border-radius:8px;background:#E6F0EE;border:1px solid #1F5F5B"><span style="font-size:11px;font-weight:600;color:#1F5F5B">To</span><span style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">{{ cf.toShort }}</span></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ cf.isUnknown }}"><span role="status" style="font-size:15px;font-weight:600">Checking your booking…</span></sc-if>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+            <span style="font-size:15px;font-weight:600">{{ cf.mLine }}</span>
+            <span style="font-size:13px;color:#5B6663;text-align:right">{{ cf.yours }}</span>
+          </div>
+          <sc-if value="{{ cf.showBtn }}"><button type="button" disabled="{{ cf.disabled }}" onClick="{{ confirm }}" style="height:48px;border:0;border-radius:8px;background:{{ cf.btnBg }};color:{{ cf.btnColor }};font-size:16px;font-weight:600">{{ cf.btnLabel }}</button></sc-if>
+          <sc-if value="{{ cf.reason }}"><span style="font-size:13px;line-height:18px;color:#3D4744">{{ cf.reason }}</span></sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- VARIANTS -->
+    <div style="width:420px;display:flex;flex-direction:column;gap:28px">
+      <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">STATES</div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Loading · calendar and slots</div>
+        <div aria-busy="true" style="display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:16px">
+          <div style="width:140px;height:20px;margin:0 auto;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+            <sc-for list="{{ skel35 }}" as="k"><div style="height:40px;border-radius:8px;background:#EEF1EF;animation:mxPulse 1.6s ease-in-out infinite"></div></sc-for>
+          </div>
+          <div style="width:90px;height:16px;border-radius:6px;background:#E4E8E6;margin-top:4px;animation:mxPulse 1.6s ease-in-out infinite"></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+            <sc-for list="{{ skel8 }}" as="k"><div style="height:56px;border-radius:8px;background:#EEF1EF;animation:mxPulse 1.6s ease-in-out infinite"></div></sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Slot taken while confirming (409)</div>
+        <div role="alert" style="display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:12px;background:#FFF4DB;border:1px solid #EBD39A">
+          <strong style="font-size:16px;color:#5A3800">Someone just booked this slot</strong>
+          <span style="font-size:14px;line-height:20px">Your other choices are saved: Dr. A. Wongsakul, 2 people, Mon 16 Nov. These are the closest free times:</span>
+          <sc-for list="{{ demoAlts }}" as="a"><button type="button" style="min-height:48px;display:flex;justify-content:space-between;align-items:center;padding:0 12px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;cursor:pointer;text-align:left" style-hover="border-color:#1F5F5B"><strong style="font-size:15px">{{ a.l }}</strong><span style="font-size:13px;color:#5B6663">{{ a.y }}</span></button></sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">No availability for this specialist</div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:12px;background:#FFFFFF;border:1px solid #E1E5E2">
+          <strong style="font-size:16px">Dr. N. Rana has no free times in November</strong>
+          <span style="font-size:15px;line-height:22px;color:#3D4744">You can go to the next date with free times, or see another specialist.</span>
+          <span style="height:44px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#1F5F5B;color:#FFFFFF;font-size:15px;font-weight:600">Go to Tue 1 Dec</span>
+          <span style="height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #8C9693;border-radius:8px;font-size:15px;font-weight:500">See Dr. A. Wongsakul (Cardiology)</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Offline · confirm disabled</div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;background:#FFFFFF;border:1px solid #E1E5E2">
+          <div role="status" style="padding:10px 12px;border-radius:8px;background:#FFF4DB;border:1px solid #EBD39A;font-size:14px;line-height:20px;color:#5A3800"><strong>You're offline.</strong> Confirming needs a connection.</div>
+          <span style="height:48px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#E1E5E2;color:#3D4744;font-size:16px;font-weight:600">Confirm booking</span>
+          <span style="font-size:14px;line-height:20px;color:#3D4744">You're offline. Your choices are saved; you can confirm once you're connected.</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Reschedule · before confirming</div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:12px;background:#FFFFFF;border:1px solid #E1E5E2">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+            <div style="min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px dashed #1F5F5B;border-radius:8px;background:#F6F7F6"><span style="font-size:17px;font-weight:600;color:#3D4744">11:20</span><span style="font-size:12px;line-height:15px;color:#1F5F5B;font-weight:600;text-align:center">Your current booking</span></div>
+            <div style="min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #8C9693;border-radius:8px"><span style="font-size:17px;font-weight:600">11:40</span><span style="font-size:12px;color:#5B6663">10:25 your time</span></div>
+            <div style="min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px dashed #C4CBC8;border-radius:8px;background:#F1F3F1"><span style="font-size:17px;font-weight:600;color:#5B6663">13:00</span><span style="font-size:12px;color:#3D4744;font-weight:500">Booked</span></div>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#3D4744">Your change</span>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:6px;align-items:center">
+            <div style="display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;background:#F6F7F6;border:1px dashed #8C9693"><span style="font-size:12px;font-weight:600;color:#3D4744">From</span><span style="font-size:14px;font-weight:500">Thu 26 Nov</span><span style="font-size:18px;font-weight:600;color:#3D4744">11:20</span><span style="font-size:13px;color:#5B6663">10:05 your time</span></div>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3D4744" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            <div style="display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;background:#E6F0EE;border:1px solid #1F5F5B"><span style="font-size:12px;font-weight:600;color:#1F5F5B">To</span><span style="font-size:14px;font-weight:500">Mon 30 Nov</span><span style="font-size:18px;font-weight:600">14:00</span><span style="font-size:13px;color:#3D4744">12:45 your time</span></div>
+          </div>
+          <span style="height:48px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#1F5F5B;color:#FFFFFF;font-size:16px;font-weight:600">Confirm new time</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Slot when your day is different</div>
+        <div style="display:flex;gap:6px;padding:16px;border-radius:12px;background:#FFFFFF;border:1px solid #E1E5E2">
+          <div style="flex:1;min-height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #8C9693;border-radius:8px;text-align:center;padding:4px"><span style="font-size:17px;font-weight:600">09:00</span><span style="font-size:12px;line-height:15px;color:#5B6663">18:00 your time, previous day</span></div>
+          <div style="flex:1;min-height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #8C9693;border-radius:8px;text-align:center;padding:4px"><span style="font-size:17px;font-weight:600">18:00</span><span style="font-size:12px;line-height:15px;color:#5B6663">00:00 your time, next day</span></div>
+          <div style="flex:1;font-size:13px;line-height:18px;color:#3D4744;align-self:center">Left: customer in Los Angeles. Right: customer in Auckland. Switch “customerZone” in Tweaks to see it live.</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Which time is which</div>
+        <div style="display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:12px;background:#FFFFFF;border:1px solid #E1E5E2">
+          <div style="width:112px;min-height:64px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #8C9693;border-radius:8px"><span style="font-size:18px;font-weight:600">10:40</span><span style="font-size:13px;color:#5B6663">09:25 your time</span></div>
+          <p style="margin:0;font-size:14px;line-height:20px">Top: Bangkok time, the hospital's clock and when you need to be there. Underneath: the same moment in your time zone.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Specialist hours vs hospital hours · Thursday</div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:#F1F3F1">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D4744" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+          <p style="margin:0;font-size:14px;line-height:20px">Dr. N. Rana sees patients until 21:00, but the hospital closes at 20:00 on Thursdays, so the last appointment is 19:40.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Calendar reason on focus or tap</div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:12px;background:#FFFFFF;border:1px solid #E1E5E2">
+          <div style="display:flex;gap:4px;justify-content:center;position:relative;padding-top:40px">
+            <span style="position:absolute;top:0;left:50%;transform:translateX(-50%);white-space:nowrap;background:#16201E;color:#FFFFFF;font-size:13px;line-height:18px;padding:6px 10px;border-radius:6px">Public holiday: Father's Day</span>
+            <span style="width:48px;height:52px;display:flex;align-items:center;justify-content:center;border:1px solid #C9D0CD;border-radius:8px;font-weight:600">4</span>
+            <span style="width:48px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#F1F3F1;color:#5B6663;text-decoration:line-through;outline:2px solid #1F5F5B;outline-offset:2px">5</span>
+            <span style="width:48px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#F1F3F1;color:#5B6663;text-decoration:line-through">6</span>
+          </div>
+          <p style="margin:0;font-size:14px;line-height:20px;color:#3D4744">Desktop: shown on hover, keyboard focus or click. Mobile: tapping a greyed day writes the reason under the calendar. Screen readers get it in the day's label.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Result unknown · confirm disabled</div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:12px;background:#FFFFFF;border:1px solid #E1E5E2">
+          <div role="status" aria-busy="true" style="display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:8px;background:#F6F7F6;border:1px solid #E1E5E2">
+            <strong style="font-size:15px">Checking your booking</strong>
+            <span style="font-size:14px;line-height:20px">We didn't get a reply in time. We're checking with the hospital whether it went through.</span>
+          </div>
+          <span style="height:48px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#E1E5E2;color:#3D4744;font-size:16px;font-weight:600">Checking…</span>
+          <span style="font-size:14px;line-height:20px;color:#3D4744">Confirming again is off until we know the result, so you won't be booked twice.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;New booking&quot;,&quot;Reschedule&quot;],&quot;default&quot;:&quot;New booking&quot;,&quot;tsType&quot;:&quot;'New booking' | 'Reschedule'&quot;},&quot;confirmOutcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Success&quot;,&quot;Someone just booked this slot&quot;,&quot;Result unknown&quot;],&quot;default&quot;:&quot;Success&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;customerZone&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Kathmandu&quot;,&quot;Los Angeles&quot;,&quot;Auckland&quot;],&quot;default&quot;:&quot;Kathmandu&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;offline&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const SPECS=[{id:'w',name:'Dr. A. Wongsakul',short:'Dr. Wongsakul',dept:'Cardiology'},{id:'r',name:'Dr. N. Rana',short:'Dr. Rana',dept:'Internal Medicine'}];
+const TZ={Kathmandu:'Asia/Kathmandu','Los Angeles':'America/Los_Angeles',Auckland:'Pacific/Auckland'};
+const TODAYK=20261022,LASTK=20270119;
+const HOL={20261023:'Chulalongkorn Day',20261205:"Father's Day",20261210:'Constitution Day',20261231:"New Year's Eve",20270101:"New Year's Day"};
+const FULL={w:[20261112,20261119],r:[20261110,20261117,20261124]};
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MOF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CUR={spec:'w',key:20261126,t:680};
+const FREE=['w-20261116-640','w-20261130-840','w-20261126-700','w-20261116-620','w-20261116-660'];
+const key=(y,m,d)=>y*10000+(m+1)*100+d;
+const unkey=k=>({y:Math.floor(k/10000),m:Math.floor(k/100)%100-1,d:k%100});
+const dow=k=>{const{y,m,d}=unkey(k);return new Date(Date.UTC(y,m,d)).getUTCDay();};
+const hhmm=t=>`${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+const dayLabel=(k,yr)=>{const{y,m,d}=unkey(k);return`${WD[dow(k)]} ${d} ${MO[m]}${yr?' '+y:''}`;};
+function times(spec,dw){const r=[];const add=(a,b)=>{for(let t=a;t<=b;t+=20)r.push(t);};
+  if(spec==='w'){if(dw>=1&&dw<=6){add(540,700);if(dw<=5)add(780,1000);}}
+  else{if(dw>=1&&dw<=6)add(840,1000);if(dw>=1&&dw<=5)add(1080,dw===4?1180:1240);}
+  return r;}
+function seeded(spec,k,t){if(FREE.includes(`${spec}-${k}-${t}`))return false;return((k%97)*31+t*7+(spec==='r'?11:0))%10<3;}
+function yours(k,t,tz){const{y,m,d}=unkey(k);const inst=new Date(Date.UTC(y,m,d,0,t-420));
+  const p=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',hourCycle:'h23',weekday:'short',day:'numeric',month:'short'}).formatToParts(inst).map(x=>[x.type,x.value]));
+  const q=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'numeric',day:'numeric'}).formatToParts(inst).map(x=>[x.type,x.value]));
+  const diff=Math.round((Date.UTC(+q.year,+q.month-1,+q.day)-Date.UTC(y,m,d))/864e5);
+  return{time:`${p.hour}:${p.minute}`,same:diff===0,rel:diff>0?'next day':diff<0?'previous day':'',wd:p.weekday,full:`${p.weekday} ${p.day} ${p.month}`};}
+
+class Component extends DCLogic {
+  state=this.init(this.props.mode);
+  init(mode){const r=mode==='Reschedule';return{spec:'w',people:r?1:2,month:{y:2026,m:10},sel:r?{key:20261130,t:840}:{key:20261116,t:640},tip:null,mTipKey:null,status:'idle',taken:[],conflictUsed:false,unknownUsed:false,mode};}
+  timers=[];
+  componentWillUnmount(){this.timers.forEach(clearTimeout);}
+  componentDidUpdate(){if(this.props.mode!==this.state.mode)this.setState(this.init(this.props.mode));}
+  isBooked(spec,k,t){return seeded(spec,k,t)||this.state.taken.includes(`${spec}-${k}-${t}`);}
+  dayStatus(spec,k){
+    if(k<TODAYK)return{ok:false,reason:'Past',tag:'Past'};
+    if(k>LASTK)return{ok:false,reason:'Not open for booking yet',tag:'Later'};
+    if(dow(k)===0)return{ok:false,reason:'Closed on Sundays',tag:'Closed'};
+    if(HOL[k])return{ok:false,reason:`Public holiday: ${HOL[k]}`,tag:'Holiday'};
+    const ts=times(spec,dow(k));
+    if(FULL[spec].includes(k)||!ts.some(t=>!this.isBooked(spec,k,t)))return{ok:false,reason:'Fully booked',tag:'Full'};
+    return{ok:true};
+  }
+  nearest(spec,k0,t0){
+    const out=[];let k=k0,{y,m,d}=unkey(k0);
+    for(let i=0;i<20&&out.length<3;i++){
+      const kk=key(...(()=>{const dt=new Date(Date.UTC(y,m,d+i));return[dt.getUTCFullYear(),dt.getUTCMonth(),dt.getUTCDate()];})());
+      if(!this.dayStatus(spec,kk).ok)continue;
+      const free=times(spec,dow(kk)).filter(t=>!this.isBooked(spec,kk,t)&&!(this.state.mode==='Reschedule'&&spec===CUR.spec&&kk===CUR.key&&t===CUR.t));
+      free.sort((a,b)=>i===0?Math.abs(a-t0)-Math.abs(b-t0):a-b);
+      free.slice(0,3-out.length).forEach(t=>out.push({key:kk,t}));
+    }
+    return out;
+  }
+  renderVals(){
+    const st=this.state,offline=!!this.props.offline,zone=this.props.customerZone||'Kathmandu',tz=TZ[zone]||TZ.Kathmandu;
+    const resched=st.mode==='Reschedule';
+    const spec=SPECS.find(s=>s.id===st.spec);
+    const {y,m}=st.month;
+    const first=key(y,m,1),daysIn=new Date(Date.UTC(y,m+1,0)).getUTCDate();
+    const lead=(dow(first)+6)%7;
+    const cells=[];for(let i=0;i<lead;i++)cells.push({key:'b'+i,blank:true,real:false});
+    for(let d=1;d<=daysIn;d++){
+      const k=key(y,m,d),s=this.dayStatus(st.spec,k),sel=st.sel&&st.sel.key===k,isCur=resched&&st.spec===CUR.spec&&k===CUR.key;
+      const tag=s.ok?(isCur?'Current':(k===TODAYK?'Today':'')):s.tag;
+      cells.push({key:k,blank:false,real:true,d,selected:!!sel,ariaDis:!s.ok,
+        aria:`${dayLabel(k,true)}${s.ok?(isCur?', your current booking':''):', not available: '+s.reason}`,
+        reason:s.reason||'',showTip:!s.ok&&st.tip===k,tag,
+        bg:sel?'#1F5F5B':(s.ok?'#FFFFFF':'#F1F3F1'),border:sel?'#1F5F5B':(s.ok?(isCur?'#1F5F5B':'#C9D0CD'):'transparent'),
+        color:sel?'#FFFFFF':(s.ok?'#16201E':'#5B6663'),subColor:sel?'#E6F0EE':(s.ok?'#1F5F5B':'#3D4744'),weight:s.ok?600:400,deco:s.ok?'none':'line-through',cursor:s.ok?'pointer':'not-allowed',
+        pick:()=>{if(!s.ok){this.setState({tip:k});return;}this.setState(x=>({sel:{key:k,t:null},status:x.status==='done'?'idle':x.status==='conflict'?'idle':x.status}));},
+        mPick:()=>{if(!s.ok){this.setState({mTipKey:k});return;}this.setState({sel:{key:k,t:null},mTipKey:null,status:'idle'});},
+        tipOn:()=>this.setState({tip:k})});
+    }
+    while(cells.length%7)cells.push({key:'e'+cells.length,blank:true,real:false});
+    const weeks=[];for(let i=0;i<cells.length;i+=7)weeks.push({key:i,days:cells.slice(i,i+7)});
+    const mi=y*12+m,minM=2026*12+9,maxM=2027*12+0;
+    const go=dl=>()=>{const n=mi+dl;this.setState({month:{y:Math.floor(n/12),m:n%12}});};
+    const cal={title:`${MOF[m]} ${y}`,weeks,dows:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(l=>({key:l,l,s:l.slice(0,2)})),
+      prevDis:mi<=minM,nextDis:mi>=maxM,prevColor:mi<=minM?'#C4CBC8':'#16201E',nextColor:mi>=maxM?'#C4CBC8':'#16201E',prev:go(-1),next:go(1)};
+    const legend=[
+      {n:'16',label:'Available',bg:'#FFFFFF',border:'#C9D0CD',color:'#16201E',weight:600,deco:'none'},
+      {n:'16',label:'Selected',bg:'#1F5F5B',border:'#1F5F5B',color:'#FFFFFF',weight:600,deco:'none'},
+      {n:'22',label:'Closed on Sundays',bg:'#F1F3F1',border:'transparent',color:'#5B6663',weight:400,deco:'line-through'},
+      {n:'5',label:'Public holiday',bg:'#F1F3F1',border:'transparent',color:'#5B6663',weight:400,deco:'line-through'},
+      {n:'12',label:'Fully booked',bg:'#F1F3F1',border:'transparent',color:'#5B6663',weight:400,deco:'line-through'},
+      {n:'21',label:'Past',bg:'#F1F3F1',border:'transparent',color:'#5B6663',weight:400,deco:'line-through'}].map((l,i)=>({...l,key:i}));
+    const sk=st.sel&&st.sel.key,dw=sk?dow(sk):null;
+    let periods=[];
+    if(sk){
+      const ts=times(st.spec,dw);
+      const P=[['Morning',0,720],['Afternoon',720,1020],['Evening',1020,1440]];
+      periods=P.map(([label,a,b])=>{
+        const list=ts.filter(t=>t>=a&&t<b).map(t=>{
+          const isCur=resched&&st.spec===CUR.spec&&sk===CUR.key&&t===CUR.t;
+          const booked=!isCur&&this.isBooked(st.spec,sk,t),sel=st.sel.t===t;
+          const yv=yours(sk,t,tz),ytxt=yv.same?`${yv.time} your time`:`${yv.time} your time, ${yv.rel}`;
+          return{key:t,time:hhmm(t),selected:sel,disabled:booked||isCur,
+            sub:isCur?'Your current booking':(booked?'Booked':ytxt),
+            aria:`${hhmm(t)} Bangkok time, ${isCur?'your current booking':booked?'booked':ytxt}`,
+            bg:sel?'#1F5F5B':(booked?'#F1F3F1':(isCur?'#F6F7F6':'#FFFFFF')),border:sel?'#1F5F5B':(booked?'#C4CBC8':(isCur?'#1F5F5B':'#8C9693')),borderStyle:(booked||isCur)?'dashed':'solid',
+            color:sel?'#FFFFFF':(booked?'#5B6663':'#16201E'),subColor:sel?'#E6F0EE':(isCur?'#1F5F5B':(booked?'#3D4744':'#5B6663')),subWeight:(booked||isCur)?600:400,
+            cursor:(booked||isCur)?'not-allowed':'pointer',
+            pick:()=>this.setState({sel:{key:sk,t},status:'idle'})};
+        });
+        let emptyText=null,note=null;
+        if(!list.length){
+          if(st.spec==='w'&&label==='Evening')emptyText='Dr. Wongsakul doesn\'t consult in the evening.';
+          else if(st.spec==='r'&&label==='Morning')emptyText='Dr. Rana doesn\'t consult in the morning.';
+          else if(dw===6)emptyText=`No ${label.toLowerCase()} times on Saturdays. The hospital closes at 17:00.`;
+          else emptyText=`No ${label.toLowerCase()} times.`;
+        }
+        if(st.spec==='r'&&label==='Evening'&&dw===4)note='Dr. N. Rana sees patients until 21:00, but the hospital closes at 20:00 on Thursdays, so the last appointment is 19:40.';
+        return{key:label,label,slots:list,has:list.length>0,emptyText,note};
+      });
+    }
+    const t=st.sel&&st.sel.t;
+    const hasSlot=sk&&t!=null;
+    const yv=hasSlot?yours(sk,t,tz):null;
+    const yoursLine=hasSlot?`${yv.time} ${zone} time${yv.same?'':`, ${yv.rel} (${yv.full})`}`:'';
+    let reason=null;
+    if(offline)reason="You're offline. Your choices are saved; you can confirm once you're connected.";
+    else if(!sk)reason='Choose a day to continue.';
+    else if(!hasSlot)reason='Choose a time to continue.';
+    const pending=st.status==='pending',done=st.status==='done',conflict=st.status==='conflict',unknown=st.status==='unknown';
+    if(unknown&&!offline)reason="We're checking the result of your last attempt. Confirming again is off until we know, so you won't be booked twice.";
+    const disabled=!!reason||pending||unknown;
+    const oldY=yours(CUR.key,CUR.t,tz);
+    const cf={
+      title:done?(resched?'Your new time':'Your appointment'):(resched?'Your new time':'Your appointment'),
+      isDone:done,doneTitle:resched?'Your appointment has moved':"You're booked",
+      isConflict:conflict,alts:(st.alts||[]).map((a,i)=>{const yy=yours(a.key,a.t,tz);return{key:i,label:`${dayLabel(a.key)} · ${hhmm(a.t)}`,yours:`${yy.time} your time${yy.same?'':', '+yy.rel}`,pick:()=>this.setState({sel:{key:a.key,t:a.t},status:'idle',month:{y:unkey(a.key).y,m:unkey(a.key).m}})};}),
+      isResched:resched&&!done,isUnknown:unknown,
+      fromDay:dayLabel(CUR.key),fromTime:hhmm(CUR.t),fromYours:`${oldY.time} your time${oldY.same?'':', '+oldY.rel}`,
+      toDay:sk?dayLabel(sk):'Choose a day',toTime:hasSlot?hhmm(t):'--:--',toYours:hasSlot?`${yv.time} your time${yv.same?'':', '+yv.rel}`:'Choose a time',
+      fromShort:`${WD[dow(CUR.key)]} ${hhmm(CUR.t)}`,toShort:hasSlot?`${WD[dow(sk)]} ${hhmm(t)}`:'Choose a time',
+      compare:hasSlot?`${WD[dow(CUR.key)]} ${hhmm(CUR.t)} → ${WD[dow(sk)]} ${hhmm(t)}, Bangkok time`:`${WD[dow(CUR.key)]} ${hhmm(CUR.t)} → choose a new time`,
+      oldLong:`${dayLabel(CUR.key,true)}, ${hhmm(CUR.t)} (${oldY.time} your time)`,
+      newLong:hasSlot?`${dayLabel(sk,true)}, ${hhmm(t)} (${yv.time} your time)`:'Not chosen yet',
+      date:sk?dayLabel(sk,true):'Not chosen yet',
+      bkk:hasSlot?`${hhmm(t)} Bangkok time`:'Not chosen yet',
+      yours:hasSlot?yoursLine:'',
+      mLine:hasSlot?`${dayLabel(sk)} · ${hhmm(t)} Bangkok`:(sk?`${dayLabel(sk)} · choose a time`:'Choose a day'),
+      spec:`${spec.name}, ${spec.dept}`,people:st.people===1?'1 person':`${st.people} people`,
+      showBtn:!done,disabled,reason:done?null:reason,
+      btnLabel:unknown?'Checking…':pending?'Confirming…':(resched?'Confirm new time':'Confirm booking'),
+      btnBg:(disabled&&!pending)?'#E1E5E2':'#1F5F5B',btnColor:(disabled&&!pending)?'#3D4744':'#FFFFFF',cursor:disabled?'not-allowed':'pointer'
+    };
+    const tipK=st.mTipKey;
+    return{
+      offline,modeEyebrow:resched?'Reschedule your appointment':'Book an appointment',
+      tzNote:`Each time shows Bangkok time first, where your appointment is. Your time (${zone}) is underneath in grey.`,
+      specs:SPECS.map(s=>{const sel=s.id===st.spec;return{key:s.id,name:s.name,dept:s.dept,selected:sel,bg:sel?'#E6F0EE':'#FFFFFF',border:sel?'#1F5F5B':'#8C9693',pick:()=>this.setState(x=>{let sel2=x.sel;if(sel2&&!this.dayStatus(s.id,sel2.key).ok)sel2=null;else if(sel2&&sel2.t!=null&&(!times(s.id,dow(sel2.key)).includes(sel2.t)||this.isBooked(s.id,sel2.key,sel2.t)))sel2={key:sel2.key,t:null};return{spec:s.id,sel:sel2,status:'idle'};})};}),
+      people:st.people,pplDecDis:st.people<=1,pplIncDis:st.people>=4,pplDecColor:st.people<=1?'#C4CBC8':'#16201E',pplIncColor:st.people>=4?'#C4CBC8':'#16201E',
+      pplDec:()=>this.setState(x=>({people:Math.max(1,x.people-1)})),pplInc:()=>this.setState(x=>({people:Math.min(4,x.people+1)})),
+      cal,legend,tipOff:()=>this.setState({tip:null}),
+      mTip:tipK?`${dayLabel(tipK)}: ${this.dayStatus(st.spec,tipK).reason}`:'Greyed days can\'t be booked. Tap one to see why.',
+      noDate:!sk,periods,
+      slotsTitle:sk?`Times on ${dayLabel(sk,true)}`:'Times',
+      slotsSub:`${spec.name} · Bangkok time first, your time underneath`,
+      cf,
+      confirm:()=>{if(disabled)return;this.setState({status:'pending'});this.timers.push(setTimeout(()=>{
+        if(this.props.confirmOutcome==='Someone just booked this slot'&&!this.state.conflictUsed){
+          const s=this.state;const tk=`${s.spec}-${s.sel.key}-${s.sel.t}`;
+          this.setState({taken:[...s.taken,tk],conflictUsed:true},()=>{const alts=this.nearest(s.spec,s.sel.key,s.sel.t);this.setState({status:'conflict',alts,sel:{key:s.sel.key,t:null}});});
+        }else if(this.props.confirmOutcome==='Result unknown'&&!this.state.unknownUsed){
+          this.setState({status:'unknown',unknownUsed:true});this.timers.push(setTimeout(()=>this.setState({status:'done'}),4500));
+        }else this.setState({status:'done'});
+      },900));},
+      again:()=>this.setState({status:'idle'}),
+      skel35:Array.from({length:35},(_,i)=>({key:i})),skel8:Array.from({length:8},(_,i)=>({key:i})),
+      demoAlts:[{key:1,l:'Mon 16 Nov · 10:20',y:'09:05 your time'},{key:2,l:'Mon 16 Nov · 11:00',y:'09:45 your time'},{key:3,l:'Mon 16 Nov · 13:00',y:'11:45 your time'}]
+    };
+  }
+}
+</script>
+</body>
+</html>

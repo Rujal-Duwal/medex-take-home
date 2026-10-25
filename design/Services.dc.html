@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9ECEA;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#16201E;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+a{color:#1F5F5B}a:hover{color:#16201E}
+:focus-visible{outline:2px solid #1F5F5B;outline-offset:2px}
+@keyframes mxPulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</helmet>
+<div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px;width:max-content">
+  <header style="display:flex;flex-direction:column;gap:12px;max-width:960px">
+    <nav aria-label="Design files" style="display:flex;gap:20px;font-size:14px;line-height:20px">
+      <a href="Tokens.dc.html">Tokens &amp; components</a>
+      <strong>/services</strong>
+      <a href="Cart.dc.html">/cart</a>
+      <a href="Booking.dc.html">/booking</a>
+    </nav>
+    <h1 style="margin:0;font-size:30px;line-height:38px;font-weight:600">/services · Service explorer</h1>
+    <p style="margin:0;font-size:16px;line-height:24px;color:#5B6663;text-wrap:pretty">“I need a full-body check-up near Bangkok, under 5,000 THB, and I'd like to compare a few hospitals side by side.” Desktop and mobile are live and share one filter state: counts, disabled options, chips, the currency step, sort and pagination all respond. Tick “Compare” on 2–3 provider cards to open the side-by-side view; the mixed-currency version is shown below.</p>
+  </header>
+
+  <div style="display:flex;gap:48px;align-items:flex-start">
+    <!-- DESKTOP -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">DESKTOP · 1440</div>
+      <div data-screen-label="Services desktop" style="width:1440px;position:relative;background:#FAFAF8;border-radius:12px;box-shadow:0 1px 2px rgba(22,32,30,.06),0 8px 32px rgba(22,32,30,.08);overflow:clip">
+        <div style="height:64px;display:flex;align-items:center;gap:40px;padding:0 48px;background:#FFFFFF;border-bottom:1px solid #E1E5E2">
+          <span style="font-size:20px;font-weight:600;letter-spacing:-0.01em;color:#1F5F5B">MedEx</span>
+          <nav style="display:flex;gap:8px;flex:1">
+            <a href="#" aria-current="page" style="height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;font-weight:500;color:#16201E;text-decoration:none;box-shadow:inset 0 -2px 0 #1F5F5B">Services</a>
+            <a href="Cart.dc.html" style="height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;color:#5B6663;text-decoration:none">Cart (5)</a>
+          </nav>
+          <button type="button" style="height:40px;padding:0 16px;border:1px solid #8C9693;border-radius:8px;background:#fff;font-size:15px;font-weight:500;cursor:pointer" style-hover="background:#F1F3F1">Sign in</button>
+        </div>
+
+        <div style="padding:32px 48px 56px;display:flex;flex-direction:column;gap:24px">
+          <h1 style="margin:0;font-size:30px;line-height:38px;font-weight:600">Services</h1>
+          <div style="display:flex;gap:32px;align-items:flex-start">
+            <!-- FILTER PANEL -->
+            <aside aria-label="Filters" style="width:304px;flex:none;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:4px 20px 8px;display:flex;flex-direction:column">
+              <div style="padding:16px 0;display:flex;flex-direction:column;gap:8px">
+                <label for="d-q" style="font-size:14px;line-height:20px;font-weight:600">Search</label>
+                <div style="position:relative">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B6663" stroke-width="2" stroke-linecap="round" style="position:absolute;left:13px;top:13px"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                  <input id="d-q" value="{{ d.q }}" onChange="{{ d.onQ }}" placeholder="Service, test or provider" style="width:100%;height:44px;border:1px solid #8C9693;border-radius:8px;padding:0 12px 0 40px;font-size:16px;background:#FFFFFF">
+                </div>
+              </div>
+
+              <div role="group" aria-labelledby="d-type-h" style="border-top:1px solid #E1E5E2;padding:16px 0;display:flex;flex-direction:column">
+                <div id="d-type-h" style="font-size:14px;line-height:20px;font-weight:600;margin-bottom:4px">Service type</div>
+                <sc-for list="{{ d.typeOpts }}" as="o" hint-placeholder-count="5">
+                  <button type="button" role="checkbox" aria-checked="{{ o.selected }}" disabled="{{ o.disabled }}" onClick="{{ o.toggle }}" style="display:flex;align-items:center;gap:12px;min-height:44px;padding:0 8px;margin:0 -8px;border:0;background:transparent;border-radius:6px;cursor:{{ o.cursor }};text-align:left" style-hover="background:#F1F3F1">
+                    <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid {{ o.boxBorder }};background:{{ o.boxBg }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ o.selected }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>
+                    <span style="flex:1;font-size:16px;line-height:24px;color:{{ o.color }}">{{ o.label }}</span>
+                    <span style="font-size:14px;color:#5B6663;font-variant-numeric:tabular-nums">{{ o.countText }}</span>
+                  </button>
+                </sc-for>
+              </div>
+
+              <div role="group" aria-labelledby="d-cat-h" style="border-top:1px solid #E1E5E2;padding:16px 0;display:flex;flex-direction:column">
+                <div id="d-cat-h" style="font-size:14px;line-height:20px;font-weight:600;margin-bottom:4px">Category</div>
+                <sc-for list="{{ d.catTree }}" as="c" hint-placeholder-count="5">
+                  <div style="display:flex;flex-direction:column">
+                    <button type="button" aria-expanded="{{ c.open }}" onClick="{{ c.toggle }}" style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;margin:0 -8px;border:0;background:transparent;border-radius:6px;cursor:pointer;text-align:left" style-hover="background:#F1F3F1">
+                      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B6663" stroke-width="2" stroke-linecap="round" style="transform:{{ c.chev }};flex:none"><path d="m9 6 6 6-6 6"></path></svg>
+                      <span style="flex:1;font-size:16px;font-weight:500">{{ c.label }}</span>
+                      <span style="font-size:14px;color:#5B6663;font-variant-numeric:tabular-nums">{{ c.countText }}</span>
+                    </button>
+                    <sc-if value="{{ c.open }}">
+                      <div style="display:flex;flex-direction:column;padding-left:26px">
+                        <sc-for list="{{ c.subs }}" as="o">
+                          <button type="button" role="checkbox" aria-checked="{{ o.selected }}" disabled="{{ o.disabled }}" onClick="{{ o.toggle }}" style="display:flex;align-items:center;gap:12px;min-height:44px;padding:0 8px;margin:0 -8px;border:0;background:transparent;border-radius:6px;cursor:{{ o.cursor }};text-align:left" style-hover="background:#F1F3F1">
+                            <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid {{ o.boxBorder }};background:{{ o.boxBg }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ o.selected }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>
+                            <span style="flex:1;font-size:16px;color:{{ o.color }}">{{ o.label }}</span>
+                            <span style="font-size:14px;color:#5B6663;font-variant-numeric:tabular-nums">{{ o.countText }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div role="group" aria-labelledby="d-prov-h" style="border-top:1px solid #E1E5E2;padding:16px 0;display:flex;flex-direction:column;gap:8px">
+                <div id="d-prov-h" style="font-size:14px;line-height:20px;font-weight:600">Provider</div>
+                <input aria-label="Search providers" value="{{ provQ }}" onChange="{{ onProvQ }}" placeholder="Search providers" style="width:100%;height:44px;border:1px solid #8C9693;border-radius:8px;padding:0 12px;font-size:16px;background:#FFFFFF">
+                <div style="display:flex;flex-direction:column;max-height:268px;overflow:auto">
+                  <sc-for list="{{ d.provOpts }}" as="o" hint-placeholder-count="5">
+                    <button type="button" role="checkbox" aria-checked="{{ o.selected }}" disabled="{{ o.disabled }}" onClick="{{ o.toggle }}" style="display:flex;align-items:center;gap:12px;min-height:44px;padding:4px 8px;border:0;background:transparent;border-radius:6px;cursor:{{ o.cursor }};text-align:left" style-hover="background:#F1F3F1">
+                      <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid {{ o.boxBorder }};background:{{ o.boxBg }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ o.selected }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>
+                      <span style="flex:1;display:flex;flex-direction:column"><span style="font-size:15px;line-height:20px;color:{{ o.color }}">{{ o.label }}</span><span style="font-size:13px;line-height:18px;color:#5B6663">{{ o.sub }}</span></span>
+                      <span style="font-size:14px;color:#5B6663;font-variant-numeric:tabular-nums">{{ o.countText }}</span>
+                    </button>
+                  </sc-for>
+                  <sc-if value="{{ d.noProv }}"><p style="margin:8px 0;font-size:14px;color:#5B6663">No providers match that name.</p></sc-if>
+                </div>
+              </div>
+
+              <div style="border-top:1px solid #E1E5E2;padding:16px 0;display:flex;flex-direction:column;gap:8px">
+                <div id="d-loc-h" style="font-size:14px;line-height:20px;font-weight:600">City or country</div>
+                <div style="position:relative">
+                  <button type="button" aria-haspopup="listbox" aria-expanded="{{ locOpen }}" aria-labelledby="d-loc-h" onClick="{{ toggleLoc }}" style="width:100%;height:44px;display:flex;align-items:center;justify-content:space-between;border:1px solid #8C9693;border-radius:8px;padding:0 12px;background:#FFFFFF;font-size:16px;cursor:pointer;text-align:left">
+                    <span>{{ d.locLabel }}</span>
+                    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B6663" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg>
+                  </button>
+                  <sc-if value="{{ locOpen }}">
+                    <div role="listbox" style="position:absolute;top:50px;left:0;right:0;z-index:30;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:8px;box-shadow:0 8px 24px rgba(22,32,30,.12);padding:4px">
+                      <sc-for list="{{ d.locOpts }}" as="o">
+                        <button type="button" role="option" aria-selected="{{ o.selected }}" disabled="{{ o.disabled }}" onClick="{{ o.toggle }}" style="width:100%;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 10px 0 {{ o.pad }};border:0;border-radius:6px;background:{{ o.rowBg }};cursor:{{ o.cursor }};text-align:left" style-hover="background:#F1F3F1">
+                          <span style="flex:1;font-size:15px;color:{{ o.color }};font-weight:{{ o.weight }}">{{ o.label }}</span>
+                          <span style="font-size:14px;color:#5B6663;font-variant-numeric:tabular-nums">{{ o.countText }}</span>
+                          <span style="width:16px;display:flex"><sc-if value="{{ o.selected }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F5F5B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+
+              <div role="group" aria-labelledby="d-price-h" style="border-top:1px solid #E1E5E2;padding:16px 0;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline">
+                  <div id="d-price-h" style="font-size:14px;line-height:20px;font-weight:600">{{ d.price.title }}</div>
+                  <sc-if value="{{ d.price.canChange }}"><button type="button" onClick="{{ d.price.change }}" style="border:0;background:none;padding:0;font-size:14px;color:#1F5F5B;text-decoration:underline;cursor:pointer;min-height:24px">Change currency</button></sc-if>
+                </div>
+                <sc-if value="{{ d.price.show }}" hint-placeholder-val="{{ true }}">
+                  <div style="position:relative;height:44px">
+                    <div style="position:absolute;left:0;right:0;top:20px;height:4px;border-radius:2px;background:#E1E5E2"></div>
+                    <div style="position:absolute;left:{{ d.price.minPct }};width:{{ d.price.wPct }};top:20px;height:4px;border-radius:2px;background:#1F5F5B"></div>
+                    <button type="button" role="slider" aria-label="Minimum price" aria-valuemin="0" aria-valuemax="{{ d.price.bound }}" aria-valuenow="{{ d.price.min }}" onKeyDown="{{ d.price.keyMin }}" style="position:absolute;left:{{ d.price.minPct }};top:12px;width:20px;height:20px;margin-left:-10px;padding:0;border-radius:50%;background:#FFFFFF;border:2px solid #1F5F5B;cursor:grab"></button>
+                    <button type="button" role="slider" aria-label="Maximum price" aria-valuemin="0" aria-valuemax="{{ d.price.bound }}" aria-valuenow="{{ d.price.max }}" onKeyDown="{{ d.price.keyMax }}" style="position:absolute;left:{{ d.price.maxPct }};top:12px;width:20px;height:20px;margin-left:-10px;padding:0;border-radius:50%;background:#FFFFFF;border:2px solid #1F5F5B;cursor:grab"></button>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5B6663">Min ({{ d.price.cur }})<input inputmode="numeric" value="{{ d.price.minText }}" onChange="{{ d.price.onMin }}" style="height:44px;border:1px solid #8C9693;border-radius:8px;padding:0 12px;font-size:16px;color:#16201E;font-variant-numeric:tabular-nums;width:100%"></label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5B6663">Max ({{ d.price.cur }})<input inputmode="numeric" value="{{ d.price.maxText }}" onChange="{{ d.price.onMax }}" style="height:44px;border:1px solid #8C9693;border-radius:8px;padding:0 12px;font-size:16px;color:#16201E;font-variant-numeric:tabular-nums;width:100%"></label>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ d.price.ask }}">
+                  <p style="margin:0;font-size:14px;line-height:20px;color:#5B6663;text-wrap:pretty">These results use more than one currency. Pick one to set a price range.</p>
+                  <div role="radiogroup" aria-label="Currency" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                    <sc-for list="{{ d.curOpts }}" as="o">
+                      <button type="button" role="radio" aria-checked="{{ o.selected }}" disabled="{{ o.disabled }}" onClick="{{ o.toggle }}" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;cursor:{{ o.cursor }}" style-hover="background:#E6F0EE;border-color:#1F5F5B">
+                        <span style="font-size:15px;font-weight:600;color:{{ o.color }}">{{ o.label }}</span>
+                        <span style="font-size:13px;color:#5B6663;font-variant-numeric:tabular-nums">{{ o.countText }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+
+              <div style="border-top:1px solid #E1E5E2;padding:12px 0 8px">
+                <button type="button" role="switch" aria-checked="{{ d.home }}" disabled="{{ d.homeDisabled }}" onClick="{{ d.toggleHome }}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:48px;border:0;background:transparent;padding:0;cursor:pointer;text-align:left">
+                  <span style="flex:1;display:flex;flex-direction:column"><span style="font-size:16px;font-weight:500">Available as a home test</span><span style="font-size:14px;color:#5B6663">{{ d.homeCount }}</span></span>
+                  <span style="width:44px;height:24px;border-radius:12px;background:{{ d.homeTrack }};position:relative;flex:none"><span style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 2px rgba(0,0,0,.2);transform:{{ d.homeKnob }}"></span></span>
+                </button>
+              </div>
+            </aside>
+
+            <!-- RESULTS -->
+            <section aria-label="Results" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+                <h2 aria-live="polite" style="margin:0;font-size:20px;line-height:28px;font-weight:600">{{ d.headline }}</h2>
+                <div style="position:relative">
+                  <button type="button" aria-haspopup="menu" aria-expanded="{{ sortOpen }}" onClick="{{ toggleSort }}" style="height:44px;display:flex;align-items:center;gap:8px;padding:0 14px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;cursor:pointer">
+                    <span style="color:#5B6663">Sort:</span><span style="font-weight:500">{{ d.sortLabel }}</span>
+                    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B6663" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg>
+                  </button>
+                  <sc-if value="{{ sortOpen }}">
+                    <div role="menu" style="position:absolute;right:0;top:50px;z-index:30;width:260px;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:8px;box-shadow:0 8px 24px rgba(22,32,30,.12);padding:4px">
+                      <sc-for list="{{ d.sortOpts }}" as="o">
+                        <button type="button" role="menuitemradio" aria-checked="{{ o.selected }}" disabled="{{ o.disabled }}" onClick="{{ o.pick }}" style="width:100%;min-height:44px;display:flex;align-items:center;gap:10px;padding:0 10px;border:0;border-radius:6px;background:transparent;font-size:15px;color:{{ o.color }};cursor:{{ o.cursor }};text-align:left" style-hover="background:#F1F3F1">
+                          <span style="width:16px;display:flex"><sc-if value="{{ o.selected }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F5F5B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>{{ o.label }}
+                        </button>
+                      </sc-for>
+                      <sc-if value="{{ d.sortNote }}"><p style="margin:4px 10px 8px;font-size:13px;line-height:18px;color:#5B6663">More than one currency here, so price sorting groups results by currency.</p></sc-if>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+
+              <sc-if value="{{ d.hasChips }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                  <sc-for list="{{ d.chips }}" as="ch" hint-placeholder-count="3">
+                    <button type="button" aria-label="{{ ch.aria }}" onClick="{{ ch.remove }}" style="height:36px;display:flex;align-items:center;gap:6px;padding:0 8px 0 14px;border:1px solid #BFD6D2;border-radius:999px;background:#E6F0EE;color:#1F5F5B;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:#D6E7E4">
+                      {{ ch.label }}
+                      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                    </button>
+                  </sc-for>
+                  <button type="button" onClick="{{ clearAll }}" style="height:36px;padding:0 8px;border:0;background:none;font-size:14px;font-weight:500;color:#16201E;text-decoration:underline;cursor:pointer">Clear all</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ d.splitNote }}"><p role="status" style="margin:0;font-size:15px;line-height:22px;color:#3D4744">{{ d.splitNote }}</p></sc-if>
+              <sc-if value="{{ d.empty }}">
+                <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:48px 32px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+                  <h3 style="margin:0;font-size:20px;font-weight:600">No services match</h3>
+                  <p style="margin:0;font-size:16px;color:#5B6663;max-width:420px">Try removing a filter. Your other choices will stay as they are.</p>
+                  <button type="button" onClick="{{ d.emptyAction }}" style="height:44px;padding:0 18px;border:1px solid #1F5F5B;border-radius:8px;background:#FFFFFF;color:#1F5F5B;font-size:15px;font-weight:500;cursor:pointer" style-hover="background:#E6F0EE">{{ d.emptyLabel }}</button>
+                </div>
+              </sc-if>
+
+              <sc-for list="{{ d.cards }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                <sc-if value="{{ c.secHead }}"><h3 style="margin:8px 0 0;padding-bottom:8px;border-bottom:1px solid #D3D9D6;font-size:15px;line-height:22px;font-weight:600;color:#3D4744">{{ c.secHead }}</h3></sc-if>
+                <article style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:20px 24px 12px">
+                  <header style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-bottom:12px;border-bottom:1px solid #E1E5E2">
+                    <div style="display:flex;flex-direction:column;gap:2px">
+                      <h3 style="margin:0;font-size:18px;line-height:28px;font-weight:600">{{ c.name }}</h3>
+                      <span style="font-size:14px;line-height:20px;color:#5B6663">{{ c.place }}</span>
+                    </div>
+                    <sc-if value="{{ c.hasRating }}" hint-placeholder-val="{{ true }}">
+                      <div style="display:flex;align-items:baseline;gap:6px;font-size:14px;padding-top:4px"><span aria-hidden="true" style="color:#A15C00;font-size:16px">★</span><strong style="font-size:16px;font-weight:600">{{ c.rating }}</strong><span style="color:#5B6663">({{ c.reviews }} reviews)</span></div>
+                    </sc-if>
+                    <sc-if value="{{ c.isNew }}">
+                      <span style="margin-top:4px;padding:4px 10px;border-radius:999px;background:#F1F3F1;font-size:13px;font-weight:500;color:#16201E">New, no reviews yet</span>
+                    </sc-if>
+                  </header>
+                  <ul style="list-style:none;margin:0;padding:0">
+                    <sc-for list="{{ c.services }}" as="s" hint-placeholder-count="3">
+                      <li style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 0;border-bottom:1px solid #F1F3F1">
+                        <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                          <a href="#" style="font-size:16px;line-height:24px;font-weight:500;color:#16201E;text-decoration:none" style-hover="text-decoration:underline">{{ s.title }}</a>
+                          <div style="display:flex;gap:6px;flex-wrap:wrap">
+                            <span style="padding:2px 8px;border:1px solid #C9D0CD;border-radius:6px;font-size:12px;line-height:16px;font-weight:500;color:#3D4744">{{ s.typeLabel }}</span>
+                            <sc-if value="{{ s.home }}"><span style="padding:2px 8px;border-radius:6px;background:#E6F0EE;font-size:12px;line-height:16px;font-weight:500;color:#1F5F5B">Home test available</span></sc-if>
+                          </div>
+                        </div>
+                        <div style="flex:none;text-align:right;font-variant-numeric:tabular-nums">
+                          <sc-if value="{{ s.isFixed }}"><div style="display:flex;align-items:baseline;gap:8px;justify-content:flex-end"><strong style="font-size:16px;font-weight:600">{{ s.final }}</strong><sc-if value="{{ s.orig }}"><s style="font-size:14px;color:#5B6663"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Original price </span>{{ s.orig }}</s></sc-if></div></sc-if>
+                          <sc-if value="{{ s.isFrom }}"><span style="font-size:16px"><span style="color:#5B6663">From </span><strong style="font-weight:600">{{ s.fromAmt }}</strong><span style="color:#5B6663">, {{ s.dur }}</span></span></sc-if>
+                          <sc-if value="{{ s.isFree }}"><strong style="font-size:16px;font-weight:600;color:#1E6B3A">Free</strong></sc-if>
+                        </div>
+                      </li>
+                    </sc-for>
+                  </ul>
+                  <div style="display:flex;align-items:center;gap:16px;min-height:56px">
+                    <sc-if value="{{ c.showAll }}" hint-placeholder-val="{{ true }}">
+                      <a href="#" style="display:inline-flex;align-items:center;gap:6px;min-height:44px;font-size:15px;font-weight:500;color:#1F5F5B" style-hover="color:#16201E">{{ c.viewAll }}<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+                    </sc-if>
+                    <span style="flex:1"></span>
+                    <sc-if value="{{ c.cmpHint }}"><span style="font-size:14px;color:#3D4744">You can compare up to 3</span></sc-if>
+                    <button type="button" role="checkbox" aria-checked="{{ c.cmpChecked }}" aria-label="{{ c.cmpLabel }}" disabled="{{ c.cmpDisabled }}" onClick="{{ c.cmpToggle }}" style="min-height:44px;display:flex;align-items:center;gap:10px;padding:0 14px 0 12px;border:1px solid {{ c.cmpBorder }};border-radius:8px;background:{{ c.cmpBg }};font-size:15px;font-weight:500;color:{{ c.cmpColor }};cursor:{{ c.cmpCursor }}" style-hover="border-color:#1F5F5B">
+                      <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid {{ c.boxBorder }};background:{{ c.boxBg }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ c.cmpChecked }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>Compare
+                    </button>
+                  </div>
+                </article>
+                </div>
+              </sc-for>
+
+              <sc-if value="{{ d.hasCards }}" hint-placeholder-val="{{ true }}">
+                <nav aria-label="Pagination" style="display:flex;align-items:center;justify-content:center;gap:6px;padding-top:16px">
+                  <button type="button" disabled="{{ d.prevDisabled }}" onClick="{{ d.prev }}" style="height:44px;padding:0 14px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;cursor:pointer;color:{{ d.prevColor }}">Previous</button>
+                  <sc-for list="{{ d.pages }}" as="pg">
+                    <button type="button" aria-current="{{ pg.aria }}" onClick="{{ pg.go }}" style="width:44px;height:44px;border:1px solid {{ pg.border }};border-radius:8px;background:{{ pg.bg }};color:{{ pg.color }};font-size:15px;font-weight:500;cursor:pointer">{{ pg.n }}</button>
+                  </sc-for>
+                  <button type="button" disabled="{{ d.nextDisabled }}" onClick="{{ d.next }}" style="height:44px;padding:0 14px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;cursor:pointer;color:{{ d.nextColor }}">Next</button>
+                </nav>
+              </sc-if>
+            </section>
+          </div>
+        </div>
+
+        <sc-if value="{{ trayOn }}">
+          <div role="region" aria-label="Compare tray" style="position:sticky;bottom:0;z-index:40;display:flex;align-items:center;gap:16px;padding:14px 48px;background:#FFFFFF;border-top:1px solid #E1E5E2;box-shadow:0 -6px 24px rgba(22,32,30,.08)">
+            <strong style="font-size:15px;flex:none">Compare</strong>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:0">
+              <sc-for list="{{ trayChips }}" as="ch">
+                <button type="button" aria-label="{{ ch.aria }}" onClick="{{ ch.remove }}" style="height:36px;display:flex;align-items:center;gap:6px;padding:0 8px 0 14px;border:1px solid #BFD6D2;border-radius:999px;background:#E6F0EE;color:#1F5F5B;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:#D6E7E4">{{ ch.label }}<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ trayHint }}"><span style="font-size:14px;color:#3D4744;flex:none">{{ trayHint }}</span></sc-if>
+            <button type="button" onClick="{{ clearCmp }}" style="height:44px;padding:0 10px;border:0;background:none;font-size:15px;font-weight:500;text-decoration:underline;cursor:pointer;flex:none">Clear</button>
+            <button type="button" ref="{{ dBtn }}" onClick="{{ openCmpD }}" style="height:44px;padding:0 20px;border:0;border-radius:8px;background:{{ trayBg }};color:{{ trayColor }};font-size:15px;font-weight:600;cursor:pointer;flex:none">{{ trayLabel }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ cmpOpen }}">
+          <div style="position:absolute;inset:0;z-index:60;background:rgba(22,32,30,.45);display:flex;justify-content:center;align-items:flex-start;padding:80px 64px">
+            <div role="dialog" aria-modal="true" aria-labelledby="cmp-d-h" onKeyDown="{{ cmpKey }}" style="position:sticky;top:32px;width:1120px;background:#FAFAF8;border-radius:16px;padding:28px 32px 32px;box-shadow:0 24px 64px rgba(22,32,30,.25)">
+              <dc-import name="CompareView" v="{{ cmpD }}" hint-size="100%,560px"></dc-import>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- MOBILE -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">MOBILE · 375 — tap “Filters”</div>
+      <div data-screen-label="Services mobile" style="width:375px;height:812px;position:relative;background:#FAFAF8;border-radius:28px;border:1px solid #D3D9D6;box-shadow:0 8px 32px rgba(22,32,30,.1);overflow:hidden">
+        <div style="height:100%;overflow:auto">
+          <div style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 16px;background:#FFFFFF;border-bottom:1px solid #E1E5E2">
+            <span style="font-size:18px;font-weight:600;color:#1F5F5B">MedEx</span>
+            <a href="Cart.dc.html" style="height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;color:#16201E;text-decoration:none">Cart (5)</a>
+          </div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+            <h1 style="margin:0;font-size:24px;line-height:32px;font-weight:600">Services</h1>
+            <div style="position:relative">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B6663" stroke-width="2" stroke-linecap="round" style="position:absolute;left:13px;top:13px"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              <input aria-label="Search" value="{{ d.q }}" onChange="{{ d.onQ }}" placeholder="Service, test or provider" style="width:100%;height:44px;border:1px solid #8C9693;border-radius:8px;padding:0 12px 0 40px;font-size:16px;background:#FFFFFF">
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="button" onClick="{{ openDrawer }}" style="flex:1;height:44px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;font-weight:500;cursor:pointer">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>{{ d.filtersLabel }}
+              </button>
+              <div style="position:relative;flex:1">
+                <button type="button" aria-haspopup="menu" aria-expanded="{{ mSortOpen }}" onClick="{{ toggleMSort }}" style="width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;cursor:pointer">
+                  <span style="font-weight:500">{{ d.sortLabel }}</span>
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B6663" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <sc-if value="{{ mSortOpen }}">
+                  <div role="menu" style="position:absolute;right:0;top:50px;z-index:30;width:240px;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:8px;box-shadow:0 8px 24px rgba(22,32,30,.12);padding:4px">
+                    <sc-for list="{{ d.sortOpts }}" as="o">
+                      <button type="button" role="menuitemradio" aria-checked="{{ o.selected }}" disabled="{{ o.disabled }}" onClick="{{ o.pick }}" style="width:100%;min-height:44px;display:flex;align-items:center;gap:10px;padding:0 10px;border:0;border-radius:6px;background:transparent;font-size:15px;color:{{ o.color }};text-align:left">
+                        <span style="width:16px;display:flex"><sc-if value="{{ o.selected }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F5F5B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>{{ o.label }}
+                      </button>
+                    </sc-for>
+                    <sc-if value="{{ d.sortNote }}"><p style="margin:4px 10px 8px;font-size:13px;line-height:18px;color:#5B6663">More than one currency here, so price sorting groups results by currency.</p></sc-if>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+            <div aria-live="polite" style="font-size:16px;line-height:24px;font-weight:600">{{ d.headline }}</div>
+            <sc-if value="{{ d.hasChips }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px">
+                <sc-for list="{{ d.chips }}" as="ch">
+                  <button type="button" aria-label="{{ ch.aria }}" onClick="{{ ch.remove }}" style="flex:none;height:44px;display:flex;align-items:center;gap:6px;padding:0 10px 0 14px;border:1px solid #BFD6D2;border-radius:999px;background:#E6F0EE;color:#1F5F5B;font-size:14px;font-weight:500;white-space:nowrap">
+                    {{ ch.label }}<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                  </button>
+                </sc-for>
+                <button type="button" onClick="{{ clearAll }}" style="flex:none;height:44px;padding:0 8px;border:0;background:none;font-size:14px;font-weight:500;text-decoration:underline;white-space:nowrap">Clear all</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ d.splitNote }}"><p role="status" style="margin:0;font-size:14px;line-height:20px;color:#3D4744">{{ d.splitNote }}</p></sc-if>
+            <sc-if value="{{ d.empty }}">
+              <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+                <h3 style="margin:0;font-size:18px;font-weight:600">No services match</h3>
+                <p style="margin:0;font-size:15px;color:#5B6663">Try removing a filter.</p>
+                <button type="button" onClick="{{ d.emptyAction }}" style="height:44px;padding:0 16px;border:1px solid #1F5F5B;border-radius:8px;background:#FFFFFF;color:#1F5F5B;font-size:15px;font-weight:500">{{ d.emptyLabel }}</button>
+              </div>
+            </sc-if>
+            <sc-for list="{{ d.cards }}" as="c" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-if value="{{ c.secHead }}"><h3 style="margin:6px 0 0;padding-bottom:6px;border-bottom:1px solid #D3D9D6;font-size:14px;line-height:20px;font-weight:600;color:#3D4744">{{ c.secHead }}</h3></sc-if>
+              <article style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:16px 16px 4px">
+                <h3 style="margin:0;font-size:17px;line-height:24px;font-weight:600">{{ c.name }}</h3>
+                <div style="display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:14px;line-height:20px;padding-bottom:10px;border-bottom:1px solid #E1E5E2">
+                  <span style="color:#5B6663">{{ c.place }}</span>
+                  <sc-if value="{{ c.hasRating }}"><span><span aria-hidden="true" style="color:#A15C00">★ </span><strong style="font-weight:600">{{ c.rating }}</strong><span style="color:#5B6663"> ({{ c.reviews }})</span></span></sc-if>
+                  <sc-if value="{{ c.isNew }}"><span style="font-weight:500">New, no reviews yet</span></sc-if>
+                </div>
+                <sc-for list="{{ c.services }}" as="s">
+                  <div style="padding:12px 0;border-bottom:1px solid #F1F3F1;display:flex;flex-direction:column;gap:6px">
+                    <a href="#" style="font-size:16px;line-height:22px;font-weight:500;color:#16201E;text-decoration:none">{{ s.title }}</a>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <span style="padding:2px 8px;border:1px solid #C9D0CD;border-radius:6px;font-size:12px;line-height:16px;font-weight:500;color:#3D4744">{{ s.typeLabel }}</span>
+                      <sc-if value="{{ s.home }}"><span style="padding:2px 8px;border-radius:6px;background:#E6F0EE;font-size:12px;line-height:16px;font-weight:500;color:#1F5F5B">Home test available</span></sc-if>
+                    </div>
+                    <div style="font-variant-numeric:tabular-nums;font-size:16px">
+                      <sc-if value="{{ s.isFixed }}"><strong style="font-weight:600">{{ s.final }}</strong><sc-if value="{{ s.orig }}"> <s style="font-size:14px;color:#5B6663">{{ s.orig }}</s></sc-if></sc-if>
+                      <sc-if value="{{ s.isFrom }}"><span style="color:#5B6663">From </span><strong style="font-weight:600">{{ s.fromAmt }}</strong><span style="color:#5B6663">, {{ s.dur }}</span></sc-if>
+                      <sc-if value="{{ s.isFree }}"><strong style="font-weight:600;color:#1E6B3A">Free</strong></sc-if>
+                    </div>
+                  </div>
+                </sc-for>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px">
+                  <sc-if value="{{ c.showAll }}"><a href="#" style="display:flex;align-items:center;min-height:44px;font-size:15px;font-weight:500;color:#1F5F5B">{{ c.viewAllShort }}</a></sc-if>
+                  <span style="flex:1"></span>
+                  <button type="button" role="checkbox" aria-checked="{{ c.cmpChecked }}" aria-label="{{ c.cmpLabel }}" disabled="{{ c.cmpDisabled }}" onClick="{{ c.cmpToggle }}" style="min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px 0 10px;border:1px solid {{ c.cmpBorder }};border-radius:8px;background:{{ c.cmpBg }};font-size:15px;font-weight:500;color:{{ c.cmpColor }}">
+                    <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid {{ c.boxBorder }};background:{{ c.boxBg }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ c.cmpChecked }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>Compare
+                  </button>
+                </div>
+                <sc-if value="{{ c.cmpHint }}"><p style="margin:-4px 0 10px;font-size:13px;color:#3D4744;text-align:right">You can compare up to 3</p></sc-if>
+              </article>
+              </div>
+            </sc-for>
+            <sc-if value="{{ d.hasCards }}" hint-placeholder-val="{{ true }}">
+              <nav aria-label="Pagination" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0 24px">
+                <button type="button" disabled="{{ d.prevDisabled }}" onClick="{{ d.prev }}" style="height:44px;padding:0 14px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;color:{{ d.prevColor }}">Previous</button>
+                <span style="font-size:14px;color:#5B6663">{{ d.pageText }}</span>
+                <button type="button" disabled="{{ d.nextDisabled }}" onClick="{{ d.next }}" style="height:44px;padding:0 14px;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF;font-size:15px;color:{{ d.nextColor }}">Next</button>
+              </nav>
+            </sc-if>
+            <sc-if value="{{ trayOn }}"><div style="height:150px"></div></sc-if>
+          </div>
+        </div>
+
+        <sc-if value="{{ mTrayOn }}">
+          <div role="region" aria-label="Compare tray" style="position:absolute;left:0;right:0;bottom:0;z-index:40;padding:12px 16px 20px;background:#FFFFFF;border-top:1px solid #E1E5E2;box-shadow:0 -6px 24px rgba(22,32,30,.1);display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px">
+              <sc-for list="{{ trayChips }}" as="ch">
+                <button type="button" aria-label="{{ ch.aria }}" onClick="{{ ch.remove }}" style="flex:none;height:44px;display:flex;align-items:center;gap:6px;padding:0 10px 0 14px;border:1px solid #BFD6D2;border-radius:999px;background:#E6F0EE;color:#1F5F5B;font-size:14px;font-weight:500;white-space:nowrap">{{ ch.short }}<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button type="button" onClick="{{ clearCmp }}" style="height:48px;padding:0 12px;border:0;background:none;font-size:16px;font-weight:500;text-decoration:underline">Clear</button>
+              <button type="button" ref="{{ mBtn }}" onClick="{{ openCmpM }}" style="flex:1;height:48px;border:0;border-radius:8px;background:{{ trayBg }};color:{{ trayColor }};font-size:16px;font-weight:600">{{ trayLabel }}</button>
+            </div>
+            <sc-if value="{{ trayHint }}"><span style="font-size:13px;line-height:18px;color:#3D4744;text-align:center">{{ trayHint }}</span></sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ cmpOpen }}">
+          <div role="dialog" aria-modal="true" aria-labelledby="cmp-m-h" onKeyDown="{{ cmpKey }}" style="position:absolute;inset:0;z-index:55;background:#FAFAF8;display:flex;flex-direction:column">
+            <div style="height:56px;flex:none;display:flex;align-items:center;gap:4px;padding:0 16px 0 4px;background:#FFFFFF;border-bottom:1px solid #E1E5E2">
+              <button type="button" aria-label="Back to results" onClick="{{ closeCmp }}" style="width:44px;height:44px;border:0;background:none;display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg></button>
+              <h2 id="cmp-m-h" tabIndex="-1" style="margin:0;font-size:18px;font-weight:600">{{ cmpTitle }}</h2>
+            </div>
+            <div style="flex:1;overflow:auto;padding:16px">
+              <dc-import name="CompareView" v="{{ cmpM }}" hint-size="100%,600px"></dc-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ drawer }}">
+          <div role="dialog" aria-modal="true" aria-labelledby="m-f-h" style="position:absolute;inset:0;z-index:50;background:#FFFFFF;display:flex;flex-direction:column">
+            <div style="height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 16px;border-bottom:1px solid #E1E5E2">
+              <h2 id="m-f-h" style="margin:0;font-size:18px;font-weight:600">Filters</h2>
+              <button type="button" aria-label="Close filters" onClick="{{ closeDrawer }}" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:0;background:none;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+            </div>
+            <div style="flex:1;overflow:auto;padding:0 16px">
+              <sc-for list="{{ dr.sections }}" as="sec">
+                <div style="border-bottom:1px solid #E1E5E2">
+                  <button type="button" aria-expanded="{{ sec.open }}" onClick="{{ sec.toggle }}" style="width:100%;min-height:52px;display:flex;align-items:center;justify-content:space-between;border:0;background:none;padding:0;font-size:16px;font-weight:600;text-align:left;cursor:pointer">
+                    <span>{{ sec.title }}<span style="font-weight:400;color:#5B6663">{{ sec.badge }}</span></span>
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B6663" stroke-width="2" stroke-linecap="round" style="transform:{{ sec.chev }}"><path d="m6 9 6 6 6-6"></path></svg>
+                  </button>
+                  <sc-if value="{{ sec.open }}">
+                    <div style="display:flex;flex-direction:column;padding-bottom:12px">
+                      <sc-for list="{{ sec.opts }}" as="o">
+                        <button type="button" role="{{ o.role }}" aria-checked="{{ o.selected }}" disabled="{{ o.disabled }}" onClick="{{ o.toggle }}" style="display:flex;align-items:center;gap:12px;min-height:44px;padding:0 0 0 {{ o.pad }};border:0;background:transparent;text-align:left;cursor:{{ o.cursor }}">
+                          <span style="width:18px;height:18px;border-radius:{{ o.radius }};border:1.5px solid {{ o.boxBorder }};background:{{ o.boxBg }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ o.selected }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>
+                          <span style="flex:1;font-size:16px;color:{{ o.color }};font-weight:{{ o.weight }}">{{ o.label }}</span>
+                          <span style="font-size:14px;color:#5B6663;font-variant-numeric:tabular-nums">{{ o.countText }}</span>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <div style="border-bottom:1px solid #E1E5E2;padding:14px 0;display:flex;flex-direction:column;gap:10px">
+                <div style="font-size:16px;font-weight:600">{{ dr.price.title }}</div>
+                <sc-if value="{{ dr.price.show }}">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5B6663">Min ({{ dr.price.cur }})<input inputmode="numeric" value="{{ dr.price.minText }}" onChange="{{ dr.price.onMin }}" style="height:44px;border:1px solid #8C9693;border-radius:8px;padding:0 12px;font-size:16px;color:#16201E;width:100%"></label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5B6663">Max ({{ dr.price.cur }})<input inputmode="numeric" value="{{ dr.price.maxText }}" onChange="{{ dr.price.onMax }}" style="height:44px;border:1px solid #8C9693;border-radius:8px;padding:0 12px;font-size:16px;color:#16201E;width:100%"></label>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ dr.price.ask }}">
+                  <p style="margin:0;font-size:14px;line-height:20px;color:#5B6663">These results use more than one currency. Pick one to set a price range.</p>
+                  <div role="radiogroup" aria-label="Currency" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                    <sc-for list="{{ dr.curOpts }}" as="o">
+                      <button type="button" role="radio" aria-checked="{{ o.selected }}" disabled="{{ o.disabled }}" onClick="{{ o.toggle }}" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #8C9693;border-radius:8px;background:#FFFFFF">
+                        <span style="font-size:15px;font-weight:600;color:{{ o.color }}">{{ o.label }}</span><span style="font-size:13px;color:#5B6663">{{ o.countText }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+              <button type="button" role="switch" aria-checked="{{ dr.home }}" disabled="{{ dr.homeDisabled }}" onClick="{{ dr.toggleHome }}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:64px;border:0;background:transparent;padding:0;text-align:left">
+                <span style="flex:1;display:flex;flex-direction:column"><span style="font-size:16px;font-weight:600">Available as a home test</span><span style="font-size:14px;color:#5B6663">{{ dr.homeCount }}</span></span>
+                <span style="width:44px;height:24px;border-radius:12px;background:{{ dr.homeTrack }};position:relative;flex:none"><span style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 2px rgba(0,0,0,.2);transform:{{ dr.homeKnob }}"></span></span>
+              </button>
+            </div>
+            <div style="flex:none;display:flex;align-items:center;gap:12px;padding:12px 16px 20px;border-top:1px solid #E1E5E2;background:#FFFFFF;box-shadow:0 -4px 16px rgba(22,32,30,.06)">
+              <button type="button" onClick="{{ clearDraft }}" style="height:48px;padding:0 12px;border:0;background:none;font-size:16px;font-weight:500;text-decoration:underline;cursor:pointer">Clear</button>
+              <button type="button" disabled="{{ dr.applyDisabled }}" onClick="{{ applyDraft }}" style="flex:1;height:48px;border:0;border-radius:8px;background:{{ dr.applyBg }};color:{{ dr.applyColor }};font-size:16px;font-weight:600;cursor:pointer">{{ dr.applyLabel }}</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- VARIANTS -->
+    <div style="width:420px;display:flex;flex-direction:column;gap:28px">
+      <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">STATES</div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Loading · skeleton</div>
+        <div aria-busy="true" style="background:#FAFAF8;border:1px solid #E1E5E2;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+          <div style="width:240px;height:24px;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div>
+          <div style="display:flex;gap:8px"><div style="width:90px;height:32px;border-radius:999px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div><div style="width:120px;height:32px;border-radius:999px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div></div>
+          <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+            <div style="width:220px;height:20px;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div>
+            <div style="width:140px;height:14px;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid #F1F3F1"><div style="width:180px;height:16px;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div><div style="width:80px;height:16px;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div></div>
+            <div style="display:flex;justify-content:space-between"><div style="width:150px;height:16px;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div><div style="width:80px;height:16px;border-radius:6px;background:#E4E8E6;animation:mxPulse 1.6s ease-in-out infinite"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Empty</div>
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+          <h3 style="margin:0;font-size:18px;font-weight:600">No services match</h3>
+          <p style="margin:0;font-size:15px;color:#5B6663">Try removing a filter. Your other choices will stay as they are.</p>
+          <button type="button" style="height:44px;padding:0 16px;border:1px solid #1F5F5B;border-radius:8px;background:#FFFFFF;color:#1F5F5B;font-size:15px;font-weight:500">Remove the price filter</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Error</div>
+        <div role="alert" style="background:#FDECEA;border:1px solid #F2C4BF;border-radius:12px;padding:16px 20px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:16px;font-weight:600;color:#8F1C13">We couldn't load services</div>
+          <p style="margin:0;font-size:15px;line-height:22px;color:#16201E">Something went wrong on our side. Your filters are saved.</p>
+          <button type="button" style="align-self:flex-start;height:44px;padding:0 16px;border:0;border-radius:8px;background:#16201E;color:#FFFFFF;font-size:15px;font-weight:500">Try again</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Provider with no reviews</div>
+        <article style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:16px 20px 8px">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding-bottom:10px;border-bottom:1px solid #E1E5E2">
+            <div><div style="font-size:17px;font-weight:600;line-height:24px">Chao Phraya Hospital</div><div style="font-size:14px;color:#5B6663">Bangkok, Thailand</div></div>
+            <span style="padding:4px 10px;border-radius:999px;background:#F1F3F1;font-size:13px;font-weight:500;white-space:nowrap">New, no reviews yet</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0">
+            <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:500">Senior Health Check</span><span style="align-self:flex-start;padding:2px 8px;border:1px solid #C9D0CD;border-radius:6px;font-size:12px;font-weight:500;color:#3D4744">Package</span></div>
+            <div style="font-variant-numeric:tabular-nums;white-space:nowrap"><strong style="font-weight:600">4,650.00 THB</strong> <s style="font-size:14px;color:#5B6663">5,200.00 THB</s></div>
+          </div>
+        </article>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Offline · slow</div>
+        <div role="status" style="display:flex;gap:12px;align-items:flex-start;background:#FFF4DB;border:1px solid #EBD39A;border-radius:10px;padding:12px 16px">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A4B00" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.8M12 20h.01"></path></svg>
+          <p style="margin:0;font-size:15px;line-height:22px;color:#5A3800"><strong>You're offline.</strong> These results are from your last visit. We'll update them when you're back online.</p>
+        </div>
+        <div role="status" style="display:flex;gap:12px;align-items:flex-start;background:#F1F3F1;border:1px solid #D3D9D6;border-radius:10px;padding:12px 16px">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3D4744" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+          <p style="margin:0;font-size:15px;line-height:22px">This is taking longer than usual. We're still loading services.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Filter option rules</div>
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:8px 16px">
+          <sc-for list="{{ ruleOpts }}" as="o">
+            <div style="display:flex;align-items:center;gap:12px;min-height:44px;border-bottom:1px solid #F1F3F1">
+              <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid {{ o.boxBorder }};background:{{ o.boxBg }};display:flex;align-items:center;justify-content:center;flex:none"><sc-if value="{{ o.selected }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>
+              <span style="flex:1;font-size:16px;color:{{ o.color }}">{{ o.label }} <span style="font-size:14px;color:#5B6663">{{ o.countText }}</span></span>
+              <span style="font:500 12px 'IBM Plex Mono',monospace;color:#5B6663">{{ o.note }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Price formats</div>
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:0 16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #F1F3F1"><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:500">Signature Facial</span><span style="align-self:flex-start;padding:2px 8px;border:1px solid #C9D0CD;border-radius:6px;font-size:12px;line-height:16px;font-weight:500;color:#3D4744">Wellness</span></div><span style="font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap"><span style="color:#5B6663">From </span><strong style="font-weight:600">1,800.00 THB</strong><span style="color:#5B6663">, 60 min</span></span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #F1F3F1"><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:500">Pre-check-up consultation</span><span style="align-self:flex-start;padding:2px 8px;border:1px solid #C9D0CD;border-radius:6px;font-size:12px;line-height:16px;font-weight:500;color:#3D4744">Service</span></div><strong style="font-size:15px;font-weight:600;color:#1E6B3A">Free</strong></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0"><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:500">Executive Health Check (Male)</span><span style="align-self:flex-start;padding:2px 8px;border:1px solid #C9D0CD;border-radius:6px;font-size:12px;line-height:16px;font-weight:500;color:#3D4744">Package</span></div><span style="display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums;white-space:nowrap"><strong style="font-size:15px;font-weight:600">5,970.60 THB</strong><s style="font-size:13px;color:#5B6663"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Original price </span>6,200.00 THB</s></span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Mobile filters · pending count before applying</div>
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;overflow:hidden">
+          <p style="margin:0;padding:12px 16px;font-size:14px;line-height:20px;color:#3D4744">Package and Lab test ticked, not applied yet. The button shows what you'll get.</p>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px 16px;border-top:1px solid #E1E5E2;box-shadow:0 -4px 16px rgba(22,32,30,.06)">
+            <span style="height:48px;display:flex;align-items:center;padding:0 12px;font-size:16px;font-weight:500;text-decoration:underline">Clear</span>
+            <span style="flex:1;height:48px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#1F5F5B;color:#FFFFFF;font-size:16px;font-weight:600">Show 42 results</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">Sort by price · no currency chosen</div>
+        <div style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:12px 16px 4px;display:flex;flex-direction:column">
+          <p style="margin:0 0 4px;font-size:14px;line-height:20px;color:#3D4744">Sorted by price within each currency. We don't convert between currencies.</p>
+          <h3 style="margin:10px 0 0;padding-bottom:6px;border-bottom:1px solid #D3D9D6;font-size:14px;font-weight:600;color:#3D4744">Prices in THB · 2 providers</h3>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #F1F3F1;font-size:15px"><span>Sukhumvit Lab Centre</span><span style="font-variant-numeric:tabular-nums;white-space:nowrap">From 420.00 THB</span></div><div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #F1F3F1;font-size:15px"><span>Riverside International Hospital</span><span style="font-variant-numeric:tabular-nums;white-space:nowrap">From 450.00 THB</span></div>
+          <h3 style="margin:14px 0 0;padding-bottom:6px;border-bottom:1px solid #D3D9D6;font-size:14px;font-weight:600;color:#3D4744">Prices in NPR · 1 provider</h3>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #F1F3F1;font-size:15px"><span>Kathmandu Diagnostics</span><span style="font-variant-numeric:tabular-nums;white-space:nowrap">From 1,260.00 NPR</span></div>
+          <h3 style="margin:14px 0 0;padding-bottom:6px;border-bottom:1px solid #D3D9D6;font-size:14px;font-weight:600;color:#3D4744">Prices in INR · 1 provider</h3>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #F1F3F1;font-size:15px"><span>Lakeview Multispeciality Hospital</span><span style="font-variant-numeric:tabular-nums;white-space:nowrap">From 950.00 INR</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#3D4744">“View all 14 services” · expanded in place</div>
+        <article style="background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;padding:16px 16px 4px">
+          <div style="padding-bottom:10px;border-bottom:1px solid #E1E5E2"><div style="font-size:17px;font-weight:600;line-height:24px">Riverside International Hospital</div><div style="font-size:14px;color:#5B6663">Bangkok, Thailand · Package</div></div>
+          <ul id="exp-list" style="list-style:none;margin:0;padding:0">
+            <sc-for list="{{ expRows }}" as="r" hint-placeholder-count="14">
+              <li style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #F1F3F1;font-size:14px;line-height:20px"><span>{{ r.title }}</span><span style="display:flex;gap:6px;align-items:baseline;font-variant-numeric:tabular-nums;white-space:nowrap"><strong style="font-weight:600">{{ r.final }}</strong><sc-if value="{{ r.orig }}"><s style="font-size:13px;color:#5B6663">{{ r.orig }}</s></sc-if></span></li>
+            </sc-for>
+          </ul>
+          <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px">
+            <span style="font-size:14px;color:#3D4744">Showing all 14</span>
+            <button type="button" aria-expanded="true" aria-controls="exp-list" style="min-height:44px;display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;font-size:15px;font-weight:500;color:#1F5F5B;cursor:pointer">Show fewer<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 15 6-6 6 6"></path></svg></button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:6px;max-width:960px">
+      <h2 style="margin:0;font-size:24px;line-height:32px;font-weight:600">Compare providers · mixed currencies</h2>
+      <p style="margin:0;font-size:16px;line-height:24px;color:#5B6663;text-wrap:pretty">Two Bangkok providers in THB and one Kathmandu clinic in NPR. “Lowest” appears only between the two THB columns. Remove a provider to see the removed notice with Undo; with one left, the view asks you to pick another. Removing the last one resets this example.</p>
+    </div>
+    <div style="display:flex;gap:48px;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">DESKTOP · LARGE DIALOG (1440 FRAME)</div>
+        <div data-screen-label="Compare desktop" style="width:1120px;background:#FAFAF8;border-radius:16px;padding:28px 32px 32px;box-shadow:0 1px 2px rgba(22,32,30,.06),0 24px 64px rgba(22,32,30,.14)">
+          <dc-import name="CompareView" v="{{ cmpVD }}" hint-size="100%,620px"></dc-import>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">MOBILE · 375 — swipe</div>
+        <div data-screen-label="Compare mobile" style="width:375px;height:812px;background:#FAFAF8;border-radius:28px;border:1px solid #D3D9D6;box-shadow:0 8px 32px rgba(22,32,30,.1);overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:56px;flex:none;display:flex;align-items:center;gap:4px;padding:0 16px 0 4px;background:#FFFFFF;border-bottom:1px solid #E1E5E2">
+            <span aria-hidden="true" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg></span>
+            <strong style="font-size:18px">{{ cmpVTitle }}</strong>
+          </div>
+          <div style="flex:1;overflow:auto;padding:16px">
+            <dc-import name="CompareView" v="{{ cmpVM }}" hint-size="100%,600px"></dc-import>
+          </div>
+        </div>
+      </div>
+      <div style="width:400px;display:flex;flex-direction:column;gap:28px">
+        <div style="font:500 13px/16px 'IBM Plex Mono',monospace;color:#5B6663">COMPARE STATES</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;font-weight:600;color:#3D4744">Tray · 1 picked</div>
+          <div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;box-shadow:0 -6px 24px rgba(22,32,30,.06)">
+            <span style="align-self:flex-start;height:36px;display:flex;align-items:center;gap:6px;padding:0 10px 0 14px;border:1px solid #BFD6D2;border-radius:999px;background:#E6F0EE;color:#1F5F5B;font-size:14px;font-weight:500">Riverside International Hospital ✕</span>
+            <div style="display:flex;gap:8px;align-items:center"><span style="height:44px;display:flex;align-items:center;padding:0 10px;font-size:15px;font-weight:500;text-decoration:underline">Clear</span><span style="flex:1;height:44px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#1F5F5B;color:#FFFFFF;font-size:15px;font-weight:600">Compare (1)</span></div>
+            <span style="font-size:14px;color:#3D4744">Pick at least one more to compare</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;font-weight:600;color:#3D4744">Card checkbox · 3 already picked</div>
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:10px 16px;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px">
+            <span style="font-size:14px;color:#3D4744">You can compare up to 3</span>
+            <span style="min-height:44px;display:flex;align-items:center;gap:10px;padding:0 14px 0 12px;border:1px solid #D3D9D6;border-radius:8px;background:#F1F3F1;font-size:15px;font-weight:500;color:#5B6663"><span style="width:18px;height:18px;border-radius:4px;border:1.5px solid #C4CBC8;background:#FFFFFF"></span>Compare</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;font-weight:600;color:#3D4744">Opened with 1 provider · mobile</div>
+          <div style="width:375px;padding:16px;background:#FAFAF8;border:1px solid #D3D9D6;border-radius:16px;overflow:hidden">
+            <dc-import name="CompareView" v="{{ cmpS1 }}" hint-size="100%,520px"></dc-import>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;font-weight:600;color:#3D4744">Provider removed inside the comparison · mobile</div>
+          <div style="width:375px;padding:16px;background:#FAFAF8;border:1px solid #D3D9D6;border-radius:16px;overflow:hidden">
+            <dc-import name="CompareView" v="{{ cmpS2 }}" hint-size="100%,560px"></dc-import>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;font-weight:600;color:#3D4744">Screen reader</div>
+          <ul style="margin:0;padding:14px 16px 14px 34px;background:#FFFFFF;border:1px solid #E1E5E2;border-radius:12px;font-size:14px;line-height:22px">
+            <li>Card checkbox: “Compare Riverside International Hospital, checkbox, not checked”.</li>
+            <li>Compare view is a table: provider names are column headers, row labels are row headers. Build it as a real &lt;table&gt; with &lt;th scope="col"&gt; and &lt;th scope="row"&gt;.</li>
+            <li>Mobile cards: carousel with “1 of 3” announced on change; Previous and Next buttons for keyboard.</li>
+            <li>Opening moves focus to the comparison heading. Back, Esc or removing the last provider returns focus to the tray's Compare button. Tab stays inside the comparison while it's open.</li>
+            <li>Removing a provider moves focus to the heading and announces “… was removed from the comparison” with Undo.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TYPES=[{id:'package',label:'Package'},{id:'lab',label:'Lab test'},{id:'wellness',label:'Wellness'},{id:'service',label:'Service'},{id:'insurance',label:'Insurance'}];
+const TL=Object.fromEntries(TYPES.map(t=>[t.id,t.label]));
+const P=[
+{id:'riverside',name:'Riverside International Hospital',city:'Bangkok',country:'Thailand',loc:'bkk',cty:'TH',cur:'THB',rating:4.7,reviews:1203,c:{package:14,lab:22,service:18},h:{lab:10,package:2}},
+{id:'sukhumvit',name:'Sukhumvit Lab Centre',city:'Bangkok',country:'Thailand',loc:'bkk',cty:'TH',cur:'THB',rating:4.5,reviews:812,c:{package:5,lab:38},h:{package:5,lab:30}},
+{id:'lotus',name:'Lotus Day Spa',city:'Bangkok',country:'Thailand',loc:'bkk',cty:'TH',cur:'THB',rating:4.8,reviews:326,c:{wellness:9},h:{}},
+{id:'chaophraya',name:'Chao Phraya Hospital',city:'Bangkok',country:'Thailand',loc:'bkk',cty:'TH',cur:'THB',rating:null,reviews:0,c:{package:8,lab:4,wellness:6,service:13},h:{}},
+{id:'lanna',name:'Lanna Medical Centre',city:'Chiang Mai',country:'Thailand',loc:'cnx',cty:'TH',cur:'THB',rating:4.6,reviews:540,c:{package:9,lab:21,wellness:11,service:8},h:{lab:6}},
+{id:'ktmdx',name:'Kathmandu Diagnostics',city:'Kathmandu',country:'Nepal',loc:'ktm',cty:'NP',cur:'NPR',rating:4.4,reviews:690,c:{package:6,lab:30,service:3},h:{lab:18,package:2}},
+{id:'himalaya',name:'Himalaya Care Hospital',city:'Kathmandu',country:'Nepal',loc:'ktm',cty:'NP',cur:'NPR',rating:4.6,reviews:980,c:{package:16,wellness:6,service:22,insurance:7},h:{}},
+{id:'lakeview',name:'Lakeview Multispeciality Hospital',city:'Pune',country:'India',loc:'pune',cty:'IN',cur:'INR',rating:4.5,reviews:1876,c:{package:28,lab:13,wellness:15,service:28,insurance:5},h:{lab:8,package:3}}];
+const S=[
+['riverside','package','Executive Health Check (Male)',5970.6,6200],
+['riverside','package','Executive Health Check (Female)',6480],
+['riverside','package','Comprehensive Cardiac Package',9259.4,10890],
+['riverside','lab','Basic Blood Panel',990,0,0,1],
+['riverside','lab','HbA1c (Diabetes) Test',450,0,0,1],
+['riverside','service','Pre-check-up consultation',0],
+['riverside','service','Specialist consultation',1200],
+['sukhumvit','package','Full Body Check-up at Home',3490,4200,0,1],
+['sukhumvit','lab','Liver Function Profile',559,0,0,1],
+['sukhumvit','lab','Vitamin D (25-OH)',1150,0,0,1],
+['sukhumvit','lab','Lipid Profile',420,0,0,1],
+['lotus','wellness','Signature Facial',1800,0,60],
+['lotus','wellness','Traditional Thai Massage',900,0,60],
+['lotus','wellness','Aromatherapy Massage',1500,0,60],
+['chaophraya','package','Essential Health Check',2890],
+['chaophraya','package','Senior Health Check',4650,5200],
+['chaophraya','wellness','Office Syndrome Physiotherapy',1200,0,45],
+['chaophraya','lab','Fasting Blood Sugar',150],
+['chaophraya','service','General consultation',500],
+['lanna','package','Standard Health Check',3200],
+['lanna','lab','Kidney Function Test',680,0,0,1],
+['lanna','wellness','Herbal Compress Massage',1100,0,90],
+['lanna','service','Dental check-up',800],
+['ktmdx','lab','Complete Blood Count',1260,0,0,1],
+['ktmdx','lab','Thyroid Function Test',2060,0,0,1],
+['ktmdx','package','Comprehensive Health Panel',8400,0,0,1],
+['ktmdx','service','Home sample collection',0],
+['himalaya','package','Full Body Check-up',14500,16000],
+['himalaya','wellness','Ayurvedic Massage',3500,0,60],
+['himalaya','service','General physician consultation',1000],
+['himalaya','insurance','Family Health Cover (1 year)',18500],
+['lakeview','package','Master Health Check',11504.75,12783.06,0,1],
+['lakeview','lab','Vitamin B12',950,0,0,1],
+['lakeview','wellness','Physiotherapy Session',900,0,45],
+['lakeview','service','Cardiology consultation',1500],
+['lakeview','insurance','Individual Health Cover (1 year)',9800]
+].map(([p,t,title,price,orig,dur,home])=>({p,t,title,price,orig:orig||null,dur:dur||null,home:!!home}));
+const CATS=[
+{id:'checkups',label:'Health check-ups',subs:[{id:'fullbody',label:'Full body',type:'package',share:.55},{id:'heart',label:'Heart',type:'package',share:.25},{id:'diabetes',label:'Diabetes',type:'package',share:.2}]},
+{id:'labs',label:'Lab tests',subs:[{id:'blood',label:'Blood tests',type:'lab',share:.5},{id:'thyroid',label:'Hormones & thyroid',type:'lab',share:.3},{id:'vitamins',label:'Vitamins',type:'lab',share:.2}]},
+{id:'spa',label:'Beauty & spa',subs:[{id:'facial',label:'Facial',type:'wellness',share:.4},{id:'massage',label:'Massage',type:'wellness',share:.6}]},
+{id:'vaccines',label:'Vaccines',subs:[{id:'flu',label:'Flu',type:'service',share:.3},{id:'travel',label:'Travel vaccines',type:'service',share:.2,only:['NP','IN']}]},
+{id:'cover',label:'Health insurance',subs:[{id:'individual',label:'Individual',type:'insurance',share:.5},{id:'family',label:'Family',type:'insurance',share:.5}]}];
+const SUBS=CATS.flatMap(c=>c.subs);
+const LOCS=[{id:'any',label:'Any location'},{id:'TH',label:'Thailand'},{id:'bkk',label:'Bangkok, Thailand',sub:1},{id:'cnx',label:'Chiang Mai, Thailand',sub:1},{id:'NP',label:'Nepal'},{id:'ktm',label:'Kathmandu, Nepal',sub:1},{id:'IN',label:'India'},{id:'pune',label:'Pune, India',sub:1}];
+const BOUND={THB:20000,NPR:30000,INR:40000};
+const SORTS=[{id:'relevance',label:'Relevance'},{id:'priceAsc',label:'Price low to high',price:1},{id:'priceDesc',label:'Price high to low',price:1},{id:'rating',label:'Rating'}];
+const DEFAULT={q:'',types:['package','wellness'],cats:[],provs:[],loc:'bkk',cur:null,price:null,home:false};
+const EMPTY={q:'',types:[],cats:[],provs:[],loc:'any',cur:null,price:null,home:false};
+const fmt=(n,d=2)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const int=n=>n.toLocaleString('en-US');
+const locMatch=(p,l)=>l==='any'||p.loc===l||p.cty===l;
+const pOf=id=>P.find(p=>p.id===id);
+function effCur(f){if(f.cur)return f.cur;const s=new Set(P.filter(p=>locMatch(p,f.loc)).map(p=>p.cur));return s.size===1?[...s][0]:null;}
+function qMatch(p,q){if(!q)return true;q=q.toLowerCase();return p.name.toLowerCase().includes(q)||S.some(s=>s.p===p.id&&s.title.toLowerCase().includes(q));}
+function pf(f){if(!f.price)return 1;const b=BOUND[effCur(f)]||1;return Math.min(1,Math.max(0,(f.price.max-f.price.min)/b*1.1+0.08));}
+function pc(p,f,ig={}){
+  if(!locMatch(p,f.loc))return 0;
+  if(f.cur&&p.cur!==f.cur)return 0;
+  if(!ig.prov&&f.provs.length&&!f.provs.includes(p.id))return 0;
+  if(!qMatch(p,f.q))return 0;
+  let tot=0;
+  for(const t of TYPES){
+    if(f.types.length&&!f.types.includes(t.id))continue;
+    const base=(f.home?p.h:p.c)[t.id]||0;let c=base;
+    if(f.cats.length){c=0;for(const s of SUBS)if(f.cats.includes(s.id)&&s.type===t.id&&(!s.only||s.only.includes(p.cty)))c+=Math.round(base*s.share);}
+    tot+=c;
+  }
+  return Math.round(tot*pf(f));
+}
+const sum=f=>P.reduce((a,p)=>a+pc(p,f),0);
+function svcMatch(s,f){
+  if(f.types.length&&!f.types.includes(s.t))return false;
+  if(f.cats.length&&!SUBS.filter(x=>f.cats.includes(x.id)).some(x=>x.type===s.t))return false;
+  if(f.home&&!s.home)return false;
+  if(f.price&&(s.price<f.price.min||s.price>f.price.max))return false;
+  if(f.q){const q=f.q.toLowerCase();if(!pOf(s.p).name.toLowerCase().includes(q)&&!s.title.toLowerCase().includes(q))return false;}
+  return true;
+}
+function sView(s){const cur=pOf(s.p).cur;return{key:s.title,title:s.title,typeLabel:TL[s.t],home:s.home,isFrom:!!s.dur,fromAmt:`${fmt(s.price)} ${cur}`,dur:`${s.dur} min`,isFree:!s.dur&&s.price===0,isFixed:!s.dur&&s.price>0,final:`${fmt(s.price)} ${cur}`,orig:s.orig?`${fmt(s.orig)} ${cur}`:null};}
+const opt=(label,n,sel,toggle,x={})=>{const dis=n===0&&!sel;return{label,n,selected:sel,disabled:dis,countText:`(${int(n)})`,toggle,boxBg:sel?'#1F5F5B':'#FFFFFF',boxBorder:sel?'#1F5F5B':(dis?'#C4CBC8':'#8C9693'),color:dis?'#5B6663':'#16201E',cursor:dis?'not-allowed':'pointer',radius:'4px',role:'checkbox',pad:'0px',weight:400,...x};};
+
+const V_IDS=['riverside','chaophraya','ktmdx'];
+const V_F={...EMPTY,types:['package','lab','wellness']};
+const CARD_W=312;
+const CUR_ORDER=['THB','NPR','INR'];
+const EXP=[['Executive Health Check (Male)',5970.6,6200],['Executive Health Check (Female)',6480],['Comprehensive Cardiac Package',9259.4,10890],['Basic Health Check',2900],['Pre-employment Check-up',1850],['Senior Health Check (60+)',7900],["Women's Health Package",4990],["Men's Health Package",4790],['Diabetes Screening Package',2450],['Liver Health Package',3300],['Kidney Health Package',3100],['Bone Health Package',3650],['Thyroid Check Package',2200],['Pre-travel Health Check',2750]].map(([t,p,o],i)=>({key:i,title:t,final:fmt(p)+' THB',orig:o?fmt(o)+' THB':null}));
+
+class Component extends DCLogic {
+  state={f:DEFAULT,draft:DEFAULT,sort:'relevance',page:1,sortOpen:false,mSortOpen:false,locOpen:false,exp:{checkups:true},provQ:'',drawer:false,acc:{type:true,cat:false,prov:false,loc:true},cmp:[],cmpOpen:false,cmpFrom:'d',cmpRemoved:null,mIdx:0,vIds:V_IDS,vIdx:0,vRemoved:null};
+  mRef=React.createRef();
+  vRef=React.createRef();
+  toggleCmp=id=>this.setState(s=>s.cmp.includes(id)?{cmp:s.cmp.filter(x=>x!==id)}:(s.cmp.length<3?{cmp:[...s.cmp,id]}:{}));
+  cmpView(ids,f,o){
+    const cols=ids.map(pOf),n=cols.length,curs=CUR_ORDER.filter(c=>cols.some(p=>p.cur===c)),mixed=curs.length>1;
+    const colsV=cols.map(p=>{
+      const pr=S.filter(s=>s.p===p.id&&svcMatch(s,f)).map(s=>s.price);
+      const c=pr.length?Math.max(pc(p,f),pr.length):0;
+      const lo=pr.length?Math.min(...pr):null,hi=pr.length?Math.max(...pr):null;
+      const home=Object.values(p.h).some(v=>v>0);
+      const rangeText=lo===null?'':lo===hi?(lo===0?'Free':`${fmt(lo)} ${p.cur}`):`${lo===0?'Free':fmt(lo)} to ${fmt(hi)} ${p.cur}`;
+      return{key:p.id,name:p.name,place:`${p.city}, ${p.country}`,cur:p.cur,lo,hasRating:!!p.rating,isNew:!p.rating,rating:p.rating?p.rating.toFixed(1):'',reviews:int(p.reviews),
+        countText:c?`${int(c)} ${c===1?'service':'services'}`:'None with your filters',hasRange:lo!==null,noRange:lo===null,rangeText,
+        homeYes:home,homeNo:!home,remove:()=>o.remove(p.id),removeAria:`Remove ${p.name} from comparison`,viewAria:`View services at ${p.name}`,lowest:false,lowestLabel:''};
+    });
+    curs.forEach(cu=>{const same=colsV.filter(x=>x.cur===cu&&x.hasRange);if(same.length<2)return;const mn=Math.min(...same.map(x=>x.lo));same.forEach(x=>{if(x.lo===mn){x.lowest=true;x.lowestLabel=mixed?`Lowest price in ${cu}`:'Lowest price';}});});
+    const idx=Math.min(o.idx||0,Math.max(0,n-1));
+    const cards=colsV.map((c,i)=>({...c,slideLabel:`${c.name}, ${i+1} of ${n}`}));
+    const scrollTo=i=>{const el=o.ref&&o.ref.current;if(el)el.scrollTo({left:i*CARD_W,behavior:'smooth'});o.setIdx&&o.setIdx(i);};
+    return{desktop:!o.mobile,mobile:!!o.mobile,hid:o.hid,title:n===1?'Compare providers':`Compare ${n} providers`,sub:o.sub,mixed,single:n===1,multi:n>1,
+      gridCols:n===1?'200px minmax(0,360px)':`200px repeat(${n},minmax(0,1fr))`,cols:colsV,cards,hasClose:!!o.close,close:o.close,
+      removed:!!o.removedName,removedText:o.removedName?`${o.removedName} was removed from the comparison.`:'',hasUndo:!!o.undo,undo:o.undo,
+      idxText:`${idx+1} of ${n}`,prevDis:idx<=0,nextDis:idx>=n-1,prevColor:idx<=0?'#C4CBC8':'#16201E',nextColor:idx>=n-1?'#C4CBC8':'#16201E',
+      prev:()=>scrollTo(Math.max(0,idx-1)),next:()=>scrollTo(Math.min(n-1,idx+1)),scrollRef:o.ref,
+      onScroll:e=>{const i=Math.round(e.currentTarget.scrollLeft/CARD_W);if(i!==idx&&o.setIdx)o.setIdx(i);}};
+  }
+  dBtn=React.createRef();
+  mBtn=React.createRef();
+  componentDidUpdate(){
+    const s=this.state,ps=this._pc||{cmpOpen:false,cmp:[]};this._pc={cmpOpen:s.cmpOpen,cmp:s.cmp};
+    const was=ps.cmpOpen&&ps.cmp.length>0,now=s.cmpOpen&&s.cmp.length>0;
+    const head=(n=0)=>requestAnimationFrame(()=>{const el=document.getElementById(s.cmpFrom==='m'?'cmp-m-h':'cmp-d-h');if(el)el.focus({preventScroll:true});else if(n<30)head(n+1);});
+    if(!was&&now)head();
+    else if(was&&now&&s.cmp.length<ps.cmp.length)head();
+    else if(was&&!now){const back=(n=0)=>requestAnimationFrame(()=>{const r=s.cmpFrom==='m'?this.mBtn:this.dBtn;if(r.current)r.current.focus({preventScroll:true});else if(n<30)back(n+1);});back();}
+  }
+  cmpKey=e=>{
+    if(e.key==='Escape'){e.stopPropagation();this.setState({cmpOpen:false,cmpRemoved:null});return;}
+    if(e.key!=='Tab')return;
+    const box=e.currentTarget,f=[...box.querySelectorAll('button:not([disabled]),a[href]')];if(!f.length)return;
+    const a=f[0],z=f[f.length-1],act=document.activeElement;
+    if(e.shiftKey&&(act===a||act.tagName==='H2')){e.preventDefault();z.focus();}
+    else if(!e.shiftKey&&act===z){e.preventDefault();a.focus();}
+  };
+  setF=fn=>this.setState(s=>({f:fn(s.f),page:1}));
+  setD=fn=>this.setState(s=>({draft:fn(s.draft)}));
+  build(f,up,isDraft){
+    const st=this.state,cur=effCur(f);
+    const tg=(k,v)=>up(x=>({...x,[k]:x[k].includes(v)?x[k].filter(y=>y!==v):[...x[k],v]}));
+    const typeOpts=TYPES.map(t=>opt(t.label,sum({...f,types:[t.id]}),f.types.includes(t.id),()=>tg('types',t.id),{key:t.id}));
+    const catTree=CATS.map(c=>{const subs=c.subs.map(s=>opt(s.label,sum({...f,cats:[s.id]}),f.cats.includes(s.id),()=>tg('cats',s.id),{key:s.id}));const open=!!st.exp[c.id];return{key:c.id,label:c.label,countText:`(${int(subs.reduce((a,b)=>a+b.n,0))})`,open,chev:open?'rotate(90deg)':'rotate(0deg)',toggle:()=>this.setState(s=>({exp:{...s.exp,[c.id]:!s.exp[c.id]}})),subs};});
+    const pq=st.provQ.toLowerCase();
+    const provOpts=P.filter(p=>isDraft||p.name.toLowerCase().includes(pq)).map(p=>opt(p.name,pc(p,f,{prov:true}),f.provs.includes(p.id),()=>tg('provs',p.id),{key:p.id,sub:`${p.city}, ${p.country}`}));
+    const locOpts=LOCS.map(l=>{const sel=f.loc===l.id;const o=opt(l.label,sum({...f,loc:l.id,cur:null,price:null}),sel,()=>{up(x=>({...x,loc:l.id,cur:null,price:null}));this.setState({locOpen:false});},{key:l.id,pad:l.sub?'28px':'10px',rowBg:sel?'#E6F0EE':'transparent',weight:l.sub?400:500,role:'radio',radius:'50%'});return o;});
+    const curOpts=['THB','NPR','INR'].map(c=>opt(c,sum({...f,cur:c,price:null}),f.cur===c,()=>up(x=>({...x,cur:c,price:null})),{key:c}));
+    const B=BOUND[cur]||1,mn=f.price?f.price.min:0,mx=f.price?f.price.max:B;
+    const setR=(a,b)=>up(x=>{a=Math.max(0,Math.min(a,B));b=Math.max(0,Math.min(b,B));if(a>b)a=b;return{...x,price:(a<=0&&b>=B)?null:{min:a,max:b}};});
+    const num=e=>parseInt(String(e.target.value).replace(/\D/g,''),10)||0;
+    const key=(isMin)=>e=>{const d=e.key==='ArrowRight'||e.key==='ArrowUp'?500:e.key==='ArrowLeft'||e.key==='ArrowDown'?-500:0;if(!d)return;e.preventDefault();isMin?setR(mn+d,mx):setR(mn,mx+d);};
+    const price={show:!!cur,ask:!cur,cur,bound:B,min:mn,max:mx,minText:String(mn),maxText:String(mx),minPct:`${mn/B*100}%`,maxPct:`${mx/B*100}%`,wPct:`${(mx-mn)/B*100}%`,title:cur?`Price (${cur})`:'Price',canChange:!!f.cur,change:()=>up(x=>({...x,cur:null,price:null})),onMin:e=>setR(num(e),mx),onMax:e=>setR(mn,num(e)),keyMin:key(true),keyMax:key(false)};
+    const homeN=sum({...f,home:true});
+    const chips=[];
+    const rm=(fn)=>()=>up(fn);
+    f.types.forEach(t=>chips.push({label:TL[t],remove:rm(x=>({...x,types:x.types.filter(y=>y!==t)}))}));
+    f.cats.forEach(c=>chips.push({label:SUBS.find(s=>s.id===c).label,remove:rm(x=>({...x,cats:x.cats.filter(y=>y!==c)}))}));
+    f.provs.forEach(id=>chips.push({label:pOf(id).name,remove:rm(x=>({...x,provs:x.provs.filter(y=>y!==id)}))}));
+    if(f.loc!=='any')chips.push({label:LOCS.find(l=>l.id===f.loc).label,remove:rm(x=>({...x,loc:'any',cur:null,price:null}))});
+    if(f.cur)chips.push({label:`Prices in ${f.cur}`,remove:rm(x=>({...x,cur:null,price:null}))});
+    if(f.price)chips.push({label:f.price.min===0?`Up to ${fmt(f.price.max,0)} ${cur}`:`${fmt(f.price.min,0)}–${fmt(f.price.max,0)} ${cur}`,remove:rm(x=>({...x,price:null}))});
+    if(f.home)chips.push({label:'Home test available',remove:rm(x=>({...x,home:false}))});
+    if(f.q)chips.push({label:`“${f.q}”`,remove:rm(x=>({...x,q:''}))});
+    chips.forEach((c,i)=>{c.key=i+c.label;c.aria=`Remove filter: ${c.label}`;});
+    const sortId=st.sort,sortDef=SORTS.find(s=>s.id===sortId),split=!cur&&!!sortDef.price;
+    let list=P.map((p,i)=>({p,i,n:pc(p,f),sv:S.filter(s=>s.p===p.id&&svcMatch(s,f))})).filter(x=>x.n>0&&x.sv.length);
+    list.forEach(x=>{if(sortId==='priceAsc')x.sv.sort((a,b)=>a.price-b.price);if(sortId==='priceDesc')x.sv.sort((a,b)=>b.price-a.price);});
+    const dir=sortId==='priceAsc'?1:-1;
+    if(sortDef.price)list.sort((a,b)=>(split?CUR_ORDER.indexOf(a.p.cur)-CUR_ORDER.indexOf(b.p.cur):0)||dir*(a.sv[0].price-b.sv[0].price));
+    if(sortId==='rating')list.sort((a,b)=>(b.p.rating||0)-(a.p.rating||0));
+    const total=list.reduce((a,x)=>a+x.n,0),pn=list.length;
+    const pages=Math.max(1,Math.ceil(pn/3)),page=Math.min(st.page,pages);
+    const cards=list.slice((page-1)*3,page*3).map(({p,n,sv})=>({key:p.id,cur:p.cur,name:p.name,place:`${p.city}, ${p.country}`,hasRating:!!p.rating,isNew:!p.rating,rating:p.rating?p.rating.toFixed(1):'',reviews:int(p.reviews),services:sv.slice(0,3).map(sView),showAll:n>Math.min(3,sv.length),viewAll:`View all ${n} services`,viewAllShort:`View all ${n}`,...(()=>{const on=st.cmp.includes(p.id),dis=!on&&st.cmp.length>=3;return{cmpChecked:on,cmpDisabled:dis,cmpHint:dis,cmpLabel:`Compare ${p.name}`,cmpToggle:()=>this.toggleCmp(p.id),cmpBg:on?'#E6F0EE':(dis?'#F1F3F1':'#FFFFFF'),cmpBorder:on?'#1F5F5B':(dis?'#D3D9D6':'#8C9693'),cmpColor:dis?'#5B6663':'#16201E',cmpCursor:dis?'not-allowed':'pointer',boxBg:on?'#1F5F5B':'#FFFFFF',boxBorder:on?'#1F5F5B':(dis?'#C4CBC8':'#8C9693')};})()}));
+    const curN=c=>list.filter(x=>x.p.cur===c).length;
+    cards.forEach((c,i,arr)=>{const k=curN(c.cur);c.secHead=split&&(i===0||arr[i-1].cur!==c.cur)?`Prices in ${c.cur} · ${k} ${k===1?'provider':'providers'}`:null;});
+    const go=n=>()=>this.setState({page:n});
+    return{
+      q:f.q,onQ:e=>{const v=e.target.value;up(x=>({...x,q:v}));},
+      typeOpts,catTree,provOpts,noProv:!provOpts.length,locOpts,locLabel:LOCS.find(l=>l.id===f.loc).label,curOpts,price,
+      home:f.home,homeDisabled:homeN===0&&!f.home,homeCount:`(${int(homeN)}) with your other filters`,toggleHome:()=>up(x=>({...x,home:!x.home})),homeTrack:f.home?'#1F5F5B':'#8C9693',homeKnob:f.home?'translateX(20px)':'translateX(0)',
+      chips,hasChips:chips.length>0,filtersLabel:chips.length?`Filters (${chips.length})`:'Filters',
+      headline:`${int(total)} ${total===1?'service':'services'} from ${pn} ${pn===1?'provider':'providers'}`,
+      sortLabel:SORTS.find(s=>s.id===sortId).label,sortNote:!cur,
+      sortOpts:SORTS.map(s=>{const dis=false;return{key:s.id,label:s.label,selected:sortId===s.id,disabled:dis,color:dis?'#5B6663':'#16201E',cursor:dis?'not-allowed':'pointer',pick:()=>this.setState({sort:s.id,sortOpen:false,mSortOpen:false,page:1})};}),
+      splitNote:split&&cards.length?"Sorted by price within each currency. We don't convert between currencies.":null,
+      cards,hasCards:cards.length>0,empty:!cards.length,emptyLabel:f.price?'Remove the price filter':'Clear all filters',emptyAction:f.price?rm(x=>({...x,price:null})):this.clearAll,
+      pages:Array.from({length:pages},(_,i)=>({key:i,n:i+1,go:go(i+1),aria:i+1===page?'page':undefined,bg:i+1===page?'#1F5F5B':'#FFFFFF',color:i+1===page?'#FFFFFF':'#16201E',border:i+1===page?'#1F5F5B':'#8C9693'})),
+      pageText:`Page ${page} of ${pages}`,prevDisabled:page<=1,nextDisabled:page>=pages,prevColor:page<=1?'#5B6663':'#16201E',nextColor:page>=pages?'#5B6663':'#16201E',prev:go(page-1),next:go(page+1),
+      total
+    };
+  }
+  clearAll=()=>this.setF(()=>EMPTY);
+  renderVals(){
+    const st=this.state;
+    const d=this.build(st.f,this.setF,false);
+    let dr=null;
+    if(st.drawer){
+      dr=this.build(st.draft,this.setD,true);
+      const acc=k=>()=>this.setState(s=>({acc:{...s.acc,[k]:!s.acc[k]}}));
+      const n=a=>{const c=a.filter(o=>o.selected).length;return c?` · ${c} selected`:'';};
+      const catFlat=dr.catTree.flatMap(c=>[{key:c.key+'h',label:c.label,countText:c.countText,selected:false,disabled:true,boxBorder:'transparent',boxBg:'transparent',color:'#16201E',weight:600,pad:'0px',cursor:'default',role:'presentation',toggle:null},...c.subs.map(o=>({...o,pad:'16px'}))]);
+      const allCatSubs=dr.catTree.flatMap(c=>c.subs);
+      const locRadio=dr.locOpts.map(o=>({...o,boxBg:o.selected?'#1F5F5B':'#FFFFFF',boxBorder:o.selected?'#1F5F5B':o.boxBorder,pad:o.pad==='28px'?'20px':'0px',toggle:()=>this.setD(x=>({...x,loc:o.key,cur:null,price:null}))}));
+      dr.sections=[
+        {key:'type',title:'Service type',badge:n(dr.typeOpts),open:st.acc.type,toggle:acc('type'),opts:dr.typeOpts},
+        {key:'cat',title:'Category',badge:n(allCatSubs),open:st.acc.cat,toggle:acc('cat'),opts:catFlat},
+        {key:'prov',title:'Provider',badge:n(dr.provOpts),open:st.acc.prov,toggle:acc('prov'),opts:dr.provOpts},
+        {key:'loc',title:'City or country',badge:` · ${dr.locLabel}`,open:st.acc.loc,toggle:acc('loc'),opts:locRadio}
+      ].map(s=>({...s,chev:s.open?'rotate(180deg)':'rotate(0deg)'}));
+      dr.applyLabel=dr.total?`Show ${int(dr.total)} ${dr.total===1?'result':'results'}`:'No results, change filters';
+      dr.applyDisabled=!dr.total;dr.applyBg=dr.total?'#1F5F5B':'#E1E5E2';dr.applyColor=dr.total?'#FFFFFF':'#3D4744';
+    }
+    const ruleOpts=[opt('Lab test',64,false,null,{note:'default'}),opt('Package',27,true,null,{note:'selected'}),opt('Insurance',0,false,null,{note:'0 · disabled'}),opt('Travel vaccines',0,true,null,{note:'0 · selected, enabled'})].map((o,i)=>({...o,key:i}));
+    const cIds=st.cmp,cn=cIds.length;
+    const sub=d.chips.length?`With your filters: ${d.chips.map(c=>c.label).join(', ')}`:'With no filters applied';
+    const removeLive=id=>this.setState(s=>{const n=s.cmp.filter(x=>x!==id);return{cmp:n,cmpOpen:s.cmpOpen&&n.length>0,mIdx:0,cmpRemoved:n.length?{name:pOf(id).name,prev:s.cmp}:null};});
+    const undoLive=()=>this.setState(s=>s.cmpRemoved?{cmp:s.cmpRemoved.prev,cmpRemoved:null}:{});
+    const closeCmp=()=>this.setState({cmpOpen:false,cmpRemoved:null});
+    const removeV=id=>this.setState(s=>{const n=s.vIds.filter(x=>x!==id);return n.length?{vIds:n,vIdx:0,vRemoved:{name:pOf(id).name,prev:s.vIds}}:{vIds:V_IDS,vIdx:0,vRemoved:null};});
+    const undoV=()=>this.setState(s=>s.vRemoved?{vIds:s.vRemoved.prev,vRemoved:null}:{});
+    const vSub='With filters: Package, Lab test, Wellness · Any location';
+    const cmpOn=st.cmpOpen&&cn>0,rName=st.cmpRemoved&&st.cmpRemoved.name;
+    const open=from=>()=>this.setState({cmpOpen:true,cmpFrom:from,cmpRemoved:null,mIdx:0,drawer:false,sortOpen:false,mSortOpen:false});
+    const noop=()=>{};
+    return{
+      cmpOpen:cmpOn,closeCmp,cmpKey:this.cmpKey,cmpTitle:cn===1?'Compare providers':`Compare ${cn} providers`,
+      cmpD:cmpOn?this.cmpView(cIds,st.f,{hid:'cmp-d-h',sub,remove:removeLive,close:closeCmp,removedName:rName,undo:undoLive}):null,
+      cmpM:cmpOn?this.cmpView(cIds,st.f,{mobile:true,sub,remove:removeLive,removedName:rName,undo:undoLive,idx:st.mIdx,ref:this.mRef,setIdx:i=>this.setState({mIdx:i})}):null,
+      cmpVD:this.cmpView(st.vIds,V_F,{hid:'cmp-v-h',sub:vSub,remove:removeV,close:null,removedName:st.vRemoved&&st.vRemoved.name,undo:undoV}),
+      cmpVM:this.cmpView(st.vIds,V_F,{mobile:true,sub:vSub,remove:removeV,removedName:st.vRemoved&&st.vRemoved.name,undo:undoV,idx:st.vIdx,ref:this.vRef,setIdx:i=>this.setState({vIdx:i})}),
+      cmpS1:this.cmpView(['chaophraya'],V_F,{mobile:true,sub:vSub,remove:noop}),
+      cmpS2:this.cmpView(['riverside','ktmdx'],V_F,{mobile:true,sub:vSub,remove:noop,removedName:'Chao Phraya Hospital',undo:noop}),
+      cmpVTitle:st.vIds.length===1?'Compare providers':`Compare ${st.vIds.length} providers`,
+      expRows:EXP,
+      trayOn:cn>0&&!cmpOn,mTrayOn:cn>0&&!cmpOn&&!st.drawer,
+      trayChips:cIds.map(id=>{const p=pOf(id);return{key:id,label:p.name,short:p.name.replace(/ (International|Multispeciality) /,' ').replace(' Hospital',''),aria:`Remove ${p.name} from compare`,remove:()=>this.toggleCmp(id)};}),
+      trayLabel:`Compare (${cn})`,trayBg:'#1F5F5B',trayColor:'#FFFFFF',
+      trayHint:cn===1?'Pick at least one more to compare':(cn>=3?'You can compare up to 3':null),
+      openCmpD:open('d'),openCmpM:open('m'),clearCmp:()=>this.setState({cmp:[]}),dBtn:this.dBtn,mBtn:this.mBtn,
+      d,dr:dr||{sections:[],price:{},curOpts:[]},drawer:st.drawer,ruleOpts,
+      provQ:st.provQ,onProvQ:e=>this.setState({provQ:e.target.value}),
+      locOpen:st.locOpen,toggleLoc:()=>this.setState(s=>({locOpen:!s.locOpen})),
+      sortOpen:st.sortOpen,toggleSort:()=>this.setState(s=>({sortOpen:!s.sortOpen})),
+      mSortOpen:st.mSortOpen,toggleMSort:()=>this.setState(s=>({mSortOpen:!s.mSortOpen})),
+      clearAll:this.clearAll,
+      openDrawer:()=>this.setState(s=>({drawer:true,draft:s.f})),
+      closeDrawer:()=>this.setState({drawer:false}),
+      clearDraft:()=>this.setD(()=>EMPTY),
+      applyDraft:()=>this.setState(s=>({f:s.draft,drawer:false,page:1}))
+    };
+  }
+}
+</script>
+</body>
+</html>
