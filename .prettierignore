@@ -1,0 +1,16 @@
+# Generated or installed
+.next/
+out/
+build/
+coverage/
+node_modules/
+package-lock.json
+next-env.d.ts
+
+# Never rewritten by tooling: raw data, design exports and the hand-written docs
+data/
+design/
+docs/
+CLAUDE.md
+AI_LOG.md
+.claude/
