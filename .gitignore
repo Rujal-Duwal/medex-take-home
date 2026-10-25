@@ -1,0 +1,40 @@
+# Dependencies
+/node_modules
+
+# Build output
+/.next/
+/out/
+/build
+*.tsbuildinfo
+next-env.d.ts
+
+# Tests
+/coverage
+
+# Env files: never commit them, even empty (no secrets in this repo)
+.env*
+
+# Claude Code: personal overrides stay local; the rest of .claude/ is tracked on purpose (ADR 0010)
+.claude/settings.local.json
+
+# Rujal's own interview prep and session notes, not part of the submission
+.claude/skills/quiz/
+docs/session-prompts.md
+
+# Vercel
+.vercel
+
+# Logs
+npm-debug.log*
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Keys
+*.pem
