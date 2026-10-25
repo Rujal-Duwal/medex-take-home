@@ -24,6 +24,7 @@ Check, and report only real findings with file and line:
 3. **Accessibility (WCAG 2.2 AA):** clickable non-buttons, missing accessible names, focus not moved after removal or step change, changes not announced through the live region, keyboard traps, colour as the only signal.
 4. **Explainability:** anything clever enough that Rujal would struggle to explain or change it live in 2 minutes. Suggest the plainer version.
 5. **Writing style:** em dashes or jargon in UI copy, comments or docs.
+6. **Tooling hygiene:** any lint warning or error, any type error, any eslint-disable without a reason. Always Blocking. You can't run commands, so use the `npm run lint` and `npm run typecheck` output you were given (if it's missing, report that under Blocking), and grep the changed files for `eslint-disable` and `@ts-` comments.
 
 Output:
 - **Blocking:** must fix before commit

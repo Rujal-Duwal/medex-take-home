@@ -19,3 +19,4 @@ An ADR is never edited after it is accepted. To change a decision, write a new A
 | 0009 | Vitest and Testing Library for tests | Accepted |
 | 0010 | AI-assisted build with human review of every commit | Accepted |
 | 0011 | Mock failures chosen by the client, mock server keeps no flag state | Accepted |
+| 0012 | Zero-warning quality gate: strict type-checked lint plus SonarJS | Accepted |

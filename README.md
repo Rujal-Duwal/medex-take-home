@@ -12,17 +12,17 @@ npm install
 npm run dev    # http://localhost:3000
 ```
 
-| Command                           | What it does                                                                        |
-| --------------------------------- | ----------------------------------------------------------------------------------- |
-| `npm run dev`                     | Runs the app locally at http://localhost:3000                                       |
-| `npm run build` then `npm start`  | Production build, then serves it                                                    |
-| `npm run check`                   | Lint, type check and tests together. CI runs these plus the build.                  |
-| `npm run lint`                    | ESLint, including accessibility rules and the "data only through the mock API" rule |
-| `npm run typecheck`               | Generates Next's route types, then runs the TypeScript compiler                     |
-| `npm test` / `npm run test:watch` | Vitest, once or in watch mode                                                       |
-| `npm run bench`                   | Vitest benchmarks                                                                   |
-| `npm run format`                  | Prettier over the code (the docs, data and design folders are left alone)           |
-| `npm run audit:data`              | Checks the data audit counts in the specs (not implemented yet)                     |
+| Command                           | What it does                                                                                                                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                     | Runs the app locally at http://localhost:3000                                                                                                                                 |
+| `npm run build` then `npm start`  | Production build, then serves it                                                                                                                                              |
+| `npm run check`                   | Lint, type check and tests together. CI runs these plus the build.                                                                                                            |
+| `npm run lint`                    | ESLint with strict type-checked, accessibility and the same Sonar rules as SonarQube for IDE, plus the "data only through the mock API" rule. Fails on any warning (ADR 0012) |
+| `npm run typecheck`               | Generates Next's route types, then runs the TypeScript compiler                                                                                                               |
+| `npm test` / `npm run test:watch` | Vitest, once or in watch mode                                                                                                                                                 |
+| `npm run bench`                   | Vitest benchmarks                                                                                                                                                             |
+| `npm run format`                  | Prettier over the code (the docs, data and design folders are left alone)                                                                                                     |
+| `npm run audit:data`              | Checks the data audit counts in the specs (not implemented yet)                                                                                                               |
 
 ## Why all three tasks
 

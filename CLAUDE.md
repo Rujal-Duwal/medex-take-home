@@ -55,6 +55,7 @@ npm is the package manager (one less tool for reviewers).
 - big.js for money maths (decision D2)
 - Luxon for time zones (decision D3)
 - Vitest and Testing Library
+- ESLint: Next.js core-web-vitals, typescript-eslint strictTypeChecked and stylisticTypeChecked, jsx-a11y, eslint-plugin-sonarjs recommended, the rest of Sonar way in `eslint.sonar-way.mjs` (unicorn, Testing Library, promise and others), Prettier last; zero warnings allowed (ADR 0012)
 - GitHub Actions CI (lint, type check, tests), Vercel Hobby for the deploy
 
 Ask before adding any other dependency. Say what it saves and what it costs to explain.
@@ -74,6 +75,7 @@ scripts/audit-data.ts     checks the audit counts
 src/app/                  routes: /, /services, /cart, /booking
 src/app/api/mock/         mock API route handlers
 src/lib/mock/             latency, failure flags, data loading (the ONLY code that reads /data)
+src/lib/api/              fetchApi: the client fetch wrapper and its typed ApiResult
 src/lib/money/            parse, calculate, format money
 src/lib/a11y/             live announcer
 src/components/ui/        shadcn components
@@ -118,6 +120,7 @@ Every mock endpoint goes through one helper in `src/lib/mock` that applies laten
 ## Definition of done for every work package
 
 - `npm run check` passes
+- npm run lint shows 0 errors and 0 warnings; npm run typecheck shows 0 errors; no eslint-disable without a one-line reason
 - strict TypeScript, no `any`, no unexplained `as` casts
 - business rules in pure functions with tests
 - components read only mapped UI shapes
