@@ -19,7 +19,7 @@ If a link is dead, search for the page title on the same site. Do not switch to 
 | Feature-based project structure | `src/features/<task>/` | https://github.com/alan2207/bulletproof-react |
 | Practical test pyramid | Testing levels in `docs/ARCHITECTURE.md` section 8 | https://martinfowler.com/articles/practical-test-pyramid.html |
 
-The full architecture style, with every pattern and interview answers, is in `docs/ARCHITECTURE.md` section 0.
+The full architecture style, with every pattern and the reasons behind it, is in `docs/ARCHITECTURE.md` section 0.
 
 ## Framework and language
 

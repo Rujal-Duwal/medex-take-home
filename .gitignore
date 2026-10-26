@@ -20,6 +20,7 @@ next-env.d.ts
 # Rujal's own interview prep and session notes, not part of the submission
 .claude/skills/quiz/
 docs/session-prompts.md
+docs/interview-notes.md
 
 # Vercel
 .vercel

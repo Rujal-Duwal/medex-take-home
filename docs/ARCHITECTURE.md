@@ -23,11 +23,7 @@ Read this before starting a work package. Update it in the same commit when a pa
 | Test pyramid | Many fast unit tests on the core, few component tests, manual and optional end-to-end on top | Section 8 below | https://martinfowler.com/articles/practical-test-pyramid.html |
 | C4 model and ADRs | How the architecture is documented | This file and `docs/adr/` | https://c4model.com/ and https://adr.github.io/ |
 
-### How to explain it in an interview
-
-**The 30-second answer.** "It's one Next.js app, organised by feature. Each feature has three rings: a mapping layer that turns MedEx's API shapes into our own types, a core of pure functions that hold every business rule (pricing, facets, slots, checkout transitions), and a thin shell of hooks and components that does the fetching and rendering. The rules are pure, so they're fast to test against every awkward case in the data, and the shell is thin, so the UI stays simple. The big decisions are written up as ADRs."
-
-**Likely follow-up questions**
+### Why it is built this way
 
 - *Why not micro-frontends?* Three small features, one team of one, one deploy. Micro-frontends solve team and deploy independence problems we don't have; they would add build and runtime cost for nothing. A modular monolith keeps the option open, since each feature folder is already self-contained.
 - *Why no Redux or Zustand?* Each kind of state has a natural home: filters in the URL, cart lines in a reducer, checkout attempts in `localStorage`, selections in component state (table in section 5). A global store would duplicate the URL in Task 1 and add indirection everywhere else.
@@ -63,7 +59,8 @@ One Next.js App Router project, deployed as one Vercel app.
 | Mock API (`src/app/api/mock/**`) | Server (route handlers) | Serve the data with the same field names as MedEx's API; apply latency and failure |
 | Mock core (`src/lib/mock`) | Server | The only code that reads `data/`; latency, faked failures, in-memory state. `flags.ts` is the exception: pure, no `data/` imports, also used by the client |
 | Fetch wrapper (`src/lib/api`) | Client | `fetchApi` and `ApiResult`: reads the page's mock flags, picks the failure for each call, returns a typed result. `isOffline()` for the offline banner |
-| Shared libs (`src/lib/money`, `src/lib/a11y`) | Both | Money maths and formatting; the live announcer |
+| Shared libs (`src/lib/money`, `src/lib/a11y`) | Both | Money maths and formatting; the live announcer (`LiveAnnouncerProvider` in the root layout, `useAnnounce()` in components) |
+| Shared UI (`src/components/ui`, `src/components/states`) | Client | shadcn components adjusted to the design tokens; the shared states: `EmptyState`, `ErrorState`, `OfflineBanner` (via `useIsOffline` in `src/lib/api`) and `Skeleton` |
 | Browser storage | Client | Checkout attempts (Task 2) so a reload shows the true state |
 
 ## 3. Layers and the direction of dependencies
@@ -163,7 +160,7 @@ flowchart LR
 
 | Concern | Where | Rule |
 |---|---|---|
-| Money | `src/lib/money` | big.js only; `Money = { amount, currency }`; round at display; never mix currencies (ADR 0004) |
+| Money | `src/lib/money` | big.js only; `Money = { amount, currency }`; never mix currencies (ADR 0004). Rounding is half-up to 2 dp, once, in `formatMoney`. Every currency uses en-US grouping (`23,009.50 INR`, not Indian lakh grouping) so the three currencies read the same way in one list. `formatMoney` never prints "Free": the price kind decides that |
 | Time | `src/features/booking` + Luxon | Resolve zones once; inject `now`; never pass raw zone strings to `Intl` (ADR 0005) |
 | Errors | `src/lib/api/fetch-api.ts` | Every call returns a typed result: `ok`, `offline`, `network`, `server`, `conflict`, `declined`. UI branches on the kind, never on message text |
 | Failure injection | `src/lib/mock/flags.ts`, `src/lib/api/fetch-api.ts`, `src/lib/mock/latency-and-failure.ts` | `?mockDelay`, `?mockFail=<endpoint>[@<group>]:<kind>[:once]`, `?mockOffline=1`. The client picks the failure and forwards only `mockDelay` and `mockStatus`; the server keeps no flag state (ADR 0003, ADR 0011) |
@@ -179,7 +176,7 @@ flowchart LR
 | Performance (Task 1) | about 100 ms per filter change, CLS 0 | Vitest bench, `performance.measure`, DevTools at 4x CPU throttle, web-vitals |
 | Accessibility | No serious or critical axe issues | axe DevTools per route, keyboard-only walkthrough, screen reader spot checks |
 | Reliability (Task 2) | No duplicate orders, true state after reload | Reducer and idempotency tests, manual reload during checkout |
-| Maintainability | Rujal can explain and change any file live | Plain code, small pure functions, self-quiz after each task |
+| Maintainability | Any file can be read and changed without deep context | Plain code, small pure functions, a comment on every non-obvious rule |
 
 ## 8. Testing strategy
 
@@ -206,7 +203,7 @@ Rules for writing tests:
 
 ## 9. Extension points
 
-Where a likely interview change would go:
+Where common changes would go:
 
 - New Task 1 filter: add to the filter state type, the URL codec, the engine's filter list and facet list, then the panel. Tests in `engine.test.ts`.
 - New currency: `src/lib/money` currency list and formatter; nothing else should need to change.
