@@ -20,7 +20,7 @@ All colours, radii and shadows are CSS variables in `globals.css`, in the shadcn
 Rules:
 
 - No raw colour values (hex, rgb, oklch) in components. Use the token classes.
-- Add semantic tokens, not one-off colours, when something new is needed: for example `--success`, `--warning`, `--unavailable`. Add them in `globals.css` with light and dark values and a contrast note.
+- Add semantic tokens, not one-off colours, when something new is needed: for example `--success`, `--warning`, `--unavailable`. Add them in `globals.css` with a contrast note. The app is light theme only (dark mode was not designed).
 - Body text and interactive text meet 4.5:1 contrast against their background; large text and UI boundaries meet 3:1. The handoff lists the checked pairs; keep to them.
 - The focus ring uses `--ring`, at least 2 px, never removed. Focus must not be hidden behind sticky bars (WCAG 2.2, 2.4.11).
 
@@ -29,6 +29,8 @@ Rules:
 - Font: **IBM Plex Sans**, chosen because it has Thai and Devanagari companions for a future translated UI. Loaded with `next/font`, self-hosted, `display: swap`.
 - Use the type scale from the handoff. Prices and times use tabular numbers (`font-variant-numeric: tabular-nums`) so columns line up and nothing shifts while updating.
 - Minimum body size 16 px on mobile.
+- Only the Latin subset of IBM Plex Sans is loaded (400, 500, 600). The UI is English only, so the Thai and Devanagari companions would be download weight for text we never show.
+- With more time: load IBM Plex Sans Thai and IBM Plex Sans Devanagari when the UI is translated.
 
 ## 4. Spacing, layout and motion
 
