@@ -2,6 +2,7 @@
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "SonarSource.sonarlint-vscode"
+    "SonarSource.sonarlint-vscode",
+    "bradlc.vscode-tailwindcss"
   ]
 }

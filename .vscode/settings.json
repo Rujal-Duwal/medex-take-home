@@ -3,5 +3,10 @@
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
+  },
+  // VS Code's built-in CSS checker doesn't know Tailwind v4's @theme, @apply or @custom-variant.
+  // Opening .css files as Tailwind CSS (from the Tailwind CSS IntelliSense extension) fixes that.
+  "files.associations": {
+    "*.css": "tailwindcss"
   }
 }
