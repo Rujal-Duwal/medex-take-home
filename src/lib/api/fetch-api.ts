@@ -56,10 +56,8 @@ function readPageMockFlags(): MockFlags {
   return parseMockFlags(window.location.search);
 }
 
-// The one offline rule. The offline banner (WBS 2.5) uses this too, so they always agree.
-// The banner must call it in an effect, not during render: the server can't know, so it
-// would render "online" and the first client render would not match.
-// fetchApi passes the flags it already read; the banner calls it with no argument.
+// The one offline rule. useIsOffline (and so the offline banner) uses this too, so they always
+// agree. fetchApi passes the flags it already read; useIsOffline calls it with no argument.
 export function isOffline(flags: MockFlags = readPageMockFlags()): boolean {
   return !navigator.onLine || flags.offline;
 }
