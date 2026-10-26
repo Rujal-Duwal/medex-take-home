@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
+import { LiveAnnouncerProvider } from "@/lib/a11y/live-announcer";
 import "./globals.css";
 
-// IBM Plex Sans has Thai and Devanagari companions for a future translated UI (docs/design-system.md).
-// next/font downloads the files at build time and serves them from our own domain,
-// so no request goes to Google when a customer opens the page.
+// Latin only: the UI is English. Thai and Devanagari companions come with translations
+// (docs/design-system.md, section 3). next/font downloads the files at build time and serves
+// them from our own domain, so no request goes to Google when a customer opens the page.
 const plexSans = IBM_Plex_Sans({
-  variable: "--font-sans",
+  variable: "--font-plex",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${plexSans.variable} h-full antialiased`}>
+    <html lang="en" className={`${plexSans.variable} h-full`}>
       <body className="flex min-h-full flex-col">
         {/* First thing a keyboard user reaches: jumps past the header straight to the content. */}
         <a
@@ -29,9 +30,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         {/* The only <main> in the app. Pages render inside it and must not add their own. */}
-        <main id="main" className="flex flex-1 flex-col">
-          {children}
-        </main>
+        {/* Renders the one shared polite live region after the page content. */}
+        <LiveAnnouncerProvider>
+          <main id="main" className="flex flex-1 flex-col">
+            {children}
+          </main>
+        </LiveAnnouncerProvider>
       </body>
     </html>
   );
