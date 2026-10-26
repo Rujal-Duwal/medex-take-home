@@ -42,10 +42,7 @@ Rujal has to explain every line and extend it live, without AI, in a 30-minute i
 
 npm is the package manager (one less tool for reviewers).
 
-- `npm install` then `npm run dev`: run locally at http://localhost:3000
 - `npm run check`: lint, type check and tests together. Must pass before a package is done.
-- `npm test` / `npm run test:watch`: Vitest
-- `npm run bench`: Vitest bench for the Task 1 engine
 - `npm run audit:data`: asserts the data audit counts in the specs
 
 ## Stack (decided, do not change without asking)
@@ -55,33 +52,13 @@ npm is the package manager (one less tool for reviewers).
 - big.js for money maths (decision D2)
 - Luxon for time zones (decision D3)
 - Vitest and Testing Library
-- ESLint: Next.js core-web-vitals, typescript-eslint strictTypeChecked and stylisticTypeChecked, jsx-a11y, eslint-plugin-sonarjs recommended, the rest of Sonar way in `eslint.sonar-way.mjs` (unicorn, Testing Library, promise and others), Prettier last; zero warnings allowed (ADR 0012)
 - GitHub Actions CI (lint, type check, tests), Vercel Hobby for the deploy
 
 Ask before adding any other dependency. Say what it saves and what it costs to explain.
 
 ## Folder layout
 
-```
-data/                     raw JSON from MedEx, never edited
-docs/ARCHITECTURE.md      layers, data flow, state placement
-docs/adr/                 architecture decision records
-docs/design-system.md     design rules
-docs/standards.md         official links for each standard
-docs/briefs/              the three MedEx briefs (PDF)
-docs/specs/               one spec per task (read before coding)
-design/                   screens from Claude Design (a guide, not a spec)
-scripts/audit-data.ts     checks the audit counts
-src/app/                  routes: /, /services, /cart, /booking
-src/app/api/mock/         mock API route handlers
-src/lib/mock/             latency, failure flags, data loading (the ONLY code that reads /data)
-src/lib/api/              fetchApi: the client fetch wrapper and its typed ApiResult
-src/lib/money/            parse, calculate, format money
-src/lib/a11y/             live announcer
-src/components/ui/        shadcn components
-src/components/states/    skeleton, empty, error with retry, offline banner
-src/features/<task>/      api client, API types, mappers, logic, components for that task
-```
+`data/` is raw JSON from MedEx: never edit it.
 
 Inside each `src/features/<task>/`:
 
@@ -120,7 +97,7 @@ Every mock endpoint goes through one helper in `src/lib/mock` that applies laten
 ## Definition of done for every work package
 
 - `npm run check` passes
-- npm run lint shows 0 errors and 0 warnings; npm run typecheck shows 0 errors; no eslint-disable without a one-line reason
+- no eslint-disable without a one-line reason
 - strict TypeScript, no `any`, no unexplained `as` casts
 - business rules in pure functions with tests
 - components read only mapped UI shapes
@@ -137,13 +114,7 @@ One work package per session. Rujal starts it with `/wbs <id>` (for example `/wb
 2. Write tests first for logic packages, then the code.
 3. Stay inside the package. Do not refactor unrelated code or start the next package.
 4. When something is ambiguous: use the default in the spec. If the spec has none, pick the simplest reasonable option, add it to Decisions and flag it in your summary.
-5. Finish with a summary:
-   - files changed and why, in plain words
-   - the 2 or 3 parts Rujal should read most carefully
-   - decisions added
-   - anything not done
-   - proposed commit messages, conventional style with a scope: `feat(services): ...`, `fix(cart): ...`, `test(booking): ...`, `chore(mock): ...`, `docs: ...`
-   - a new entry for `AI_LOG.md`
+5. Finish with a short note. Rujal then runs `/review-package`, which writes the full summary, proposed commits (conventional style with a scope, for example `feat(services): ...`) and the `AI_LOG.md` entry.
 
 **Do not run `git commit`, `git push` or change git config.** Rujal reviews the diff and commits himself. The commit history is read by MedEx.
 
