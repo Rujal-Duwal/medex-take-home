@@ -13,8 +13,10 @@ const plexSans = IBM_Plex_Sans({
   display: "swap",
 });
 
+// Every page needs its own title (WCAG 2.4.2). A page sets `title: "Services"` and the
+// template turns it into "Services | MedEx". Pages without one get the default.
 export const metadata: Metadata = {
-  title: "MedEx take-home",
+  title: { default: "MedEx take-home", template: "%s | MedEx" },
   description: "Service explorer, cart and booking for MedEx",
 };
 
@@ -29,9 +31,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        {/* The only <main> in the app. Pages render inside it and must not add their own. */}
         {/* Renders the one shared polite live region after the page content. */}
         <LiveAnnouncerProvider>
+          {/* The only <main> in the app. Pages render inside it and must not add their own. */}
           <main id="main" className="flex flex-1 flex-col">
             {children}
           </main>
