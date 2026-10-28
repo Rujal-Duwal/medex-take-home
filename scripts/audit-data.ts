@@ -9,7 +9,12 @@ import Big from "big.js";
 import task1 from "../data/task1-service-explorer.json" with { type: "json" };
 import task3 from "../data/task3-booking.json" with { type: "json" };
 // Type-only, so Node strips it when it runs the script.
-import type { ApiCategory, ApiProvider, ApiService } from "../src/features/services/api-types";
+import type {
+  ApiCategory,
+  ApiProvider,
+  ApiService,
+  ApiWellnessOption,
+} from "../src/features/services/api-types";
 
 let failures = 0;
 
@@ -273,10 +278,83 @@ check(
     .filter((o) => discountTooBig(o.price, o.discount, o.discountType)).length,
   0,
 );
+// The mapper hides a service it can't price rather than show 0 (Decisions). Today there is none.
 check(
-  "no percent discount is over 100",
-  services.filter((s) => s.discountType === "percent" && new Big(s.discount ?? "0").gt(100)).length,
+  "every non-wellness service has all five pricing fields",
+  services
+    .filter((s) => s.type !== "wellness")
+    .every(
+      (s) =>
+        s.price !== null &&
+        s.discount !== null &&
+        s.discountType !== null &&
+        s.serviceCharge !== null &&
+        s.serviceChargeType !== null,
+    ),
+  true,
+);
+check(
+  "every wellness service has at least one duration option",
+  services.filter((s) => s.type === "wellness").every((s) => s.wellnessPricing.length > 0),
+  true,
+);
+
+// Every set of price terms: each non-wellness service's own, and each wellness option's.
+// The ?? fallbacks never apply: the check above shows every field is set.
+type PriceTerms = Omit<ApiWellnessOption, "id" | "durationInMinutes">;
+const allTerms: PriceTerms[] = [
+  ...services
+    .filter((s) => s.type !== "wellness")
+    .map((s) => ({
+      price: s.price ?? "0",
+      discount: s.discount ?? "0",
+      discountType: s.discountType ?? "amount",
+      serviceCharge: s.serviceCharge ?? "0",
+      serviceChargeType: s.serviceChargeType ?? "amount",
+    })),
+  ...wellnessOptions,
+];
+check(
+  "no percent discount is over 100, on services or wellness options",
+  allTerms.filter((t) => t.discountType === "percent" && new Big(t.discount).gt(100)).length,
   0,
+);
+check(
+  "no price, discount or service charge is negative",
+  allTerms.filter((t) => [t.price, t.discount, t.serviceCharge].some((v) => new Big(v).lt(0)))
+    .length,
+  0,
+);
+check(
+  "no wellness option is priced 0",
+  wellnessOptions.filter((o) => new Big(o.price).eq(0)).length,
+  0,
+);
+
+// The brief's formula, written out again here on purpose (see the note at the top).
+const adjustment = (type: "percent" | "amount", value: string, base: Big): Big =>
+  type === "percent" ? base.times(value).div(100) : new Big(value);
+const discountOf = (t: PriceTerms): Big => adjustment(t.discountType, t.discount, new Big(t.price));
+check(
+  "no discount brings a price to exactly 0",
+  allTerms.filter((t) => new Big(t.price).gt(0) && discountOf(t).eq(t.price)).length,
+  0,
+);
+// Why the struck-through price includes the service charge (Decisions): with the bare price
+// struck through instead, these would show a struck-through price at or below the final one.
+check(
+  "39 discounted prices come to the bare price or more once the charge is added",
+  allTerms.filter((t) => {
+    const price = new Big(t.price);
+    const discount = discountOf(t);
+    if (discount.lte(0) || discount.gt(price)) return false;
+    const afterDiscount = price.minus(discount);
+    const final = afterDiscount.plus(
+      adjustment(t.serviceChargeType, t.serviceCharge, afterDiscount),
+    );
+    return final.gte(price);
+  }).length,
+  39,
 );
 
 // ---------- Task 3 ----------
