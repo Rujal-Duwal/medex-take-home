@@ -18,18 +18,18 @@ import { sonarWayRules, sonarWayTestRules } from "./eslint.sonar-way.mjs";
 // for example "../../data/task1-service-explorer.json" or "@/../data/...".
 // It only sees static import paths: dynamic import(), require(), absolute paths and
 // fs.readFile calls get past it, so those stay a review check.
-const noDataImports = [
-  "error",
-  {
-    patterns: [
-      {
-        regex: String.raw`^(\.{1,2}/)+data(/|$)|^@/\.\./data(/|$)`,
-        message:
-          "Only src/lib/mock and scripts/ may read data/. Fetch it through the mock API instead.",
-      },
-    ],
-  },
-];
+const dataFolderPattern = {
+  regex: String.raw`^(\.{1,2}/)+data(/|$)|^@/\.\./data(/|$)`,
+  message: "Only src/lib/mock and scripts/ may read data/. Fetch it through the mock API instead.",
+};
+// The modules in src/lib/mock that hold the data (task1-data.ts) are server only: a client
+// component importing one would ship the whole JSON to the browser. Only src/app (route
+// handlers and server pages) may import them; see the src/app block below.
+const serverDataModulePattern = {
+  regex: String.raw`^@/lib/mock/task\d-data$`,
+  message: "Server only. Import it from a route handler or a server page in src/app.",
+};
+const noDataImports = ["error", { patterns: [dataFolderPattern, serverDataModulePattern] }];
 
 const eslintConfig = defineConfig([
   // 1. Next.js: React, hooks, the Next plugin and Core Web Vitals rules.
@@ -59,6 +59,11 @@ const eslintConfig = defineConfig([
       ...jsxA11y.flatConfigs.recommended.rules,
       "no-restricted-imports": noDataImports,
     },
+  },
+  // Route handlers and server pages may import the server-only data modules, not data/ itself.
+  {
+    files: ["src/app/**"],
+    rules: { "no-restricted-imports": ["error", { patterns: [dataFolderPattern] }] },
   },
   // The two places allowed to read data/. flags.ts is left out: the client fetch
   // wrapper imports it, so a data/ import there would ship the JSON to the browser.
