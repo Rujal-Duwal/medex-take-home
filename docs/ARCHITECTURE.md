@@ -104,6 +104,7 @@ flowchart LR
 ```
 
 - `mapCatalogue` (`mappers.ts`) turns the three endpoint responses into one `Catalogue` holding only what a customer can see. The visibility rule (service, provider, category and subcategory all active) lives there and nowhere else in the app. `scripts/audit-data.ts` restates it on purpose, to check the spec's counts against the raw data.
+- `url-codec.ts` turns the URL into a `ServiceQuery` plus the compare selection, and back. Defaults are left out; bad values and anything not in the mapped catalogue are dropped quietly, so it needs the catalogue to parse.
 - The same `engine` runs on the server (first render from `searchParams`, so no unfiltered flash) and on the client (live facet counts).
 - Prices are computed once at mapping time with big.js and stored on each UI service, with every amount the price filter checks (`payableAmounts`) and the normalised search text per field (`search`).
 - `runQuery` (`engine.ts`) takes the `Catalogue` and a `ServiceQuery` and returns the page of provider groups, the counts and `facetCounts`. Search is applied once, first, since it has no counts. Results come from one pass with every filter. Each facet's counts come from one more pass with that facet's filter cleared (`withoutFacet`). Matches are sorted once, then grouped by provider in that order, so groups follow their best service.
