@@ -61,6 +61,23 @@ export function fixedPrice(terms: PriceTerms, currency: Currency): Price {
   return { kind: "fixed", final, original };
 }
 
+// The one amount a price stands for when filtering and sorting: what the card shows. The final
+// price, the "From" price for wellness (service 0003), and 0 for Free (service 0006). Free
+// carries no Money, so the provider's currency is passed in.
+export function shownAmount(price: Price, currency: Currency): Money {
+  switch (price.kind) {
+    case "free": {
+      return { amount: new Big(0), currency };
+    }
+    case "fixed": {
+      return price.final;
+    }
+    case "from": {
+      return price.lowest;
+    }
+  }
+}
+
 // A wellness service: "From" its cheapest option by final price (service 0003). A tie goes to the
 // shorter option. Undefined when there are no options: the price is unknown, never 0, and the
 // mapper hides the service.

@@ -58,6 +58,14 @@ export interface Service {
   subcategoryKey?: string;
   testAtHome: boolean;
   price: Price;
+  // Every final amount the customer could pay: one for a fixed or Free service (0), one per
+  // duration option for wellness. The price filter matches a service if any of them is in range
+  // (spec Decisions); price is still what is shown and sorted.
+  payableAmounts: Money[];
+  // Search text worked out once when mapping (normalizeForSearch), kept per field because
+  // relevance ranks a title match above a category match above a provider match (D6).
+  // category holds the category and subcategory titles; it is empty for Other.
+  search: { title: string; category: string; provider: string };
 }
 
 // Everything a customer can see. Hidden categories, providers and services are already gone.

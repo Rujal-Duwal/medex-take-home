@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { formatMoney } from "@/lib/money/money";
-import type { ApiCategory, ApiProvider, ApiService, ApiSubcategory } from "./api-types";
-import { mapCatalogue, tidyText } from "./mappers";
+import type {
+  ApiCategory,
+  ApiProvider,
+  ApiService,
+  ApiSubcategory,
+  ApiWellnessOption,
+} from "./api-types";
+import { mapCatalogue, normalizeForSearch, tidyText } from "./mappers";
 import { OTHER_CATEGORY_KEY } from "./types";
 
 // Small fixtures in the shape of data/task1-service-explorer.json. Ids and slugs match the
@@ -81,9 +87,47 @@ function service(id: string, overrides: Partial<ApiService> = {}): ApiService {
 
 const checkup = category("checkup", "health-check-up", "package");
 
+// A wellness service keeps its prices in wellnessPricing, with the service's own price fields null.
+const wellnessFields = {
+  type: "wellness" as const,
+  price: null,
+  discount: null,
+  discountType: null,
+  serviceCharge: null,
+  serviceChargeType: null,
+};
+
+// A wellness option with an amount discount and no service charge.
+function option(durationInMinutes: number, price: string, discount = "0.00"): ApiWellnessOption {
+  return {
+    id: `option-${String(durationInMinutes)}`,
+    durationInMinutes,
+    price,
+    discount,
+    discountType: "amount",
+    serviceCharge: "0.00",
+    serviceChargeType: "amount",
+  };
+}
+
 describe("tidyText", () => {
   it("trims and collapses spaces in the title of service 0007", () => {
     expect(tidyText("  hba1c   TEST (Diabetes) ")).toBe("hba1c TEST (Diabetes)");
+  });
+});
+
+describe("normalizeForSearch", () => {
+  it("lowercases service 0007's title and turns its brackets into spaces", () => {
+    expect(normalizeForSearch("  hba1c   TEST (Diabetes) ")).toBe("hba1c test diabetes");
+  });
+
+  it("splits words on punctuation, so check-up matches check up", () => {
+    expect(normalizeForSearch("Women's Check-Up")).toBe("women s check up");
+  });
+
+  it("keeps Thai and Devanagari vowel signs inside a word", () => {
+    expect(normalizeForSearch("ตรวจสุขภาพ")).toBe("ตรวจสุขภาพ");
+    expect(normalizeForSearch("स्वास्थ्य जाँच")).toBe("स्वास्थ्य जाँच");
   });
 });
 
@@ -175,25 +219,7 @@ describe("mapCatalogue: prices", () => {
   });
 
   it("gives wellness service 0003 a from price", () => {
-    const raw = service("0003", {
-      type: "wellness",
-      price: null,
-      discount: null,
-      discountType: null,
-      serviceCharge: null,
-      serviceChargeType: null,
-      wellnessPricing: [
-        {
-          id: "option-60",
-          durationInMinutes: 60,
-          price: "1800.00",
-          discount: "0.00",
-          discountType: "amount",
-          serviceCharge: "0.00",
-          serviceChargeType: "amount",
-        },
-      ],
-    });
+    const raw = service("0003", { ...wellnessFields, wellnessPricing: [option(60, "1800.00")] });
     const price = mapCatalogue([checkup], [provider(48)], [raw]).services[0]?.price;
     expect(price?.kind).toBe("from");
     if (price?.kind !== "from") return;
@@ -212,6 +238,59 @@ describe("mapCatalogue: prices", () => {
   it("hides a wellness service with no options instead of showing 0", () => {
     const raw = service("no-options", { type: "wellness", price: null, wellnessPricing: [] });
     expect(mapCatalogue([checkup], [provider(48)], [raw]).services).toEqual([]);
+  });
+});
+
+describe("mapCatalogue: price filter amounts", () => {
+  it("gives a fixed service its final price", () => {
+    const { services } = mapCatalogue([checkup], [provider(48)], [service("0001")]);
+    expect(services[0]?.payableAmounts.map((a) => formatMoney(a))).toEqual(["5,970.60 THB"]);
+  });
+
+  it("gives a Free service 0", () => {
+    const { services } = mapCatalogue(
+      [checkup],
+      [provider(48)],
+      [service("0006", { price: "0.00" })],
+    );
+    expect(services[0]?.payableAmounts.map((a) => formatMoney(a))).toEqual(["0.00 THB"]);
+  });
+
+  it("gives wellness service 0003 every option's final price, not only the cheapest", () => {
+    const raw = service("0003", {
+      ...wellnessFields,
+      wellnessPricing: [option(60, "1800.00"), option(90, "2400.00", "360.00")],
+    });
+    const { services } = mapCatalogue([checkup], [provider(48)], [raw]);
+    expect(services[0]?.payableAmounts.map((a) => formatMoney(a))).toEqual([
+      "1,800.00 THB",
+      "2,040.00 THB",
+    ]);
+  });
+});
+
+describe("mapCatalogue: search text", () => {
+  const bloodTests = { ...category("bt", "blood-tests", "lab_test"), title: "Blood Tests" };
+  bloodTests.children = [{ ...subcategory("bt-thyroid", "thyroid", bloodTests), title: "Thyroid" }];
+
+  it("keeps the title, category and provider name apart for relevance", () => {
+    const raw = service("0007", {
+      title: "  hba1c   TEST (Diabetes) ",
+      categoryId: "bt",
+      subCategoryId: "bt-thyroid",
+    });
+    const { services } = mapCatalogue([bloodTests], [provider(48)], [raw]);
+    expect(services[0]?.search).toEqual({
+      title: "hba1c test diabetes",
+      category: "blood tests thyroid",
+      provider: "riverside international hospital",
+    });
+  });
+
+  it("leaves the category text empty for Other", () => {
+    const raw = service("no-category", { categoryId: null });
+    const { services } = mapCatalogue([checkup], [provider(48)], [raw]);
+    expect(services[0]?.search.category).toBe("");
   });
 });
 

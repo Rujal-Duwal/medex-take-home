@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatMoney } from "@/lib/money/money";
-import { finalPrice, fixedPrice, fromPrice, type PriceTerms } from "./pricing";
+import { formatMoney, parseMoney } from "@/lib/money/money";
+import { finalPrice, fixedPrice, fromPrice, shownAmount, type PriceTerms } from "./pricing";
 import type { Price } from "./types";
 
 // Default terms: no discount, no charge. Each test overrides only what its case is about.
@@ -178,5 +178,25 @@ describe("fromPrice", () => {
 
   it("gives no price for a wellness service with no options, never 0", () => {
     expect(fromPrice([], "THB")).toBeUndefined();
+  });
+});
+
+describe("shownAmount", () => {
+  it("is the final price of a fixed price", () => {
+    const price = { kind: "fixed" as const, final: parseMoney("5970.60", "THB") };
+    expect(formatMoney(shownAmount(price, "THB"))).toBe("5,970.60 THB");
+  });
+
+  it("is the from price of a wellness service (0003)", () => {
+    const price = {
+      kind: "from" as const,
+      lowest: parseMoney("1800", "THB"),
+      durationInMinutes: 60,
+    };
+    expect(formatMoney(shownAmount(price, "THB"))).toBe("1,800.00 THB");
+  });
+
+  it("is 0 in the provider's currency for a Free service (0006)", () => {
+    expect(formatMoney(shownAmount({ kind: "free" }, "NPR"))).toBe("0.00 NPR");
   });
 });
