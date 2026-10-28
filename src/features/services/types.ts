@@ -3,7 +3,9 @@ import type { Currency, Money } from "@/lib/money/money";
 // UI shapes for Task 1. mappers.ts builds these from the API types; components and the engine
 // only ever see these.
 
-export type ServiceType = "package" | "lab_test" | "wellness" | "service" | "insurance";
+// A list as well as a type, so the URL codec can check a value from the address bar.
+export const SERVICE_TYPES = ["package", "lab_test", "wellness", "service", "insurance"] as const;
+export type ServiceType = (typeof SERVICE_TYPES)[number];
 
 // Category keys always include the type, because slugs repeat across types:
 // "package.ultrasound" and "lab_test.ultrasound" are different categories, and

@@ -12,7 +12,9 @@ import type { Catalogue, Provider, Service, ServiceType } from "./types";
 export const PAGE_SIZE = 10; // provider groups per page (D9)
 export const GROUP_PREVIEW_SIZE = 3; // services shown per group before "View all N"
 
-export type SortOrder = "relevance" | "price-asc" | "price-desc" | "rating";
+// A list as well as a type, so the URL codec can check a value from the address bar.
+export const SORT_ORDERS = ["relevance", "price-asc", "price-desc", "rating"] as const;
+export type SortOrder = (typeof SORT_ORDERS)[number];
 
 // One city or one country, never both, so a location implies at most one currency.
 export type Location = { kind: "city"; slug: string } | { kind: "country"; code: string };
