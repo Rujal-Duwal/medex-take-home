@@ -1,4 +1,4 @@
-import type { Currency } from "@/lib/money/money";
+import type { Currency, Money } from "@/lib/money/money";
 
 // UI shapes for Task 1. mappers.ts builds these from the API types; components and the engine
 // only ever see these.
@@ -38,6 +38,16 @@ export interface Provider {
   rating: ProviderRating;
 }
 
+// What a customer pays, worked out once when mapping (pricing.ts). The kinds keep "free" and
+// "from" apart from a real amount, so a component can't show 0 by mistake.
+// original is the price without the discount, struck through on screen. It is only set when a
+// discount applies, and it includes the service charge, like final.
+export type Price =
+  | { kind: "fixed"; final: Money; original?: Money }
+  // Wellness: the cheapest duration option. The real price is unknown until one is chosen.
+  | { kind: "from"; lowest: Money; durationInMinutes: number; original?: Money }
+  | { kind: "free" };
+
 export interface Service {
   id: string;
   title: string;
@@ -47,6 +57,7 @@ export interface Service {
   // Undefined when the service sits directly in its category, or in Other.
   subcategoryKey?: string;
   testAtHome: boolean;
+  price: Price;
 }
 
 // Everything a customer can see. Hidden categories, providers and services are already gone.

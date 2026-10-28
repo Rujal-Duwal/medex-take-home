@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { formatMoney } from "@/lib/money/money";
 import type { ApiCategory, ApiProvider, ApiService, ApiSubcategory } from "./api-types";
 import { mapCatalogue, tidyText } from "./mappers";
 import { OTHER_CATEGORY_KEY } from "./types";
@@ -96,7 +97,8 @@ describe("mapCatalogue: services", () => {
   it("maps provider, type and home test without the API field names", () => {
     const raw = service("checkup-1", { userId: 48, type: "package", testAtHome: true });
     const { services } = mapCatalogue([checkup], [provider(48)], [raw]);
-    expect(services).toEqual([
+    // toMatchObject: the price has its own tests below.
+    expect(services).toMatchObject([
       {
         id: "checkup-1",
         title: "Executive Health Check (Male)",
@@ -145,6 +147,71 @@ describe("mapCatalogue: services", () => {
     const noSubcategory = service("orphan-3", { subCategoryId: "missing" });
     const raw = [noProvider, noCategory, noSubcategory];
     expect(mapCatalogue([checkup], [provider(48)], raw).services).toEqual([]);
+  });
+});
+
+describe("mapCatalogue: prices", () => {
+  // The rules themselves are tested in pricing.test.ts. These check the mapper picks the right
+  // one, in the provider's currency, and hides a service it can't price.
+  const nprProvider = provider(48);
+  nprProvider.providerInformation = { ...nprProvider.providerInformation, currency: "NPR" };
+
+  it("gives service 0001 its price, with the struck-through price", () => {
+    const { services } = mapCatalogue([checkup], [provider(48)], [service("0001")]);
+    const price = services[0]?.price;
+    expect(price?.kind).toBe("fixed");
+    if (price?.kind !== "fixed") return;
+    expect(formatMoney(price.final)).toBe("5,970.60 THB");
+    expect(price.original).toBeDefined();
+    if (price.original === undefined) return;
+    expect(formatMoney(price.original)).toBe("6,634.00 THB");
+  });
+
+  it("prices a service in its provider's currency", () => {
+    const price = mapCatalogue([checkup], [nprProvider], [service("npr-1")]).services[0]?.price;
+    expect(price?.kind).toBe("fixed");
+    if (price?.kind !== "fixed") return;
+    expect(price.final.currency).toBe("NPR");
+  });
+
+  it("gives wellness service 0003 a from price", () => {
+    const raw = service("0003", {
+      type: "wellness",
+      price: null,
+      discount: null,
+      discountType: null,
+      serviceCharge: null,
+      serviceChargeType: null,
+      wellnessPricing: [
+        {
+          id: "option-60",
+          durationInMinutes: 60,
+          price: "1800.00",
+          discount: "0.00",
+          discountType: "amount",
+          serviceCharge: "0.00",
+          serviceChargeType: "amount",
+        },
+      ],
+    });
+    const price = mapCatalogue([checkup], [provider(48)], [raw]).services[0]?.price;
+    expect(price?.kind).toBe("from");
+    if (price?.kind !== "from") return;
+    expect(formatMoney(price.lowest)).toBe("1,800.00 THB");
+    expect(price.durationInMinutes).toBe(60);
+  });
+
+  it("hides a service with a null pricing field instead of showing 0", () => {
+    const raw = [
+      service("no-price", { price: null }),
+      service("no-discount-type", { discountType: null }),
+    ];
+    expect(mapCatalogue([checkup], [provider(48)], raw).services).toEqual([]);
+  });
+
+  it("hides a wellness service with no options instead of showing 0", () => {
+    const raw = service("no-options", { type: "wellness", price: null, wellnessPricing: [] });
+    expect(mapCatalogue([checkup], [provider(48)], [raw]).services).toEqual([]);
   });
 });
 

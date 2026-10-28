@@ -1,8 +1,11 @@
+import type { Currency } from "@/lib/money/money";
 import type { ApiCategory, ApiProvider, ApiService } from "./api-types";
+import { fixedPrice, fromPrice } from "./pricing";
 import {
   OTHER_CATEGORY_KEY,
   type Catalogue,
   type Category,
+  type Price,
   type Provider,
   type ProviderRating,
   type Service,
@@ -11,7 +14,7 @@ import {
 
 // API shapes to UI shapes for Task 1 (the anti-corruption layer, ARCHITECTURE.md section 0).
 // Raw field names (userId, providerInformation, subCategoryId) stop here.
-// Prices are added in WBS 3.2 and the search text in WBS 3.3, both computed once here.
+// Prices are worked out once here (pricing.ts); the search text is added in WBS 3.3.
 
 // Titles in the data can carry stray spaces (service 0007: "  hba1c   TEST (Diabetes) ").
 // Display text is trimmed with single spaces. Case is left alone; search lowercases on its own.
@@ -79,19 +82,42 @@ function mapProvider(provider: ApiProvider): Provider {
   };
 }
 
-// Built from active categories, subcategories and providers only. A service whose category is
-// inactive, or missing from the data, finds no key and is hidden with it.
+// Built from active categories, subcategories and providers only. A service whose provider or
+// category is inactive, or missing from the data, finds nothing and is hidden with it.
 interface Lookups {
-  activeProviderIds: Set<number>;
+  // A service is priced in its provider's currency.
+  currencyByActiveProviderId: Map<number, Currency>;
   categoryKeyById: Map<string, string>;
   subcategoryKeyById: Map<string, string>;
+}
+
+// Wellness services are priced by their duration options, everything else by its own fields.
+// Undefined when a price can't be worked out (a null field, or no options): the price is
+// unknown, and unknown is never shown as 0. None in the data today; the audit asserts that.
+function mapPrice(service: ApiService, currency: Currency): Price | undefined {
+  // An API wellness option already has every field WellnessOption needs, none of them null.
+  if (service.type === "wellness") return fromPrice(service.wellnessPricing, currency);
+
+  const { price, discount, discountType, serviceCharge, serviceChargeType } = service;
+  if (
+    price === null ||
+    discount === null ||
+    discountType === null ||
+    serviceCharge === null ||
+    serviceChargeType === null
+  ) {
+    return undefined;
+  }
+  return fixedPrice({ price, discount, discountType, serviceCharge, serviceChargeType }, currency);
 }
 
 // Returns undefined for a service the customer must not see. The visibility rule lives here and
 // nowhere else: the service has status true, its provider is active, and its category and
 // subcategory (if it has them) are active. A service with no category goes under Other.
+// A service with no price we can work out is hidden too (see mapPrice).
 function mapService(service: ApiService, lookups: Lookups): Service | undefined {
-  if (!service.status || !lookups.activeProviderIds.has(service.userId)) return undefined;
+  const currency = lookups.currencyByActiveProviderId.get(service.userId);
+  if (!service.status || currency === undefined) return undefined;
 
   const categoryKey =
     service.categoryId === null
@@ -105,6 +131,9 @@ function mapService(service: ApiService, lookups: Lookups): Service | undefined 
     if (subcategoryKey === undefined) return undefined;
   }
 
+  const price = mapPrice(service, currency);
+  if (price === undefined) return undefined;
+
   return {
     id: service.id,
     title: tidyText(service.title),
@@ -113,6 +142,7 @@ function mapService(service: ApiService, lookups: Lookups): Service | undefined 
     categoryKey,
     subcategoryKey,
     testAtHome: service.testAtHome,
+    price,
   };
 }
 
@@ -127,7 +157,9 @@ export function mapCatalogue(
     .filter((provider) => provider.status === "active")
     .map((provider) => mapProvider(provider));
   const lookups: Lookups = {
-    activeProviderIds: new Set(providers.map((provider) => provider.id)),
+    currencyByActiveProviderId: new Map(
+      providers.map((provider) => [provider.id, provider.currency]),
+    ),
     categoryKeyById,
     subcategoryKeyById,
   };
