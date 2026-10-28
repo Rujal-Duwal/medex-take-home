@@ -184,6 +184,22 @@ check(
   true,
 );
 
+// A location implies its currency (Decisions, WBS 3.3), which holds only if every provider in a
+// country uses the same one. All providers, active or not, so a status change can't break it.
+const currenciesByCountry = countBy(providers, (p) => p.providerInformation.country.alphaCode);
+check(
+  "every country has one currency (TH THB, NP NPR, IN INR)",
+  [...currenciesByCountry].map(([country, inCountry]) => [
+    country,
+    [...new Set(inCountry.map((p) => p.providerInformation.currency))],
+  ]),
+  [
+    ["TH", ["THB"]],
+    ["NP", ["NPR"]],
+    ["IN", ["INR"]],
+  ],
+);
+
 // "Different prices" compares every pricing field, wellness options included but without their
 // ids, which are unique and would make any two wellness listings look different.
 // The price field alone repeats in 180 groups, almost all wellness, where it is null (Decisions).
