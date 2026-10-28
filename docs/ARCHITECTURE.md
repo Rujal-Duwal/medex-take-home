@@ -105,7 +105,8 @@ flowchart LR
 
 - `mapCatalogue` (`mappers.ts`) turns the three endpoint responses into one `Catalogue` holding only what a customer can see. The visibility rule (service, provider, category and subcategory all active) lives there and nowhere else in the app. `scripts/audit-data.ts` restates it on purpose, to check the spec's counts against the raw data.
 - The same `engine` runs on the server (first render from `searchParams`, so no unfiltered flash) and on the client (live facet counts).
-- Prices are computed once at mapping time with big.js and stored on each UI service.
+- Prices are computed once at mapping time with big.js and stored on each UI service, with every amount the price filter checks (`payableAmounts`) and the normalised search text per field (`search`).
+- `runQuery` (`engine.ts`) takes the `Catalogue` and a `ServiceQuery` and returns the page of provider groups, the counts and `facetCounts`. Search is applied once, first, since it has no counts. Results come from one pass with every filter. Each facet's counts come from one more pass with that facet's filter cleared (`withoutFacet`). Matches are sorted once, then grouped by provider in that order, so groups follow their best service.
 - The mobile drawer runs the engine on a pending copy of the filters to show "Show N results" before applying.
 
 ### Task 2: Cart and checkout
@@ -161,7 +162,7 @@ flowchart LR
 
 | Concern | Where | Rule |
 |---|---|---|
-| Money | `src/lib/money` | big.js only; `Money = { amount, currency }`; never mix currencies (ADR 0004). Rounding is half-up to 2 dp, once, in `formatMoney`. Every currency uses en-US grouping (`23,009.50 INR`, not Indian lakh grouping) so the three currencies read the same way in one list. `formatMoney` never prints "Free": the price kind decides that |
+| Money | `src/lib/money` | big.js only; `Money = { amount, currency }`; never mix currencies (ADR 0004): `addMoney` and `compareMoney` throw on two currencies. Rounding is half-up to 2 dp, once, in `formatMoney`. Every currency uses en-US grouping (`23,009.50 INR`, not Indian lakh grouping) so the three currencies read the same way in one list. `formatMoney` never prints "Free": the price kind decides that |
 | Time | `src/features/booking` + Luxon | Resolve zones once; inject `now`; never pass raw zone strings to `Intl` (ADR 0005) |
 | Errors | `src/lib/api/fetch-api.ts` | Every call returns a typed result: `ok`, `offline`, `network`, `server`, `conflict`, `declined`. UI branches on the kind, never on message text |
 | Failure injection | `src/lib/mock/flags.ts`, `src/lib/api/fetch-api.ts`, `src/lib/mock/latency-and-failure.ts` | `?mockDelay`, `?mockFail=<endpoint>[@<group>]:<kind>[:once]`, `?mockOffline=1`. The client picks the failure and forwards only `mockDelay` and `mockStatus`; the server keeps no flag state (ADR 0003, ADR 0011) |
@@ -186,6 +187,7 @@ A testing pyramid sized for a take-home: most confidence comes from fast unit te
 | Level | Tool | What belongs here | Where | Runs |
 |---|---|---|---|---|
 | Unit | Vitest | Every pure function with a business rule: pricing, engine and facets, URL codec, subtotals, quantity queue, checkout reducer, merge, time zone resolver, slot generator, availability | `*.test.ts` next to the file | `npm test`, CI on every push |
+| Real data | Vitest | The engine over the real `data/` file: 2,853 visible, Other, ultrasound, new providers last | `scripts/*.test.ts` (only `scripts/` and `src/lib/mock` may read `data/`) | `npm test`, CI |
 | Mock API | Vitest | Route helpers: flag parsing, `:once`, idempotency (same key, same order), `dayOffset` to dates, current booking marked | `src/lib/mock/*.test.ts`; `:once` end to end in `src/lib/api/fetch-api.test.ts` | `npm test`, CI |
 | Component | Vitest + Testing Library | Only where behaviour is the point: five fast "+" taps, focus after removing a line, drawer "Show N results" before applying | `*.test.tsx` next to the component | `npm test`, CI |
 | Benchmark | Vitest bench | Task 1 engine over 3,200 services; median and p95 | `engine.bench.ts` | `npm run bench`, by hand |
