@@ -150,6 +150,12 @@ Tests: round trip for every param; bad input dropped; the three `thyroid` subcat
 
 Add new decisions below this line as they come up.
 
+- **Other holds 20 visible services, not 22 (WBS 3.1).** The data has 22 services with no `categoryId`; 2 of them are hidden by the other visibility rules. The customer sees 20 under "Other". The engine test "22 services under Other" expects 20 on visible data. Checked in `scripts/audit-data.ts`.
+- **Hidden services overlap (WBS 3.1).** 46 + 113 + 198 = 357, but 347 services are hidden: 10 are hidden for more than one reason. 2,853 visible is exact.
+- **"Always at different prices" means the pricing fields (WBS 3.1).** None of the 747 repeated provider and title groups repeat the same pricing. The `price` field alone repeats in 180 groups, almost all wellness, where `price` is null and prices live in the options.
+- **Inactive subcategory (WBS 3.1).** None in the data. The mapper still hides it and its services, like an inactive category, so a future status change doesn't leak hidden services.
+- **Broken references hide the service (WBS 3.1).** A service whose provider, category or subcategory is not in the data is hidden. None in the data today; the audit asserts that.
+
 ## Tests that must exist
 
 - pricing: 0001, 0002, 0003, 0005, 0006, an amount service charge, rounding only at display
