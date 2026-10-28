@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  applyMockDelayToPage,
   applyMockLatencyAndFailure,
   fakeFailureResponse,
   mockLatencyMs,
@@ -64,5 +65,31 @@ describe("applyMockLatencyAndFailure", () => {
     expect(settled).toBe(false);
     await vi.advanceTimersByTimeAsync(800);
     expect(settled).toBe(true);
+  });
+});
+
+// Resolves to whether the page's wait was over by `afterMs`.
+async function doneAfter(pageSearch: string, afterMs: number): Promise<boolean> {
+  vi.useFakeTimers();
+  let done = false;
+  void applyMockDelayToPage(new URLSearchParams(pageSearch)).then(() => {
+    done = true;
+  });
+  await vi.advanceTimersByTimeAsync(afterMs);
+  return done;
+}
+
+describe("applyMockDelayToPage", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("waits out ?mockDelay=3000 from the page URL", async () => {
+    expect(await doneAfter("mockDelay=3000", 2999)).toBe(false);
+    expect(await doneAfter("mockDelay=3000", 3000)).toBe(true);
+  });
+
+  it("doesn't wait at all without mockDelay, not even the random latency", async () => {
+    expect(await doneAfter("q=thyroid&mockFail=services:500", 0)).toBe(true);
   });
 });

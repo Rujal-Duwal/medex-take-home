@@ -1,4 +1,4 @@
-import { readForwardedMockParams, type FakeStatus } from "./flags";
+import { parseMockFlags, readForwardedMockParams, type FakeStatus } from "./flags";
 
 // Every mock route handler starts with these two lines (CLAUDE.md, "Mock API contract"):
 //
@@ -33,4 +33,13 @@ export async function applyMockLatencyAndFailure(request: Request): Promise<Resp
   const { delayMs, status } = readForwardedMockParams(new URL(request.url).searchParams);
   await sleep(mockLatencyMs(delayMs));
   return status === undefined ? null : fakeFailureResponse(status);
+}
+
+// For a page that renders its first view on the server from data it reads directly, not through
+// an endpoint (Task 1's /services). It waits out the reviewer's ?mockDelay from the page URL, so
+// the loading skeleton can be seen on a first load. Only the delay: failures stay with the
+// client's calls (ADR 0011), and the random latency is left out so a normal first load is fast.
+export async function applyMockDelayToPage(pageParams: URLSearchParams): Promise<void> {
+  const { delayMs } = parseMockFlags(pageParams.toString());
+  if (delayMs > 0) await sleep(delayMs);
 }
