@@ -81,6 +81,8 @@ Every mock endpoint waits a random 300 to 800 ms. Add these to the page URL (not
 
 Endpoint names for `mockFail` are listed in each spec under "Mock endpoints": `categories`, `providers`, `services`, `cart`, `cart-item`, `cart-delete`, `merge`, `checkout`, `orders`, `provider`, `slots`, `availability`, `book`, `reschedule`. A rule with a mistyped endpoint or kind is ignored.
 
+On `/services`: `?mockDelay=4000` shows the loading skeleton (the first render waits too), then "This is taking longer than usual" while the browser loads the data. `?mockFail=services:500:once` shows the error, and "Try again" brings the results back. `?mockOffline=1` keeps the first results under the offline banner. Links inside the page (pages, "View all") don't carry the flags, so type them again after following one.
+
 Cart groups for `@group` are the cart's group types: `lab_test`, `package`, `wellness`, `unknown`. A group name that doesn't exist is accepted but never matches a call.
 
 How it works (ADR 0011): the browser reads these flags, decides whether each call fails, and forwards only `mockDelay` and `mockStatus` to the endpoint. You can see them in the DevTools network tab. `:once` is remembered until the page reloads, so reloading replays a demo. A `network` failure sends the request and then drops the reply, so the server may have done the work. That is the case where checkout must not charge twice.

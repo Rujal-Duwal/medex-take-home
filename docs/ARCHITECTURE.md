@@ -57,7 +57,7 @@ One Next.js App Router project, deployed as one Vercel app.
 | Pages (`src/app/services`, `/cart`, `/booking`, `/`) | Server render, then client | Read the URL, render the first view, hand over to client components |
 | Feature code (`src/features/<task>`) | Server and client | API calls, mapping, pure business logic, UI components |
 | Mock API (`src/app/api/mock/**`) | Server (route handlers) | Serve the data with the same field names as MedEx's API; apply latency and failure |
-| Mock core (`src/lib/mock`) | Server | The only code that reads `data/`; latency, faked failures, in-memory state. `flags.ts` is the exception: pure, no `data/` imports, also used by the client |
+| Mock core (`src/lib/mock`) | Server | The only code that reads `data/` (`task1-data.ts` and the like, used by the route handlers and by the `/services` server render); latency, faked failures, in-memory state. `flags.ts` is the exception: pure, no `data/` imports, also used by the client |
 | Fetch wrapper (`src/lib/api`) | Client | `fetchApi` and `ApiResult`: reads the page's mock flags, picks the failure for each call, returns a typed result. `isOffline()` for the offline banner |
 | Shared libs (`src/lib/money`, `src/lib/a11y`) | Both | Money maths and formatting; the live announcer (`LiveAnnouncerProvider` in the root layout, `useAnnounce()` in components) |
 | Shared UI (`src/components/ui`, `src/components/states`) | Client | shadcn components adjusted to the design tokens; the shared states: `EmptyState`, `ErrorState`, `OfflineBanner` (via `useIsOffline` in `src/lib/api`) and `Skeleton` |
@@ -88,6 +88,7 @@ Rules that follow from this:
 - Components never see raw API field names. They receive UI shapes from mappers.
 - Pure logic never fetches, never reads the clock, never touches the DOM. It takes inputs (including `now`) and returns values, so it is easy to test and easy to change live.
 - Only `src/lib/mock` and `scripts/` import from `data/`. ESLint enforces it.
+- One shortcut past the client layer: a server page may read data through `src/lib/mock` for its first render (Task 1's `/services`), as a real server would call MedEx's API internally. ESLint allows the server-only data modules (`task1-data.ts`) only in `src/app`.
 
 ## 4. Components per task
 
@@ -109,6 +110,8 @@ flowchart LR
 - Prices are computed once at mapping time with big.js and stored on each UI service, with every amount the price filter checks (`payableAmounts`) and the normalised search text per field (`search`).
 - `runQuery` (`engine.ts`) takes the `Catalogue` and a `ServiceQuery` and returns the page of provider groups, the counts and `facetCounts`. Search is applied once, first, since it has no counts. Results come from one pass with every filter. Each facet's counts come from one more pass with that facet's filter cleared (`withoutFacet`). Matches are sorted once, then grouped by provider in that order, so groups follow their best service.
 - The mobile drawer runs the engine on a pending copy of the filters to show "Show N results" before applying.
+- Hand-over (`src/app/services/page.tsx`, `components/service-explorer.tsx`): the server page reads the data through `src/lib/mock/task1-data.ts`, runs the codec and engine, and turns the result into a `ResultsView` (`results-view.ts`): plain strings and links, so it can be passed to a client component. `ServiceExplorer` shows it until `useCatalogue` has loaded the three endpoints, then renders the same `ServiceResults` from its own run of the engine on `useSearchParams()`. Same inputs, same output, so the swap can't be seen.
+- `useCatalogue` holds the client load: loading (with a slow flag after 3 s), ready, failed, offline. "Try again" starts a new attempt.
 
 ### Task 2: Cart and checkout
 
@@ -189,7 +192,7 @@ A testing pyramid sized for a take-home: most confidence comes from fast unit te
 |---|---|---|---|---|
 | Unit | Vitest | Every pure function with a business rule: pricing, engine and facets, URL codec, subtotals, quantity queue, checkout reducer, merge, time zone resolver, slot generator, availability | `*.test.ts` next to the file | `npm test`, CI on every push |
 | Real data | Vitest | The engine over the real `data/` file: 2,853 visible, Other, ultrasound, new providers last | `scripts/*.test.ts` (only `scripts/` and `src/lib/mock` may read `data/`) | `npm test`, CI |
-| Mock API | Vitest | Route helpers: flag parsing, `:once`, idempotency (same key, same order), `dayOffset` to dates, current booking marked | `src/lib/mock/*.test.ts`; `:once` end to end in `src/lib/api/fetch-api.test.ts` | `npm test`, CI |
+| Mock API | Vitest | Route helpers: flag parsing, `:once`, idempotency (same key, same order), `dayOffset` to dates, current booking marked | `src/lib/mock/*.test.ts`; the endpoints in `src/app/api/mock/*.test.ts`; `:once` end to end in `src/lib/api/fetch-api.test.ts` | `npm test`, CI |
 | Component | Vitest + Testing Library | Only where behaviour is the point: five fast "+" taps, focus after removing a line, drawer "Show N results" before applying | `*.test.tsx` next to the component | `npm test`, CI |
 | Benchmark | Vitest bench | Task 1 engine over 3,200 services; median and p95 | `engine.bench.ts` | `npm run bench`, by hand |
 | Data audit | `scripts/audit-data.ts` | Every count in the specs' data audits | `scripts/` | `npm run audit:data` |
