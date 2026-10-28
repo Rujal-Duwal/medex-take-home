@@ -14,7 +14,7 @@ Read this before starting a work package. Update it in the same commit when a pa
 | Feature-based folders | Code grouped by feature, not by file type; a feature owns its api, types, mappers, logic and components | `src/features/<task>/` | https://github.com/alan2207/bulletproof-react (see `docs/project-structure.md`) and https://feature-sliced.design/ |
 | Layered (presentation, domain, data) | UI, business rules and data access kept apart; dependencies point one way | Section 3 below | https://martinfowler.com/bliki/PresentationDomainDataLayering.html |
 | Functional core, imperative shell | Decisions live in pure functions; side effects (fetch, clock, storage, DOM) live in a thin outer shell that calls them | `engine.ts`, `pricing.ts`, `slots.ts` (core); hooks and components (shell) | https://www.destroyallsoftware.com/screencasts/catalog/functional-core-imperative-shell |
-| Anti-corruption layer | Raw API shapes are translated once into our own UI types, so messy or changing API data can't leak into the UI | `mappers.ts` in each feature | https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer |
+| Anti-corruption layer | Raw API shapes are translated once into our own UI types, so messy or changing API data can't leak into the UI | `mappers.ts` in each feature turns `api-types.ts` shapes into the UI shapes in `types.ts` | https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer |
 | Ports and adapters (light) | The UI depends on `api.ts` functions, not on how data is fetched; swapping the mock for MedEx's real API changes the adapter, not the features | `features/*/api.ts`, `src/lib/mock` | https://alistair.cockburn.us/hexagonal-architecture/ |
 | Server-first rendering | Server Components render the first view; Client Components take over where interaction is needed | `/services` page reads `searchParams` on the server | https://nextjs.org/docs/app/getting-started/server-and-client-components |
 | URL as state | Shareable view state lives in the URL, not in a store | Task 1 URL codec | https://nextjs.org/docs/app/api-reference/file-conventions/page |
@@ -103,6 +103,7 @@ flowchart LR
   view --> announcer["Live announcer"]
 ```
 
+- `mapCatalogue` (`mappers.ts`) turns the three endpoint responses into one `Catalogue` holding only what a customer can see. The visibility rule (service, provider, category and subcategory all active) lives there and nowhere else in the app. `scripts/audit-data.ts` restates it on purpose, to check the spec's counts against the raw data.
 - The same `engine` runs on the server (first render from `searchParams`, so no unfiltered flash) and on the client (live facet counts).
 - Prices are computed once at mapping time with big.js and stored on each UI service.
 - The mobile drawer runs the engine on a pending copy of the filters to show "Show N results" before applying.

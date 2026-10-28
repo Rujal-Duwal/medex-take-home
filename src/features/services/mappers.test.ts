@@ -1,0 +1,247 @@
+import { describe, expect, it } from "vitest";
+import type { ApiCategory, ApiProvider, ApiService, ApiSubcategory } from "./api-types";
+import { mapCatalogue, tidyText } from "./mappers";
+import { OTHER_CATEGORY_KEY } from "./types";
+
+// Small fixtures in the shape of data/task1-service-explorer.json. Ids and slugs match the
+// real data where a case depends on them (the ultrasound and thyroid slugs).
+
+function subcategory(
+  id: string,
+  slug: string,
+  parent: Pick<ApiCategory, "id" | "type">,
+  status = true,
+): ApiSubcategory {
+  return { id, title: slug, slug, type: parent.type, position: 1, status, parentId: parent.id };
+}
+
+function category(
+  id: string,
+  slug: string,
+  type: ApiCategory["type"],
+  childSlugs: string[] = [],
+  status = true,
+): ApiCategory {
+  const parent = { id, type };
+  return {
+    id,
+    title: slug,
+    slug,
+    type,
+    position: 1,
+    status,
+    parentId: null,
+    children: childSlugs.map((childSlug) => subcategory(`${id}-${childSlug}`, childSlug, parent)),
+  };
+}
+
+function provider(id: number, overrides: Partial<ApiProvider> = {}): ApiProvider {
+  return {
+    id,
+    name: "Riverside International Hospital",
+    username: "riverside-international-hospital",
+    status: "active",
+    providerInformation: {
+      companyName: "Riverside International Hospital",
+      slug: "riverside-international-hospital",
+      types: ["package", "lab_test", "service"],
+      currency: "THB",
+      city: { id: "3d77", name: "Bangkok", slug: "bangkok" },
+      country: { id: 219, name: "Thailand", alphaCode: "TH" },
+      rating: 4.7,
+      reviewCount: 1203,
+    },
+    ...overrides,
+  };
+}
+
+function service(id: string, overrides: Partial<ApiService> = {}): ApiService {
+  return {
+    id,
+    title: "Executive Health Check (Male)",
+    slug: "executive-health-check-male",
+    type: "package",
+    userId: 48,
+    categoryId: "checkup",
+    subCategoryId: null,
+    price: "6200.00",
+    discount: "10.00",
+    discountType: "percent",
+    serviceCharge: "7.00",
+    serviceChargeType: "percent",
+    status: true,
+    testAtHome: false,
+    homeTestCharge: null,
+    wellnessPricing: [],
+    createdAt: "2025-03-25T04:00:00.000Z",
+    ...overrides,
+  };
+}
+
+const checkup = category("checkup", "health-check-up", "package");
+
+describe("tidyText", () => {
+  it("trims and collapses spaces in the title of service 0007", () => {
+    expect(tidyText("  hba1c   TEST (Diabetes) ")).toBe("hba1c TEST (Diabetes)");
+  });
+});
+
+describe("mapCatalogue: services", () => {
+  it("shows service 0007's title trimmed with single spaces", () => {
+    const raw = service("0007", { title: "  hba1c   TEST (Diabetes) " });
+    const { services } = mapCatalogue([checkup], [provider(48)], [raw]);
+    expect(services[0]?.title).toBe("hba1c TEST (Diabetes)");
+  });
+
+  it("maps provider, type and home test without the API field names", () => {
+    const raw = service("checkup-1", { userId: 48, type: "package", testAtHome: true });
+    const { services } = mapCatalogue([checkup], [provider(48)], [raw]);
+    expect(services).toEqual([
+      {
+        id: "checkup-1",
+        title: "Executive Health Check (Male)",
+        type: "package",
+        providerId: 48,
+        categoryKey: "package.health-check-up",
+        testAtHome: true,
+      },
+    ]);
+  });
+
+  it("puts a service with no category under Other", () => {
+    const raw = service("no-category", { categoryId: null, subCategoryId: null });
+    const { services } = mapCatalogue([checkup], [provider(48)], [raw]);
+    expect(services[0]?.categoryKey).toBe(OTHER_CATEGORY_KEY);
+    expect(services[0]?.subcategoryKey).toBeUndefined();
+  });
+
+  it("hides service 0004, which has status false", () => {
+    const raw = service("0004", { status: false });
+    expect(mapCatalogue([checkup], [provider(48)], [raw]).services).toEqual([]);
+  });
+
+  it("hides services of an inactive provider (161, 162)", () => {
+    const raw = service("from-161", { userId: 161 });
+    const inactive = provider(161, { status: "inactive" });
+    expect(mapCatalogue([checkup], [inactive], [raw]).services).toEqual([]);
+  });
+
+  it("hides services in an inactive category (Seasonal Offers)", () => {
+    const seasonal = category("seasonal", "seasonal-offers", "package", [], false);
+    const raw = service("seasonal-1", { categoryId: "seasonal" });
+    expect(mapCatalogue([seasonal], [provider(48)], [raw]).services).toEqual([]);
+  });
+
+  it("hides services in an inactive subcategory, like an inactive category", () => {
+    const parent = category("checkup", "health-check-up", "package");
+    parent.children = [subcategory("lady", "lady-checkup", parent, false)];
+    const raw = service("lady-1", { categoryId: "checkup", subCategoryId: "lady" });
+    expect(mapCatalogue([parent], [provider(48)], [raw]).services).toEqual([]);
+  });
+
+  it("hides a service whose provider, category or subcategory is missing from the data", () => {
+    const noProvider = service("orphan-1", { userId: 999 });
+    const noCategory = service("orphan-2", { categoryId: "missing" });
+    const noSubcategory = service("orphan-3", { subCategoryId: "missing" });
+    const raw = [noProvider, noCategory, noSubcategory];
+    expect(mapCatalogue([checkup], [provider(48)], raw).services).toEqual([]);
+  });
+});
+
+describe("mapCatalogue: category keys", () => {
+  // In the real data two top-level categories share the slug "ultrasound", and the subcategory
+  // slug "thyroid" appears under three parents.
+  const packageUltrasound = category("pu", "ultrasound", "package", ["thyroid"]);
+  const labUltrasound = category("lu", "ultrasound", "lab_test", ["thyroid"]);
+  const bloodTests = category("bt", "blood-tests", "lab_test", ["thyroid"]);
+  const all = [packageUltrasound, labUltrasound, bloodTests];
+
+  it("keeps the two ultrasound categories apart by including the type", () => {
+    const keys = mapCatalogue(all, [], []).categories.map((c) => c.key);
+    expect(keys).toEqual(["package.ultrasound", "lab_test.ultrasound", "lab_test.blood-tests"]);
+  });
+
+  it("keeps the three thyroid subcategories apart by including the parent", () => {
+    const keys = mapCatalogue(all, [], []).categories.flatMap((c) =>
+      c.subcategories.map((s) => s.key),
+    );
+    expect(keys).toEqual([
+      "package.ultrasound.thyroid",
+      "lab_test.ultrasound.thyroid",
+      "lab_test.blood-tests.thyroid",
+    ]);
+  });
+
+  it("gives a service the keys of its category and subcategory", () => {
+    const raw = service("thyroid-scan", {
+      type: "lab_test",
+      categoryId: "lu",
+      subCategoryId: "lu-thyroid",
+    });
+    const { services } = mapCatalogue(all, [provider(48)], [raw]);
+    expect(services[0]?.categoryKey).toBe("lab_test.ultrasound");
+    expect(services[0]?.subcategoryKey).toBe("lab_test.ultrasound.thyroid");
+  });
+
+  it("leaves inactive categories and subcategories out of the tree", () => {
+    const seasonal = category("seasonal", "seasonal-offers", "package", [], false);
+    const parent = category("checkup", "health-check-up", "package", ["general-checkup"]);
+    parent.children.push(subcategory("lady", "lady-checkup", parent, false));
+    const { categories } = mapCatalogue([seasonal, parent], [], []);
+    expect(categories).toEqual([
+      {
+        key: "package.health-check-up",
+        title: "health-check-up",
+        type: "package",
+        subcategories: [
+          { key: "package.health-check-up.general-checkup", title: "general-checkup" },
+        ],
+      },
+    ]);
+  });
+
+  it("orders categories and subcategories by position", () => {
+    const second = { ...category("b", "second", "package"), position: 2 };
+    const first = { ...category("a", "first", "package"), position: 1 };
+    second.children = [
+      { ...subcategory("b2", "later", second), position: 2 },
+      { ...subcategory("b1", "earlier", second), position: 1 },
+    ];
+    const { categories } = mapCatalogue([second, first], [], []);
+    expect(categories.map((c) => c.key)).toEqual(["package.first", "package.second"]);
+    expect(categories[1]?.subcategories.map((s) => s.key)).toEqual([
+      "package.second.earlier",
+      "package.second.later",
+    ]);
+  });
+});
+
+describe("mapCatalogue: providers", () => {
+  it("maps location, currency and rating", () => {
+    expect(mapCatalogue([], [provider(48)], []).providers).toEqual([
+      {
+        id: 48,
+        name: "Riverside International Hospital",
+        currency: "THB",
+        city: { slug: "bangkok", name: "Bangkok" },
+        country: { code: "TH", name: "Thailand" },
+        rating: { kind: "rated", stars: 4.7, reviewCount: 1203 },
+      },
+    ]);
+  });
+
+  it("marks provider 61, with rating null and 0 reviews, as new", () => {
+    const newProvider = provider(61);
+    newProvider.providerInformation = {
+      ...newProvider.providerInformation,
+      rating: null,
+      reviewCount: 0,
+    };
+    expect(mapCatalogue([], [newProvider], []).providers[0]?.rating).toEqual({ kind: "new" });
+  });
+
+  it("leaves inactive providers out", () => {
+    const inactive = provider(161, { status: "inactive" });
+    expect(mapCatalogue([], [inactive, provider(48)], []).providers.map((p) => p.id)).toEqual([48]);
+  });
+});
