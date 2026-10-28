@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addMoney, formatMoney, parseMoney } from "./money";
+import { addMoney, compareMoney, formatMoney, parseMoney } from "./money";
 
 describe("formatMoney", () => {
   it("shows a THB price with grouping, 2 decimals and the code after a space", () => {
@@ -30,6 +30,18 @@ describe("formatMoney", () => {
 
   it("prints zero as a number, never as Free (the price kind decides Free)", () => {
     expect(formatMoney(parseMoney("0.00", "THB"))).toBe("0.00 THB");
+  });
+});
+
+describe("compareMoney", () => {
+  it("compares two amounts in one currency", () => {
+    expect(compareMoney(parseMoney("900", "THB"), parseMoney("1000.00", "THB"))).toBe(-1);
+    expect(compareMoney(parseMoney("1000", "THB"), parseMoney("1000.00", "THB"))).toBe(0);
+    expect(compareMoney(parseMoney("1000.01", "THB"), parseMoney("1000", "THB"))).toBe(1);
+  });
+
+  it("refuses to compare two currencies, since there are no exchange rates", () => {
+    expect(() => compareMoney(parseMoney("1", "THB"), parseMoney("1", "NPR"))).toThrow();
   });
 });
 

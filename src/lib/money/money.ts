@@ -2,8 +2,10 @@ import Big from "big.js";
 
 // Money rules for all three tasks (ADR 0004, ARCHITECTURE.md section 6).
 // Every amount carries its currency, maths uses big.js, and rounding happens once, in formatMoney.
-// A new currency goes in this list and nowhere else.
-export type Currency = "THB" | "NPR" | "INR";
+// A new currency goes in this list and nowhere else. The order is the order of the currency
+// sections when Task 1 sorts by price with no currency chosen (spec D8).
+export const CURRENCIES = ["THB", "NPR", "INR"] as const;
+export type Currency = (typeof CURRENCIES)[number];
 
 export interface Money {
   amount: Big;
@@ -22,6 +24,15 @@ export function addMoney(a: Money, b: Money): Money {
     throw new Error(`Can't add ${b.currency} to ${a.currency}`);
   }
   return { amount: a.amount.plus(b.amount), currency: a.currency };
+}
+
+// Like adding, comparing THB with NPR is always a bug in the caller. Returns -1, 0 or 1, like
+// big.js cmp. Task 1's price filter and price sort go through this, so a mistake fails loudly.
+export function compareMoney(a: Money, b: Money): number {
+  if (a.currency !== b.currency) {
+    throw new Error(`Can't compare ${b.currency} with ${a.currency}`);
+  }
+  return a.amount.cmp(b.amount);
 }
 
 // en-US grouping for every currency, so THB, NPR and INR read the same way in one list.
