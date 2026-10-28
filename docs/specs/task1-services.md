@@ -49,7 +49,7 @@ Each data set is its own endpoint, as the brief asks. Flag names in brackets.
 
 | id | Data | What the customer sees | Test |
 |---|---|---|---|
-| 0001 | 6200, 10% off, 7% service charge | 5,970.60 THB, 6,200.00 struck through | yes |
+| 0001 | 6200, 10% off, 7% service charge | 5,970.60 THB, 6,634.00 struck through (6,200 plus the 7% charge; see Decisions) | yes |
 | 0002 | amount discount 500 on 3500 NPR | 3,000.00 NPR plus any charge, original struck through | yes |
 | 0003 | Signature Facial, 60 min 1,800 THB, 90 min 2,040 THB | "From 1,800.00 THB, 60 min" | yes |
 | 0004 | status false | hidden | yes |
@@ -155,6 +155,12 @@ Add new decisions below this line as they come up.
 - **"Always at different prices" means the pricing fields (WBS 3.1).** None of the 747 repeated provider and title groups repeat the same pricing. The `price` field alone repeats in 180 groups, almost all wellness, where `price` is null and prices live in the options.
 - **Inactive subcategory (WBS 3.1).** None in the data. The mapper still hides it and its services, like an inactive category, so a future status change doesn't leak hidden services.
 - **Broken references hide the service (WBS 3.1).** A service whose provider, category or subcategory is not in the data is hidden. None in the data today; the audit asserts that.
+- **The struck-through price includes the service charge (WBS 3.2).** It is what the customer would pay without the discount: the brief's formula with the discount left out. Service 0001 shows 5,970.60 THB with 6,634.00 struck through, not 6,200.00. Why: with the bare `price` struck through, 39 prices in the data (a small discount plus a larger charge) would show a struck-through price equal to or lower than what the customer pays, which reads like a trick. Including the charge in both, the discount is the only thing that makes them differ, so the final price is always lower. With a percent charge the gap is the discount plus the charge on it (0001: 663.40, not 620), which matters for a "biggest saving" sort. The brief says only "the original price", so this fits it; it changes this spec's earlier 0001 row. The 39 is checked in `scripts/audit-data.ts`.
+- **Discount larger than the price covers percent too (WBS 3.2).** A percent discount over 100 is the same mistake as 0005 and is ignored the same way. None in the data today, on services or wellness options; the audit asserts that.
+- **A negative discount counts as no discount (WBS 3.2).** It would raise the price, which is not a discount. None in the data today, and no negative price or charge either; the audit asserts that.
+- **Wellness always shows "From" (WBS 3.2).** Even with one option, since the price is unknown until a duration is chosen. The cheapest option is picked by final price, not list price (0003: the 90 min option is 2,040 after its discount, still above 1,800). A tie goes to the shorter option.
+- **A final price of 0 shows "Free" (WBS 3.2).** That includes a discount that brings the price to exactly 0, shown as Free with nothing struck through. A wellness option priced 0 would show "From 0.00 THB". Neither is in the data today; the audit asserts that.
+- **A service we can't price is hidden (WBS 3.2).** A non-wellness service with a null pricing field, or a wellness service with no options, has no honest price to show, and unknown is never 0. None in the data today; the audit asserts that.
 
 ## Tests that must exist
 
