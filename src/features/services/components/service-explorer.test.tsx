@@ -8,6 +8,7 @@ import { defaultQuery, runQuery } from "../engine";
 import { toFiltersView } from "../filters-view";
 import type { ResultsView } from "../results-view";
 import type { Catalogue } from "../types";
+import { SEARCH_SEND_INTERVAL_MS } from "./search-box";
 import { ServiceExplorer } from "./service-explorer";
 
 // The hand-over: the server's results show until the client has loaded the catalogue, then
@@ -17,10 +18,13 @@ import { ServiceExplorer } from "./service-explorer";
 vi.mock("../api", () => ({ loadCatalogue: vi.fn() }));
 
 // Next.js re-renders useSearchParams after history.pushState and replaceState. The fake does
-// the same: beforeEach wraps both to tell the subscribers the URL changed.
+// the same: beforeEach wraps both to tell the subscribers the URL changed. Like Next, it keeps
+// its own copy of the URL, so it only moves when told.
 const urlStore = vi.hoisted(() => {
   const listeners = new Set<() => void>();
+  let search = "";
   return {
+    search: () => search,
     subscribe: (listener: () => void) => {
       listeners.add(listener);
       return () => {
@@ -28,6 +32,7 @@ const urlStore = vi.hoisted(() => {
       };
     },
     changed: () => {
+      search = window.location.search;
       for (const listener of listeners) listener();
     },
   };
@@ -36,7 +41,7 @@ vi.mock("next/navigation", async () => {
   const { useSyncExternalStore } = await import("react");
   return {
     useSearchParams: () =>
-      new URLSearchParams(useSyncExternalStore(urlStore.subscribe, () => window.location.search)),
+      new URLSearchParams(useSyncExternalStore(urlStore.subscribe, urlStore.search)),
   };
 });
 
@@ -128,6 +133,7 @@ let replaceState: ReturnType<typeof fakeHistoryMethod>;
 
 beforeEach(() => {
   window.history.replaceState({}, "", "/services");
+  urlStore.changed();
   mockedLoad.mockReset();
   pushState = fakeHistoryMethod("pushState");
   replaceState = fakeHistoryMethod("replaceState");
@@ -256,6 +262,24 @@ describe("ServiceExplorer", () => {
     });
   });
 
+  it("a change is timed once, up to the commit that shows its results (T1-12)", async () => {
+    mockedLoad.mockResolvedValue(loaded);
+    renderExplorer();
+    const homeTest = screen.getByRole("checkbox", { name: /Available as a home test/ });
+    await vi.waitFor(() => {
+      expect(homeTest).toBeEnabled();
+    });
+    performance.clearMeasures("filter-change");
+
+    fireEvent.click(homeTest);
+    expect(await screen.findByRole("heading", { name: "1 service from 1 provider" })).toBeVisible();
+    expect(performance.getEntriesByName("filter-change")).toHaveLength(1);
+
+    // A change that leaves the URL the same shows nothing new, so it isn't timed.
+    fireEvent.change(searchInPanel(), { target: { value: " " } });
+    expect(performance.getEntriesByName("filter-change")).toHaveLength(1);
+  });
+
   it("a tick adds a history entry; typing adds one for the first letter, then replaces it", async () => {
     mockedLoad.mockResolvedValue(loaded);
     renderExplorer();
@@ -267,23 +291,32 @@ describe("ServiceExplorer", () => {
     fireEvent.click(homeTest);
     expect(pushState).toHaveBeenCalledTimes(1);
 
-    const search = searchInPanel();
+    // The search box sends typing on at most once every 250 ms (SearchBox). Fake timers let
+    // each letter through.
+    vi.useFakeTimers();
+    function type(value: string) {
+      fireEvent.change(searchInPanel(), { target: { value } });
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_SEND_INTERVAL_MS);
+      });
+    }
+
     // Only a space is no search, so the view doesn't change and nothing is written.
-    fireEvent.change(search, { target: { value: " " } });
+    type(" ");
     expect(pushState).toHaveBeenCalledTimes(1);
     expect(replaceState).not.toHaveBeenCalled();
 
-    fireEvent.change(search, { target: { value: "e" } });
+    type("e");
     expect(pushState).toHaveBeenCalledTimes(2);
     expect(pushState).toHaveBeenLastCalledWith(null, "", "/services?q=e&home=1");
 
-    fireEvent.change(search, { target: { value: "exec" } });
+    type("exec");
     expect(pushState).toHaveBeenCalledTimes(2);
     expect(replaceState).toHaveBeenLastCalledWith(null, "", "/services?q=exec&home=1");
 
     // After a tick, the next letter starts a new entry, so Back undoes the tick on its own.
     fireEvent.click(screen.getByRole("checkbox", { name: /Available as a home test/ }));
-    fireEvent.change(search, { target: { value: "execu" } });
+    type("execu");
     expect(pushState).toHaveBeenCalledTimes(4);
     expect(pushState).toHaveBeenLastCalledWith(null, "", "/services?q=execu");
   });
@@ -365,7 +398,11 @@ describe("ServiceExplorer: search chip", () => {
     const search = searchInPanel();
     fireEvent.change(search, { target: { value: "e" } });
     fireEvent.change(search, { target: { value: "exec" } });
+    // "exec" waits in the search box (sent at most every 250 ms). Clicking the chip takes focus
+    // from the box first, which sends it.
+    fireEvent.blur(search);
     expect(pushState).toHaveBeenCalledTimes(1);
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/services?q=exec&home=1");
 
     fireEvent.click(await screen.findByRole("button", { name: "Remove filter: “exec”" }));
     expect(pushState).toHaveBeenCalledTimes(2);
@@ -428,6 +465,37 @@ describe("ServiceExplorer: mobile filters drawer", () => {
     });
 
     fireEvent.change(onPage, { target: { value: "exec" } });
+    expect(window.location.search).toBe("?q=exec");
+  });
+
+  it("the draft starts from the address bar, with text typed just before tapping Filters", async () => {
+    window.history.replaceState({}, "", "/services");
+    mockedLoad.mockResolvedValue(loaded);
+    renderExplorer();
+    const onPage = screen
+      .getAllByRole("searchbox", { name: "Search" })
+      .find((box) => box !== searchInPanel());
+    if (onPage === undefined) throw new Error("the search box on the page is missing");
+    await vi.waitFor(() => {
+      expect(onPage).toBeEnabled();
+    });
+    fireEvent.focus(onPage);
+    fireEvent.change(onPage, { target: { value: "e" } });
+
+    // Next applies a URL change in a transition, so on a quick tap the drawer can open before
+    // useSearchParams has the text the box sent on blur. The fake router lags the same way:
+    // the address bar moves, useSearchParams doesn't.
+    replaceState.mockImplementation((data, unused, url) => {
+      History.prototype.replaceState.call(window.history, data, unused, url);
+    });
+    fireEvent.change(onPage, { target: { value: "exec" } });
+    fireEvent.blur(onPage);
+    expect(window.location.search).toBe("?q=exec");
+
+    fireEvent.click(screen.getByRole("button", { name: /^Filters/ }));
+    const drawer = screen.getByRole("dialog", { name: "Filters" });
+    fireEvent.click(within(drawer).getByRole("button", { name: "Show 2 results" }));
+    // The draft held "exec", the same as the address bar, so applying it changes nothing.
     expect(window.location.search).toBe("?q=exec");
   });
 

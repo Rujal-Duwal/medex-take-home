@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ErrorState } from "@/components/states/error-state";
 import { OfflineBanner } from "@/components/states/offline-banner";
@@ -29,6 +29,13 @@ function addressBarState(catalogue: Catalogue): ServicesUrlState {
 }
 
 const SLOW_MESSAGE = "This is taking longer than usual. We're still loading services.";
+
+// Each change is timed from the moment it reaches the explorer (a click, or typing that
+// SearchBox sends on) to the commit that shows its results (T1-12, WBS 3.9). It shows as
+// "filter-change" in the Timings track of the DevTools Performance panel; in the console,
+// performance.getEntriesByName("filter-change") lists them. Nothing is logged: customers'
+// consoles stay clean.
+const CHANGE_MEASURE = "filter-change";
 
 // The hand-over from the server's first view to the client (spec "Rendering and states").
 //
@@ -61,6 +68,8 @@ export function ServiceExplorer({
   const announce = useAnnounce();
   const resultsRef = useRef<HTMLElement>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // The query the drawer's draft starts from, read from the address bar as it opens.
+  const [drawerStartQuery, setDrawerStartQuery] = useState<ServiceQuery | undefined>(undefined);
 
   const clientViews = useMemo(() => {
     if (state.kind !== "ready") return undefined;
@@ -102,15 +111,32 @@ export function ServiceExplorer({
   // Whether the current history entry was made by typing, so the next letter replaces it
   // rather than adding another. Back or forward lands on some other entry, so it resets.
   const isTypingEntry = useRef(false);
+  // When the change waiting to be shown started (performance.now()), set by writeQuery.
+  const changeStartedAt = useRef<number | undefined>(undefined);
   useEffect(() => {
     function landedOnOtherEntry() {
       isTypingEntry.current = false;
+      // Back or forward replaces the change being timed: its commit isn't that change's.
+      changeStartedAt.current = undefined;
     }
     globalThis.addEventListener("popstate", landedOnOtherEntry);
     return () => {
       globalThis.removeEventListener("popstate", landedOnOtherEntry);
     };
   }, []);
+
+  // A layout effect runs right after React has put the new results in the page, before the
+  // browser paints them, so the measure ends at the commit.
+  useLayoutEffect(() => {
+    const start = changeStartedAt.current;
+    if (start === undefined) return;
+    // While typing, a commit for an earlier letter can land after a newer letter was written.
+    // Only the commit that matches the address bar shows the latest change.
+    const addressBar = new URLSearchParams(globalThis.location.search);
+    if (searchParams.toString() !== addressBar.toString()) return;
+    changeStartedAt.current = undefined;
+    performance.measure(CHANGE_MEASURE, { start });
+  }, [searchParams]);
 
   const isSlow = state.kind === "loading" && state.isSlow;
   useEffect(() => {
@@ -129,12 +155,19 @@ export function ServiceExplorer({
     };
   }, [isSlow]);
 
-  // Writes query to the URL, keeping the rest of current (the compare selection).
-  function writeQuery(current: ServicesUrlState, query: ServiceQuery, isSearch: boolean) {
+  // Writes query to the URL, keeping the rest of current (the compare selection). startedAt is
+  // when the customer acted, for the timing above.
+  function writeQuery(
+    current: ServicesUrlState,
+    query: ServiceQuery,
+    isSearch: boolean,
+    startedAt: number,
+  ) {
     const href = servicesHref({ ...current, query });
     // Nothing changed (a space typed, the same price applied again): no entry, or Back would
     // seem to do nothing.
     if (href === servicesHref(current)) return;
+    changeStartedAt.current = startedAt;
     // Every change adds a history entry, so Back undoes it (T1-10). Typing adds one for the
     // first letter, then replaces it, so Back undoes the whole edit, not each letter.
     if (isSearch && isTypingEntry.current) globalThis.history.replaceState(null, "", href);
@@ -143,20 +176,32 @@ export function ServiceExplorer({
   }
 
   function handleFilterChange(change: FilterChange) {
+    const startedAt = performance.now();
     if (state.kind !== "ready") return;
     const current = addressBarState(state.catalogue);
     const query = applyFilterChange(current.query, change, state.catalogue.categories);
-    writeQuery(current, query, change.kind === "search");
+    writeQuery(current, query, change.kind === "search", startedAt);
   }
 
   // The drawer's "Show N results": the whole draft becomes one history entry, so Back undoes
   // the drawer edit in one go. Closing returns focus to the Filters button (Radix), and the
   // new count is read out by the effect above.
   function handleApply(query: ServiceQuery) {
+    const startedAt = performance.now();
     if (state.kind !== "ready") return;
     const current = addressBarState(state.catalogue);
-    writeQuery(current, query, false);
+    writeQuery(current, query, false, startedAt);
     setIsDrawerOpen(false);
+  }
+
+  // The draft starts from the address bar, not useSearchParams, like every change above. The
+  // tap on Filters takes focus from the search box, which sends its waiting text (SearchBox);
+  // Next applies that in a transition, which may not have run before the drawer opens.
+  function handleDrawerOpenChange(isOpen: boolean) {
+    if (isOpen && state.kind === "ready") {
+      setDrawerStartQuery(addressBarState(state.catalogue).query);
+    }
+    setIsDrawerOpen(isOpen);
   }
 
   // Focus waits on the results area when the control that had it goes away: a way out of the
@@ -241,15 +286,16 @@ export function ServiceExplorer({
                 ? `Filters (${String(shownFilters.chips.length)})`
                 : "Filters"
             }
-            // The draft starts from the URL on screen. Opening the drawer moves focus off the
-            // search box, so useSearchParams has caught up with the address bar by then.
             loaded={
               state.kind === "ready" && clientViews
-                ? { catalogue: state.catalogue, urlQuery: clientViews.urlQuery }
+                ? {
+                    catalogue: state.catalogue,
+                    urlQuery: drawerStartQuery ?? clientViews.urlQuery,
+                  }
                 : undefined
             }
             isOpen={isDrawerOpen}
-            onOpenChange={setIsDrawerOpen}
+            onOpenChange={handleDrawerOpenChange}
             onApply={handleApply}
           />
           <SortSelect sort={shownFilters.sort} isEnabled={isReady} onChange={handleFilterChange} />
