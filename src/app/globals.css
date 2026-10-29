@@ -81,6 +81,9 @@
   --radius-md: calc(var(--radius) - 2px); /* 6px badges */
   --radius-lg: var(--radius); /* 8px inputs, buttons, slots */
   --radius-xl: calc(var(--radius) + 4px); /* 12px cards, panels */
+  /* The handoff's "soft top shadow" for the sticky compare tray. Decorative, so no contrast
+     pair: the tray's top border marks its edge. */
+  --shadow-tray: 0 -4px 12px rgb(22 32 30 / 0.08);
 }
 
 @layer base {

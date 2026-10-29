@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { toCompareTrayView } from "@/features/services/compare";
 import { runQuery } from "@/features/services/engine";
 import { mapCatalogue } from "@/features/services/mappers";
 import { toFiltersView } from "@/features/services/filters-view";
@@ -38,6 +39,7 @@ export default async function ServicesPage({ searchParams }: Readonly<PageProps<
     <ServiceExplorer
       serverView={toResultsView(result, urlState)}
       serverFilters={toFiltersView(catalogue, result, urlState.query)}
+      serverCompareTray={toCompareTrayView(catalogue, urlState.compareProviderIds)}
     />
   );
 }

@@ -53,7 +53,16 @@ function Pagination({ pagination }: Readonly<{ pagination: PaginationView }>) {
   );
 }
 
-export function ServiceResults({ view }: Readonly<{ view: ResultsView }>) {
+// isCompareEnabled and onCompareToggle go to each card's Compare box (WBS 3.10).
+export function ServiceResults({
+  view,
+  isCompareEnabled,
+  onCompareToggle,
+}: Readonly<{
+  view: ResultsView;
+  isCompareEnabled: boolean;
+  onCompareToggle: (providerId: number) => void;
+}>) {
   return (
     <>
       <h2 className="text-xl font-semibold tabular-nums">{view.countText}</h2>
@@ -70,7 +79,12 @@ export function ServiceResults({ view }: Readonly<{ view: ResultsView }>) {
           <ul className="flex flex-col gap-4">
             {section.groups.map((group) => (
               <li key={group.providerId}>
-                <ProviderGroupCard group={group} headingLevel={section.heading ? 4 : 3} />
+                <ProviderGroupCard
+                  group={group}
+                  headingLevel={section.heading ? 4 : 3}
+                  isCompareEnabled={isCompareEnabled}
+                  onCompareToggle={onCompareToggle}
+                />
               </li>
             ))}
           </ul>

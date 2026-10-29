@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ErrorState } from "@/components/states/error-state";
 import { OfflineBanner } from "@/components/states/offline-banner";
 import { useAnnounce } from "@/lib/a11y/live-announcer";
+import { toCompareTrayView, toggleCompared, type CompareTrayView } from "../compare";
 import { runQuery, type ServiceQuery } from "../engine";
 import { applyFilterChange, type FilterChange } from "../filter-changes";
 import { toFiltersView, type FiltersView } from "../filters-view";
@@ -14,6 +15,8 @@ import type { Catalogue } from "../types";
 import { useCatalogue } from "../use-catalogue";
 import { parseServicesUrl, servicesHref, type ServicesUrlState } from "../url-codec";
 import { ActiveFilters } from "./active-filters";
+import { BottomDock } from "./bottom-dock";
+import { CompareTray } from "./compare-tray";
 import { ExplorerColumns } from "./explorer-columns";
 import { FilterPanel, SortSelect } from "./filter-panel";
 import { FiltersDrawer } from "./filters-drawer";
@@ -59,10 +62,18 @@ const CHANGE_MEASURE = "filter-change";
 // Small screens (WBS 3.8): the panel is hidden. The search box sits above the results and
 // applies as you type, as on large screens; the other filters open in FiltersDrawer, which
 // edits a draft and hands it to handleApply.
+//
+// Compare (WBS 3.10): each card's Compare box and the tray change the compare list in the URL
+// through handleCompareChange. The tray goes through the same hand-over, from serverCompareTray.
 export function ServiceExplorer({
   serverView,
   serverFilters,
-}: Readonly<{ serverView: ResultsView; serverFilters: FiltersView }>) {
+  serverCompareTray,
+}: Readonly<{
+  serverView: ResultsView;
+  serverFilters: FiltersView;
+  serverCompareTray: CompareTrayView;
+}>) {
   const { state, retry } = useCatalogue();
   const searchParams = useSearchParams();
   const announce = useAnnounce();
@@ -76,9 +87,11 @@ export function ServiceExplorer({
     const urlState = parseServicesUrl(searchParams, state.catalogue);
     const result = runQuery(state.catalogue, urlState.query);
     return {
+      urlState,
       urlQuery: urlState.query,
       results: toResultsView(result, urlState),
       filters: toFiltersView(state.catalogue, result, urlState.query),
+      compareTray: toCompareTrayView(state.catalogue, urlState.compareProviderIds),
     };
   }, [state, searchParams]);
 
@@ -89,6 +102,7 @@ export function ServiceExplorer({
   // The panel always shows: the server's until the client has the catalogue, then disabled
   // (see FilterPanel), since a change couldn't be counted yet.
   const shownFilters = clientViews?.filters ?? serverFilters;
+  const shownCompareTray = clientViews?.compareTray ?? serverCompareTray;
   const isReady = state.kind === "ready";
 
   // The count (and page) is read out when it changes (T1-14), whichever side rendered it. It
@@ -143,18 +157,6 @@ export function ServiceExplorer({
     if (isSlow) announce(SLOW_MESSAGE);
   }, [isSlow, announce]);
 
-  // The slow note floats over the bottom of the window. While it shows, the page keeps room
-  // under it when scrolling to a focused element, so the note never hides what has focus
-  // (WCAG 2.4.11; technique C43: https://www.w3.org/WAI/WCAG22/Techniques/css/C43).
-  useEffect(() => {
-    if (!isSlow) return;
-    const root = document.documentElement;
-    root.style.scrollPaddingBottom = "6rem";
-    return () => {
-      root.style.scrollPaddingBottom = "";
-    };
-  }, [isSlow]);
-
   // Writes query to the URL, keeping the rest of current (the compare selection). startedAt is
   // when the customer acted, for the timing above.
   function writeQuery(
@@ -181,6 +183,23 @@ export function ServiceExplorer({
     const current = addressBarState(state.catalogue);
     const query = applyFilterChange(current.query, change, state.catalogue.categories);
     writeQuery(current, query, change.kind === "search", startedAt);
+  }
+
+  // Compare (WBS 3.10): update gets the address bar's compare list and returns the new one
+  // (compare.ts has the rules). A history entry each, like a filter, so Back undoes a tick.
+  // Not timed: it doesn't change the results.
+  function handleCompareChange(update: (ids: number[]) => number[]) {
+    if (state.kind !== "ready") return;
+    const current = addressBarState(state.catalogue);
+    const next = { ...current, compareProviderIds: update(current.compareProviderIds) };
+    const href = servicesHref(next);
+    if (href === servicesHref(current)) return;
+    globalThis.history.pushState(null, "", href);
+    isTypingEntry.current = false;
+  }
+
+  function handleCompareToggle(providerId: number) {
+    handleCompareChange((ids) => toggleCompared(ids, providerId));
   }
 
   // The drawer's "Show N results": the whole draft becomes one history entry, so Back undoes
@@ -231,7 +250,15 @@ export function ServiceExplorer({
         />
       );
     }
-    if (shownView) return <ServiceResults view={shownView} />;
+    if (shownView) {
+      return (
+        <ServiceResults
+          view={shownView}
+          isCompareEnabled={isReady}
+          onCompareToggle={handleCompareToggle}
+        />
+      );
+    }
     if (state.kind === "failed") {
       return (
         <ErrorState
@@ -251,15 +278,6 @@ export function ServiceExplorer({
   return (
     <div className="flex flex-col gap-4">
       <OfflineBanner message="You're offline. We'll update these results when you're back online." />
-      {/* Fixed at the bottom of the window, out of the page flow, so it appears without moving
-          the results (CLS 0). The live region reads it out (the effects above). */}
-      {isSlow && (
-        <div className="fixed inset-x-4 bottom-4 z-10 mx-auto max-w-md">
-          <Alert variant="info">
-            <AlertDescription>{SLOW_MESSAGE}</AlertDescription>
-          </Alert>
-        </div>
-      )}
       <ExplorerColumns
         filters={
           // One panel in the page at a time: while the drawer is open its fields would repeat
@@ -317,6 +335,31 @@ export function ServiceExplorer({
           {renderResults()}
         </section>
       </ExplorerColumns>
+      {/* The slow note above the compare tray, both fixed at the bottom of the window. The
+          live region reads the note out (the effects above). */}
+      <BottomDock>
+        {isSlow && (
+          <div className="mx-4 mb-3 sm:mx-auto sm:w-full sm:max-w-md">
+            <Alert variant="info">
+              <AlertDescription>{SLOW_MESSAGE}</AlertDescription>
+            </Alert>
+          </div>
+        )}
+        <CompareTray
+          tray={shownCompareTray}
+          loaded={
+            state.kind === "ready" && clientViews
+              ? {
+                  catalogue: state.catalogue,
+                  urlState: clientViews.urlState,
+                  chips: clientViews.filters.chips,
+                }
+              : undefined
+          }
+          onCompareChange={handleCompareChange}
+          onTrayGone={focusResults}
+        />
+      </BottomDock>
     </div>
   );
 }

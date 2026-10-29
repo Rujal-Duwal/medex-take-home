@@ -219,6 +219,27 @@ describe("toResultsView: View all N services (D10)", () => {
   });
 });
 
+// Riverside's Compare box, with these providers chosen.
+function compareFor(compareProviderIds: number[]) {
+  const view = toResultsView(result([group(riverside, [thbCheckup])]), {
+    ...urlState(),
+    compareProviderIds,
+  });
+  return onlyGroup(view).compare;
+}
+
+describe("toResultsView: the card's Compare box (WBS 3.10)", () => {
+  it("is ticked when the provider is in compare", () => {
+    expect(compareFor([70, 48])).toEqual({ isChosen: true, isFull: false });
+    expect(compareFor([70])).toEqual({ isChosen: false, isFull: false });
+  });
+
+  it("can't be ticked with 3 others chosen, but a chosen one can still be unticked", () => {
+    expect(compareFor([61, 70, 105])).toEqual({ isChosen: false, isFull: true });
+    expect(compareFor([61, 48, 105])).toEqual({ isChosen: true, isFull: false });
+  });
+});
+
 describe("toResultsView: an open group with 3 or fewer matches", () => {
   it("has no Show fewer link, since there is nothing to hide", () => {
     const view = toResultsView(

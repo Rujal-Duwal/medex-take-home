@@ -5,8 +5,8 @@ import {
   type QueryResult,
   type ServiceQuery,
 } from "./engine";
-import type { Price, ProviderRating, Service, ServiceType } from "./types";
-import { servicesHref, type ServicesUrlState } from "./url-codec";
+import type { Price, Provider, ProviderRating, Service, ServiceType } from "./types";
+import { isCompareFull, servicesHref, type ServicesUrlState } from "./url-codec";
 
 // What the results list shows, worked out from the engine's result: every text and link as a
 // plain string. It exists for two reasons:
@@ -37,6 +37,13 @@ export interface GroupToggleView {
   href: string;
 }
 
+// The card's "Compare" box (WBS 3.10). isFull: 3 other providers are chosen, so this one can't
+// be added ("You can compare up to 3").
+export interface GroupCompareView {
+  isChosen: boolean;
+  isFull: boolean;
+}
+
 export interface ProviderGroupView {
   providerId: number;
   name: string;
@@ -45,6 +52,7 @@ export interface ProviderGroupView {
   services: ServiceView[];
   // Undefined when every matching service already shows.
   toggle?: GroupToggleView;
+  compare: GroupCompareView;
 }
 
 export interface ResultsSectionView {
@@ -125,13 +133,19 @@ function priceView(price: Price): PriceView {
   return { kind: "fixed", final: formatMoney(price.final), original };
 }
 
-function ratingView(rating: ProviderRating): RatingView {
+// The compare view shows the rating and place the same way (compare.ts).
+export function ratingView(rating: ProviderRating): RatingView {
   if (rating.kind === "new") return { kind: "new" };
   return {
     kind: "rated",
     stars: rating.stars.toFixed(1),
     reviews: countOf(rating.reviewCount, "review"),
   };
+}
+
+// "Bangkok, Thailand"
+export function placeOf(provider: Provider): string {
+  return `${provider.city.name}, ${provider.country.name}`;
 }
 
 function serviceView(service: Service): ServiceView {
@@ -171,13 +185,18 @@ function groupToggle(
 
 function groupView(group: ProviderGroup, state: ServicesUrlState, page: number): ProviderGroupView {
   const { provider } = group;
+  const isChosen = state.compareProviderIds.includes(provider.id);
   return {
     providerId: provider.id,
     name: provider.name,
-    place: `${provider.city.name}, ${provider.country.name}`,
+    place: placeOf(provider),
     rating: ratingView(provider.rating),
     services: group.services.map((service) => serviceView(service)),
     toggle: groupToggle(group, state, page),
+    compare: {
+      isChosen,
+      isFull: !isChosen && isCompareFull(state.compareProviderIds),
+    },
   };
 }
 

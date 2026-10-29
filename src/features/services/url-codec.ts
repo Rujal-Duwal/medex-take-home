@@ -27,6 +27,12 @@ import { OTHER_CATEGORY_KEY, SERVICE_TYPES, type Catalogue, type ServiceType } f
 
 export const MAX_COMPARED_PROVIDERS = 3;
 
+// No room for another provider in compare. The one place for the limit rule: the card's box,
+// the tray's hint and the compare list rules (compare.ts) all ask this.
+export function isCompareFull(ids: number[]): boolean {
+  return ids.length >= MAX_COMPARED_PROVIDERS;
+}
+
 export interface ServicesUrlState {
   query: ServiceQuery;
   // Providers chosen for side-by-side compare (WBS 3.10). Kept out of ServiceQuery because it

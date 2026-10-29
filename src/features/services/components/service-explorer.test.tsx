@@ -4,6 +4,7 @@ import type { ApiResult } from "@/lib/api/fetch-api";
 import { LiveAnnouncerProvider } from "@/lib/a11y/live-announcer";
 import { parseMoney } from "@/lib/money/money";
 import { loadCatalogue } from "../api";
+import type { CompareTrayView } from "../compare";
 import { defaultQuery, runQuery } from "../engine";
 import { toFiltersView } from "../filters-view";
 import type { ResultsView } from "../results-view";
@@ -62,6 +63,7 @@ const serverView: ResultsView = {
           place: "Bangkok, Thailand",
           rating: { kind: "new" },
           services: [],
+          compare: { isChosen: false, isFull: false },
         },
       ],
     },
@@ -105,10 +107,16 @@ function liveRegion(): HTMLElement {
 // The server's panel, from the same catalogue (the server's names don't matter for it).
 const serverFilters = toFiltersView(catalogue, runQuery(catalogue, defaultQuery), defaultQuery);
 
-function renderExplorer() {
+const noCompareTray: CompareTrayView = { providers: [], compareLabel: "Compare (0)" };
+
+function renderExplorer(serverCompareTray = noCompareTray) {
   render(
     <LiveAnnouncerProvider>
-      <ServiceExplorer serverView={serverView} serverFilters={serverFilters} />
+      <ServiceExplorer
+        serverView={serverView}
+        serverFilters={serverFilters}
+        serverCompareTray={serverCompareTray}
+      />
     </LiveAnnouncerProvider>,
   );
 }
@@ -449,6 +457,61 @@ async function openDrawerAt(url: string) {
   fireEvent.click(trigger);
   return { trigger, drawer: screen.getByRole("dialog", { name: "Filters" }) };
 }
+
+describe("ServiceExplorer: compare (WBS 3.10)", () => {
+  it("ticking Compare on a card adds the provider to the URL and the tray", async () => {
+    mockedLoad.mockResolvedValue(loaded);
+    renderExplorer();
+    const box = await screen.findByRole("checkbox", {
+      name: "Compare Riverside International Hospital",
+    });
+
+    fireEvent.click(box);
+    expect(window.location.search).toBe("?compare=48");
+    expect(pushState).toHaveBeenCalledTimes(1);
+    expect(box).toBeChecked();
+    const tray = screen.getByRole("region", { name: "Compare tray" });
+    expect(within(tray).getByText("Pick at least one more to compare")).toBeVisible();
+
+    fireEvent.click(box);
+    expect(window.location.search).toBe("");
+    expect(screen.queryByRole("region", { name: "Compare tray" })).not.toBeInTheDocument();
+  });
+
+  it("the Compare box and the tray from the server wait for the catalogue, like the filters", () => {
+    window.history.replaceState({}, "", "/services?compare=48");
+    mockedLoad.mockReturnValue(Promise.withResolvers<ApiResult<Catalogue>>().promise);
+    renderExplorer({
+      providers: [{ providerId: 48, name: "Riverside International Hospital" }],
+      compareLabel: "Compare (1)",
+      hint: "Pick at least one more to compare",
+    });
+
+    expect(
+      screen.getByRole("checkbox", { name: "Compare Riverside (server render)" }),
+    ).toBeDisabled();
+    const tray = screen.getByRole("region", { name: "Compare tray" });
+    for (const button of within(tray).getAllByRole("button")) expect(button).toBeDisabled();
+  });
+
+  it("compare is not a filter: a tick and Clear all keep it in the URL", async () => {
+    window.history.replaceState({}, "", "/services?compare=48");
+    urlStore.changed();
+    mockedLoad.mockResolvedValue(loaded);
+    renderExplorer();
+    const homeTest = screen.getByRole("checkbox", { name: /Available as a home test/ });
+    await vi.waitFor(() => {
+      expect(homeTest).toBeEnabled();
+    });
+
+    fireEvent.click(homeTest);
+    expect(window.location.search).toBe("?home=1&compare=48");
+
+    const panel = screen.getByRole("complementary", { name: "Filters" });
+    fireEvent.click(await within(panel).findByRole("button", { name: "Clear all" }));
+    expect(window.location.search).toBe("?compare=48");
+  });
+});
 
 describe("ServiceExplorer: mobile filters drawer", () => {
   it("the search box on the page writes the URL as you type, like the panel's", async () => {
