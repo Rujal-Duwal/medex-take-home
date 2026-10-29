@@ -95,6 +95,11 @@ export function countOf(count: number, noun: string): string {
   return `${formatCount(count)} ${word}`;
 }
 
+// How long a count must stay the same before it is read out. Typing "thyroid" changes the count
+// on most letters, and a count per letter would talk over the letters a screen reader echoes.
+// The results count and the drawer's pending count both wait this long.
+export const ANNOUNCE_DELAY_MS = 500;
+
 // Shown as the results heading and read out by the live region: "124 services from 18 providers".
 export function resultCountText(serviceCount: number, providerCount: number): string {
   if (serviceCount === 0) return "No services match your filters";

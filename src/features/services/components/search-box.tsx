@@ -13,10 +13,20 @@ import { fieldClassName } from "./field-class-name";
 // what is in the box; copying it back would eat letters. "Clear all" and clicking Back happen
 // with focus elsewhere, so the box catches up with them. Back from the keyboard (Alt+Left)
 // can happen while typing, so popstate sets the box from the address bar too.
+//
+// There are two: one in the filter panel on large screens, one above the results on small
+// screens (WBS 3.8). Both are in the page, one hidden by CSS, so each needs its own id.
 export function SearchBox({
+  id,
   urlText,
+  disabled,
   onChange,
-}: Readonly<{ urlText: string; onChange: (change: FilterChange) => void }>) {
+}: Readonly<{
+  id: string;
+  urlText: string;
+  disabled?: boolean;
+  onChange: (change: FilterChange) => void;
+}>) {
   const [text, setText] = useState(urlText);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,16 +49,17 @@ export function SearchBox({
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="services-search" className="text-base font-semibold">
+      <label htmlFor={id} className="text-base font-semibold">
         Search
       </label>
       <input
         ref={inputRef}
-        id="services-search"
+        id={id}
         type="search"
         value={text}
         placeholder="Service, test or provider"
         autoComplete="off"
+        disabled={disabled}
         className={fieldClassName}
         onFocus={() => {
           setIsFocused(true);

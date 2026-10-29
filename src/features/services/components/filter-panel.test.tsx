@@ -128,10 +128,10 @@ describe("ProviderFilter", () => {
 
 describe("SearchBox", () => {
   it("follows the URL while not focused, and Back while typing", () => {
-    const { rerender } = render(<SearchBox urlText="" onChange={vi.fn()} />);
+    const { rerender } = render(<SearchBox id="search" urlText="" onChange={vi.fn()} />);
     const box = screen.getByRole("searchbox", { name: "Search" });
 
-    rerender(<SearchBox urlText="thyroid" onChange={vi.fn()} />);
+    rerender(<SearchBox id="search" urlText="thyroid" onChange={vi.fn()} />);
     expect(box).toHaveValue("thyroid");
 
     // Typing, then Back from the keyboard: focus stays in the box.

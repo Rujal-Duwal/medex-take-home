@@ -1,26 +1,32 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ErrorState } from "@/components/states/error-state";
 import { OfflineBanner } from "@/components/states/offline-banner";
 import { useAnnounce } from "@/lib/a11y/live-announcer";
-import { runQuery } from "../engine";
+import { runQuery, type ServiceQuery } from "../engine";
 import { applyFilterChange, type FilterChange } from "../filter-changes";
 import { toFiltersView, type FiltersView } from "../filters-view";
-import { toResultsView, type ResultsView } from "../results-view";
+import { ANNOUNCE_DELAY_MS, toResultsView, type ResultsView } from "../results-view";
+import type { Catalogue } from "../types";
 import { useCatalogue } from "../use-catalogue";
-import { parseServicesUrl, servicesHref } from "../url-codec";
+import { parseServicesUrl, servicesHref, type ServicesUrlState } from "../url-codec";
 import { ActiveFilters } from "./active-filters";
 import { ExplorerColumns } from "./explorer-columns";
 import { FilterPanel, SortSelect } from "./filter-panel";
+import { FiltersDrawer } from "./filters-drawer";
 import { NoResults } from "./no-results";
 import { ResultsSkeleton } from "./results-skeleton";
+import { SearchBox } from "./search-box";
 import { ServiceResults } from "./service-results";
 
-// How long the count must stay the same before it is read out; see the effect below.
-const ANNOUNCE_DELAY_MS = 500;
+// The URL in the address bar, not useSearchParams: Next updates that in a transition, so while
+// typing it can be a change behind. A change built on it could undo the one before.
+function addressBarState(catalogue: Catalogue): ServicesUrlState {
+  return parseServicesUrl(new URLSearchParams(globalThis.location.search), catalogue);
+}
 
 const SLOW_MESSAGE = "This is taking longer than usual. We're still loading services.";
 
@@ -42,6 +48,10 @@ const SLOW_MESSAGE = "This is taking longer than usual. We're still loading serv
 // History API"). This then re-renders from the new URL. Next applies that URL in a transition,
 // so React can drop a render that a newer keystroke makes stale. The search box keeps its own
 // text, so typing shows at once; a tick shows together with the new results.
+//
+// Small screens (WBS 3.8): the panel is hidden. The search box sits above the results and
+// applies as you type, as on large screens; the other filters open in FiltersDrawer, which
+// edits a draft and hands it to handleApply.
 export function ServiceExplorer({
   serverView,
   serverFilters,
@@ -50,12 +60,14 @@ export function ServiceExplorer({
   const searchParams = useSearchParams();
   const announce = useAnnounce();
   const resultsRef = useRef<HTMLElement>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const clientViews = useMemo(() => {
     if (state.kind !== "ready") return undefined;
     const urlState = parseServicesUrl(searchParams, state.catalogue);
     const result = runQuery(state.catalogue, urlState.query);
     return {
+      urlQuery: urlState.query,
       results: toResultsView(result, urlState),
       filters: toFiltersView(state.catalogue, result, urlState.query),
     };
@@ -72,8 +84,8 @@ export function ServiceExplorer({
 
   // The count (and page) is read out when it changes (T1-14), whichever side rendered it. It
   // starts at the server's, so the hand-over itself is silent: nothing changed for the customer.
-  // It waits for the count to settle: typing "thyroid" changes it on most letters, and a count
-  // per letter would talk over the letters a screen reader echoes.
+  // It waits for the count to settle (ANNOUNCE_DELAY_MS). FiltersDrawer reads out its pending
+  // count the same way.
   const lastAnnounced = useRef(serverView.announcement);
   useEffect(() => {
     if (shownView === undefined || shownView.announcement === lastAnnounced.current) return;
@@ -117,22 +129,34 @@ export function ServiceExplorer({
     };
   }, [isSlow]);
 
-  function handleFilterChange(change: FilterChange) {
-    if (state.kind !== "ready") return;
-    // Read from the address bar, not useSearchParams, so a change made before the last one
-    // has rendered still builds on it.
-    const current = parseServicesUrl(new URLSearchParams(window.location.search), state.catalogue);
-    const query = applyFilterChange(current.query, change, state.catalogue.categories);
+  // Writes query to the URL, keeping the rest of current (the compare selection).
+  function writeQuery(current: ServicesUrlState, query: ServiceQuery, isSearch: boolean) {
     const href = servicesHref({ ...current, query });
     // Nothing changed (a space typed, the same price applied again): no entry, or Back would
     // seem to do nothing.
     if (href === servicesHref(current)) return;
     // Every change adds a history entry, so Back undoes it (T1-10). Typing adds one for the
     // first letter, then replaces it, so Back undoes the whole edit, not each letter.
-    const isSearch = change.kind === "search";
     if (isSearch && isTypingEntry.current) globalThis.history.replaceState(null, "", href);
     else globalThis.history.pushState(null, "", href);
     isTypingEntry.current = isSearch;
+  }
+
+  function handleFilterChange(change: FilterChange) {
+    if (state.kind !== "ready") return;
+    const current = addressBarState(state.catalogue);
+    const query = applyFilterChange(current.query, change, state.catalogue.categories);
+    writeQuery(current, query, change.kind === "search");
+  }
+
+  // The drawer's "Show N results": the whole draft becomes one history entry, so Back undoes
+  // the drawer edit in one go. Closing returns focus to the Filters button (Radix), and the
+  // new count is read out by the effect above.
+  function handleApply(query: ServiceQuery) {
+    if (state.kind !== "ready") return;
+    const current = addressBarState(state.catalogue);
+    writeQuery(current, query, false);
+    setIsDrawerOpen(false);
   }
 
   // Focus waits on the results area when the control that had it goes away: a way out of the
@@ -193,10 +217,43 @@ export function ServiceExplorer({
       )}
       <ExplorerColumns
         filters={
-          <FilterPanel view={shownFilters} isEnabled={isReady} onChange={handleFilterChange} />
+          // One panel in the page at a time: while the drawer is open its fields would repeat
+          // every id in this one, and a label would point at the hidden copy. The panel is
+          // hidden on screens where the drawer opens, so taking it out changes nothing seen.
+          !isDrawerOpen && (
+            <FilterPanel view={shownFilters} isEnabled={isReady} onChange={handleFilterChange} />
+          )
         }
       >
-        <SortSelect sort={shownFilters.sort} isEnabled={isReady} onChange={handleFilterChange} />
+        <div className="lg:hidden">
+          <SearchBox
+            id="services-search-small"
+            urlText={shownFilters.search}
+            disabled={!isReady}
+            onChange={handleFilterChange}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 lg:justify-end">
+          <FiltersDrawer
+            // The handoff's label: the number of chips, so the customer sees filters are on.
+            label={
+              shownFilters.chips.length > 0
+                ? `Filters (${String(shownFilters.chips.length)})`
+                : "Filters"
+            }
+            // The draft starts from the URL on screen. Opening the drawer moves focus off the
+            // search box, so useSearchParams has caught up with the address bar by then.
+            loaded={
+              state.kind === "ready" && clientViews
+                ? { catalogue: state.catalogue, urlQuery: clientViews.urlQuery }
+                : undefined
+            }
+            isOpen={isDrawerOpen}
+            onOpenChange={setIsDrawerOpen}
+            onApply={handleApply}
+          />
+          <SortSelect sort={shownFilters.sort} isEnabled={isReady} onChange={handleFilterChange} />
+        </div>
         <ActiveFilters
           chips={shownFilters.chips}
           isEnabled={isReady}

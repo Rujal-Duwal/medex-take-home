@@ -15,6 +15,9 @@ import { SearchBox } from "./search-box";
 // every control reports a FilterChange, and the explorer applies it and writes the URL.
 // isEnabled is false until the client has the catalogue: before that a change couldn't be
 // counted, so the whole panel is a disabled fieldset (one attribute, no layout change).
+//
+// The panel shows on large screens only. On small screens FilterFields goes into the drawer
+// (filters-drawer.tsx), which sends its changes to a pending copy instead of the URL.
 
 // A native select with its own arrow. The browser draws its arrow against the right edge and
 // ignores padding there, so appearance-none hides it and a chevron is drawn 12px in, the same
@@ -57,12 +60,13 @@ export function SortSelect({
   onChange: (change: FilterChange) => void;
 }>) {
   return (
-    <div className="flex items-center gap-3 self-end">
+    <div className="flex items-center gap-3">
       {/* nowrap and shrink-0: the select is as wide as its longest option, and "Sort by" stays
-          on one line beside it. */}
+          on one line beside it. On a phone there is no room for it next to the Filters
+          button, so it is only read out there, as the handoff draws it. */}
       <label
         htmlFor="services-sort"
-        className="shrink-0 text-sm whitespace-nowrap text-text-secondary"
+        className="sr-only shrink-0 text-sm whitespace-nowrap text-text-secondary sm:not-sr-only"
       >
         Sort by
       </label>
@@ -160,6 +164,29 @@ function CategoryFilter({
   );
 }
 
+// Every filter but the search, in the panel's order. Shared by the panel and the drawer: the
+// panel has the search above them, and on small screens the search is on the page instead.
+export function FilterFields({
+  view,
+  onChange,
+}: Readonly<{ view: FiltersView; onChange: (change: FilterChange) => void }>) {
+  return (
+    <>
+      <fieldset className="min-w-0">
+        <legend className="mb-2 text-base font-semibold">Service type</legend>
+        {view.types.map((option) => (
+          <FilterOption key={option.id} option={option} onChange={onChange} />
+        ))}
+      </fieldset>
+      <CategoryFilter groups={view.categoryGroups} other={view.otherCategory} onChange={onChange} />
+      <ProviderFilter providers={view.providers} onChange={onChange} />
+      <LocationSelect location={view.location} onChange={onChange} />
+      <PriceFilter price={view.price} onChange={onChange} />
+      <FilterOption option={view.homeTest} onChange={onChange} />
+    </>
+  );
+}
+
 export function FilterPanel({
   view,
   isEnabled,
@@ -176,9 +203,10 @@ export function FilterPanel({
     // Its height fits the window once it has stuck. Before that (page at the top) it starts
     // lower, so its end is below the window. The wheel must then carry on to the page when the
     // panel reaches its end, so there is no overscroll-contain here.
+    // Below the large breakpoint it is hidden; the Filters button and drawer replace it.
     <aside
       aria-labelledby="filters-heading"
-      className="rounded-xl border bg-card px-5 pb-5 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:w-76 lg:flex-none lg:overflow-y-auto"
+      className="hidden rounded-xl border bg-card px-5 pb-5 lg:sticky lg:block lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:w-76 lg:flex-none lg:overflow-y-auto"
     >
       {/* A fixed-height row, so "Clear all" appearing doesn't move the panel. */}
       <div className="flex h-14 items-center justify-between gap-2">
@@ -203,22 +231,8 @@ export function FilterPanel({
       </div>
       <fieldset disabled={!isEnabled} className="flex min-w-0 flex-col gap-6">
         <legend className="sr-only">Filter services</legend>
-        <SearchBox urlText={view.search} onChange={onChange} />
-        <fieldset className="min-w-0">
-          <legend className="mb-2 text-base font-semibold">Service type</legend>
-          {view.types.map((option) => (
-            <FilterOption key={option.id} option={option} onChange={onChange} />
-          ))}
-        </fieldset>
-        <CategoryFilter
-          groups={view.categoryGroups}
-          other={view.otherCategory}
-          onChange={onChange}
-        />
-        <ProviderFilter providers={view.providers} onChange={onChange} />
-        <LocationSelect location={view.location} onChange={onChange} />
-        <PriceFilter price={view.price} onChange={onChange} />
-        <FilterOption option={view.homeTest} onChange={onChange} />
+        <SearchBox id="services-search" urlText={view.search} onChange={onChange} />
+        <FilterFields view={view} onChange={onChange} />
       </fieldset>
     </aside>
   );

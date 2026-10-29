@@ -108,6 +108,13 @@ function renderExplorer() {
   );
 }
 
+// The panel's search box. Below the large breakpoint a second one sits above the results; both
+// are in the DOM (jsdom has no CSS), and either writes the same URL.
+function searchInPanel(): HTMLElement {
+  const panel = screen.getByRole("complementary", { name: "Filters" });
+  return within(panel).getByRole("searchbox", { name: "Search" });
+}
+
 // Calls the real method, then tells useSearchParams, as Next.js does.
 function fakeHistoryMethod(method: "pushState" | "replaceState") {
   const original = window.history[method].bind(window.history);
@@ -260,7 +267,7 @@ describe("ServiceExplorer", () => {
     fireEvent.click(homeTest);
     expect(pushState).toHaveBeenCalledTimes(1);
 
-    const search = screen.getByRole("searchbox", { name: "Search" });
+    const search = searchInPanel();
     // Only a space is no search, so the view doesn't change and nothing is written.
     fireEvent.change(search, { target: { value: " " } });
     expect(pushState).toHaveBeenCalledTimes(1);
@@ -355,7 +362,7 @@ describe("ServiceExplorer: active filter chips", () => {
 describe("ServiceExplorer: search chip", () => {
   it("removing the search right after typing adds a history entry, so Back brings it back", async () => {
     await renderLoadedAt("/services?home=1");
-    const search = screen.getByRole("searchbox", { name: "Search" });
+    const search = searchInPanel();
     fireEvent.change(search, { target: { value: "e" } });
     fireEvent.change(search, { target: { value: "exec" } });
     expect(pushState).toHaveBeenCalledTimes(1);
@@ -390,5 +397,100 @@ describe("ServiceExplorer: no results", () => {
     expect(window.location.search).toBe("?home=1");
     expect(results).toHaveFocus();
     expect(await screen.findByRole("heading", { name: "1 service from 1 provider" })).toBeVisible();
+  });
+});
+
+// Opens the page at url with the catalogue loaded, then opens the drawer.
+async function openDrawerAt(url: string) {
+  window.history.replaceState({}, "", url);
+  mockedLoad.mockResolvedValue(loaded);
+  renderExplorer();
+  const trigger = screen.getByRole("button", { name: /^Filters/ });
+  await vi.waitFor(() => {
+    expect(trigger).toBeEnabled();
+  });
+  fireEvent.click(trigger);
+  return { trigger, drawer: screen.getByRole("dialog", { name: "Filters" }) };
+}
+
+describe("ServiceExplorer: mobile filters drawer", () => {
+  it("the search box on the page writes the URL as you type, like the panel's", async () => {
+    window.history.replaceState({}, "", "/services");
+    mockedLoad.mockResolvedValue(loaded);
+    renderExplorer();
+    // The page's box is the one outside the panel.
+    const onPage = screen
+      .getAllByRole("searchbox", { name: "Search" })
+      .find((box) => box !== searchInPanel());
+    if (onPage === undefined) throw new Error("the search box on the page is missing");
+    await vi.waitFor(() => {
+      expect(onPage).toBeEnabled();
+    });
+
+    fireEvent.change(onPage, { target: { value: "exec" } });
+    expect(window.location.search).toBe("?q=exec");
+  });
+
+  it("counts the pending filters without changing the URL, then applies them in one entry", async () => {
+    const { trigger, drawer } = await openDrawerAt("/services");
+    expect(within(drawer).getByRole("heading", { name: "Filters" })).toHaveFocus();
+    // One panel at a time, so ids stay unique.
+    expect(screen.queryByRole("complementary", { name: "Filters" })).not.toBeInTheDocument();
+    expect(within(drawer).getByRole("button", { name: "Show 2 results" })).toBeVisible();
+
+    fireEvent.click(within(drawer).getByRole("checkbox", { name: /Available as a home test/ }));
+    expect(within(drawer).getByRole("button", { name: "Show 1 result" })).toBeVisible();
+    expect(window.location.search).toBe("");
+    expect(pushState).not.toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(liveRegion()).toHaveTextContent("1 result with these filters");
+    });
+
+    fireEvent.click(within(drawer).getByRole("button", { name: "Show 1 result" }));
+    expect(window.location.search).toBe("?home=1");
+    expect(pushState).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(trigger).toHaveFocus();
+    });
+    expect(trigger).toHaveAccessibleName("Filters (1)");
+  });
+
+  it("Esc throws the draft away and returns focus to Filters", async () => {
+    const { trigger, drawer } = await openDrawerAt("/services");
+    fireEvent.click(within(drawer).getByRole("checkbox", { name: /Available as a home test/ }));
+
+    fireEvent.keyDown(drawer, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(window.location.search).toBe("");
+    await vi.waitFor(() => {
+      expect(trigger).toHaveFocus();
+    });
+
+    fireEvent.click(trigger);
+    const reopened = screen.getByRole("dialog", { name: "Filters" });
+    expect(
+      within(reopened).getByRole("checkbox", { name: /Available as a home test/ }),
+    ).not.toBeChecked();
+  });
+
+  it("with nothing found the button says so, stays focusable and does nothing", async () => {
+    const { drawer } = await openDrawerAt("/services?q=nothing");
+    const apply = within(drawer).getByRole("button", { name: "No results, change filters" });
+    expect(apply).toHaveAttribute("aria-disabled", "true");
+    expect(apply).toBeEnabled();
+
+    fireEvent.click(apply);
+    expect(screen.getByRole("dialog", { name: "Filters" })).toBeVisible();
+    expect(pushState).not.toHaveBeenCalled();
+  });
+
+  it("Clear removes the drawer's filters and keeps the search, which is on the page", async () => {
+    const { drawer } = await openDrawerAt("/services?q=exec&home=1");
+    expect(within(drawer).getByRole("button", { name: "Show 1 result" })).toBeVisible();
+
+    fireEvent.click(within(drawer).getByRole("button", { name: "Clear" }));
+    fireEvent.click(within(drawer).getByRole("button", { name: "Show 2 results" }));
+    expect(window.location.search).toBe("?q=exec");
   });
 });
