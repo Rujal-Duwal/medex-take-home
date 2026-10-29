@@ -320,6 +320,161 @@ describe("providersMatchingName", () => {
   });
 });
 
+describe("toFiltersView: active filter chips", () => {
+  const labels = (overrides: Partial<ServiceQuery>) => viewFor(overrides).chips.map((c) => c.label);
+
+  it("none without filters", () => {
+    expect(viewFor().chips).toEqual([]);
+    expect(viewFor({ sort: "rating", search: "   " }).chips).toEqual([]);
+  });
+
+  it("one per chosen value, in the panel's order, whatever the URL's order", () => {
+    expect(
+      labels({
+        search: "  thyroid ",
+        homeTestOnly: true,
+        price: { currency: "THB", min: new Big(1000), max: new Big(5000) },
+        location: { kind: "city", slug: "bangkok" },
+        providerIds: [48, 70],
+        categoryKeys: [OTHER_CATEGORY_KEY, "lab_test.ultrasound", "package.ultrasound.thyroid"],
+        types: ["lab_test", "package"],
+      }),
+    ).toEqual([
+      "Package",
+      "Lab test",
+      "Ultrasound: Thyroid (Package)",
+      "Ultrasound (Lab test)",
+      "Other category",
+      "Himal Hospital",
+      "Riverside International Hospital",
+      "Bangkok",
+      "1,000.00 THB to 5,000.00 THB",
+      "Home test available",
+      "“thyroid”",
+    ]);
+  });
+
+  it("the two ultrasound categories read differently", () => {
+    expect(labels({ categoryKeys: ["package.ultrasound", "lab_test.ultrasound"] })).toEqual([
+      "Ultrasound (Package)",
+      "Ultrasound (Lab test)",
+    ]);
+  });
+
+  it("a country shows its name", () => {
+    expect(labels({ location: { kind: "country", code: "NP" } })).toEqual(["Nepal"]);
+  });
+
+  it("a chosen currency has its own chip, and each end of the range reads on its own", () => {
+    expect(labels({ price: { currency: "NPR" } })).toEqual(["Prices in NPR"]);
+    expect(labels({ price: { currency: "NPR", max: new Big(2000) } })).toEqual([
+      "Prices in NPR",
+      "Up to 2,000.00 NPR",
+    ]);
+    expect(labels({ price: { currency: "THB", min: new Big(1000) } })).toEqual([
+      "Prices in THB",
+      "From 1,000.00 THB",
+    ]);
+  });
+
+  it("no currency chip when the location's currency is the chosen one", () => {
+    // The location already limits results to THB, so "Prices in THB" would remove nothing.
+    expect(
+      labels({ location: { kind: "city", slug: "bangkok" }, price: { currency: "THB" } }),
+    ).toEqual(["Bangkok"]);
+  });
+
+  it("each chip carries the change that removes it", () => {
+    const changes = viewFor({
+      search: "thyroid",
+      homeTestOnly: true,
+      price: { currency: "NPR", max: new Big(2000) },
+      location: { kind: "country", code: "NP" },
+      providerIds: [70],
+      categoryKeys: ["package.ultrasound"],
+      types: ["package"],
+    }).chips.map((chip) => chip.change);
+    expect(changes).toEqual([
+      { kind: "type", type: "package" },
+      { kind: "category", key: "package.ultrasound" },
+      { kind: "provider", id: 70 },
+      { kind: "location" },
+      // In the location's currency: removing the range removes the price filter, like an
+      // empty Apply (WBS 3.6).
+      { kind: "currency" },
+      { kind: "home-test" },
+      { kind: "remove-filter", filter: "search" },
+    ]);
+  });
+
+  it("removing a range in a chosen currency keeps the currency", () => {
+    const [currency, range] = viewFor({ price: { currency: "NPR", max: new Big(2000) } }).chips;
+    expect(currency?.change).toEqual({ kind: "currency" });
+    expect(range?.change).toEqual({ kind: "currency", currency: "NPR" });
+  });
+
+  it("chip ids are unique", () => {
+    const ids = viewFor({
+      types: ["package"],
+      categoryKeys: ["package.ultrasound.thyroid"],
+      providerIds: [70],
+      price: { currency: "NPR", max: new Big(2000) },
+    }).chips.map((chip) => chip.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe("toFiltersView: ways out of no results", () => {
+  const waysOut = (overrides: Partial<ServiceQuery>) =>
+    viewFor(overrides).waysOut.map((way) => way.label);
+
+  it("none while there are results", () => {
+    expect(viewFor({ types: ["package"] }).waysOut).toEqual([]);
+  });
+
+  it("the filter that brings back the most comes first, then Clear all", () => {
+    // Nepal has no lab tests. Without the location: 2 lab tests. Without the type: 1 service.
+    const view = viewFor({ types: ["lab_test"], location: { kind: "country", code: "NP" } });
+    expect(view.waysOut.map((way) => way.label)).toEqual([
+      "Remove the location filter (2 services)",
+      "Remove the service type filter (1 service)",
+      "Clear all filters (5 services)",
+    ]);
+    expect(view.waysOut.map((way) => way.change)).toEqual([
+      { kind: "remove-filter", filter: "location" },
+      { kind: "remove-filter", filter: "type" },
+      { kind: "clear" },
+    ]);
+  });
+
+  it("leaves out a filter whose removal still finds nothing", () => {
+    // Himal has no lab test and no home test: only removing the provider helps.
+    expect(waysOut({ providerIds: [70], types: ["lab_test"], homeTestOnly: true })).toEqual([
+      "Remove the provider filter (1 service)",
+      "Clear all filters (5 services)",
+    ]);
+  });
+
+  it("with one filter, Clear all would be the same button, so it isn't offered", () => {
+    expect(waysOut({ search: "nothing like this" })).toEqual(["Clear the search (5 services)"]);
+  });
+
+  it("a tie keeps the panel's order", () => {
+    // Other holds one service, not a home test; the one home test isn't under Other.
+    expect(waysOut({ categoryKeys: [OTHER_CATEGORY_KEY], homeTestOnly: true })).toEqual([
+      "Remove the category filter (1 service)",
+      "Remove the home test filter (1 service)",
+      "Clear all filters (5 services)",
+    ]);
+  });
+
+  it("names the price filter", () => {
+    expect(waysOut({ price: { currency: "THB", max: new Big(10) } })).toEqual([
+      "Remove the price filter (5 services)",
+    ]);
+  });
+});
+
 describe("providersInShortList", () => {
   const providers: FilterOptionView[] = Array.from(
     { length: PROVIDER_PREVIEW_SIZE + 3 },

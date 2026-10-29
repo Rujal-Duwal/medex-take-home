@@ -89,7 +89,8 @@ export function formatCount(count: number): string {
   return wholeNumber.format(count);
 }
 
-function countOf(count: number, noun: string): string {
+// "1 service", "124 services". The empty state's ways out use it too (filters-view.ts).
+export function countOf(count: number, noun: string): string {
   const word = count === 1 ? noun : `${noun}s`;
   return `${formatCount(count)} ${word}`;
 }

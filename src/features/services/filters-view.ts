@@ -1,15 +1,23 @@
-import { CURRENCIES, type Currency } from "@/lib/money/money";
+import { CURRENCIES, formatMoney, type Currency } from "@/lib/money/money";
 import {
+  countMatches,
   locationKey,
   SORT_ORDERS,
   type Location,
+  type PriceFilter,
   type QueryResult,
   type ServiceQuery,
   type SortOrder,
 } from "./engine";
-import { hasActiveFilters, type FilterChange } from "./filter-changes";
+import {
+  activeFilterGroups,
+  applyFilterChange,
+  hasActiveFilters,
+  type FilterChange,
+  type FilterGroup,
+} from "./filter-changes";
 import { normalizeForSearch } from "./mappers";
-import { formatCount, TYPE_LABELS } from "./results-view";
+import { countOf, formatCount, TYPE_LABELS } from "./results-view";
 import {
   OTHER_CATEGORY_KEY,
   SERVICE_TYPES,
@@ -17,6 +25,7 @@ import {
   type Category,
   type Provider,
 } from "./types";
+import { searchTextOf } from "./url-codec";
 
 // What the filter panel shows, worked out from the catalogue and the engine's result, like
 // ResultsView for the results: plain strings, numbers, booleans and FilterChange objects, so
@@ -90,6 +99,21 @@ export type PriceFilterView =
       emptyRangeChange: FilterChange;
     };
 
+// One active filter value above the results, with an X to remove it (HANDOFF "Active
+// filters"). Its accessible name is "Remove filter: " plus the label.
+export interface ChipView {
+  // Unique among the chips: the React key, and how focus finds the next chip.
+  id: string;
+  label: string;
+  change: FilterChange;
+}
+
+// A button in the empty state: "Remove the price filter (124 services)".
+export interface WayOutView {
+  label: string;
+  change: FilterChange;
+}
+
 export interface FiltersView {
   types: FilterOptionView[];
   categoryGroups: CategoryGroupView[];
@@ -106,6 +130,11 @@ export interface FiltersView {
   search: string;
   // Shows "Clear all". The sort is not a filter, so it doesn't count.
   hasActiveFilters: boolean;
+  // In the panel's order, so the order doesn't change when one goes.
+  chips: ChipView[];
+  // Only with no results: the filters whose removal brings some back, most first, then
+  // "Clear all filters".
+  waysOut: WayOutView[];
 }
 
 const SORT_LABELS: Record<SortOrder, string> = {
@@ -284,6 +313,22 @@ function locationView(
   };
 }
 
+// What emptying the range asks for: an empty Apply, or removing the range's chip. In the
+// location's currency that is no price filter at all: keeping cur would leave other countries at
+// 0 with no way to remove it. In a chosen currency the currency stays, with no bounds.
+// Whether removing the chosen currency would change anything: the panel's Change currency and
+// the "Prices in THB" chip both show only then. When the location's currency is the chosen one,
+// the location already limits results to it, so removing the currency would only clear the range.
+function canRemoveCurrency(price: PriceFilter | undefined, result: QueryResult): boolean {
+  return price !== undefined && price.currency !== result.locationCurrency;
+}
+
+function withoutRange(currency: Currency, result: QueryResult): FilterChange {
+  return result.locationCurrency === currency
+    ? { kind: "currency" }
+    : { kind: "currency", currency };
+}
+
 function priceView(
   catalogue: Catalogue,
   query: ServiceQuery,
@@ -296,14 +341,9 @@ function priceView(
       min: query.price?.min?.toFixed() ?? "",
       max: query.price?.max?.toFixed() ?? "",
       // Only when it would change something: without the price filter the customer gets the
-      // currency choice, or the location's currency if that is a different one. When the
-      // location's currency is the chosen one, Change would only clear the range.
-      canChangeCurrency:
-        query.price !== undefined && result.locationCurrency !== query.price.currency,
-      emptyRangeChange:
-        result.locationCurrency === result.priceCurrency
-          ? { kind: "currency" }
-          : { kind: "currency", currency: result.priceCurrency },
+      // currency choice, or the location's currency if that is a different one.
+      canChangeCurrency: canRemoveCurrency(query.price, result),
+      emptyRangeChange: withoutRange(result.priceCurrency, result),
     };
   }
   // Only the currencies the catalogue uses, in the CURRENCIES order.
@@ -326,6 +366,164 @@ function priceView(
         : "Pick a currency to set a price range.",
     currencies,
   };
+}
+
+function locationName(catalogue: Catalogue, location: Location): string {
+  for (const { city, country } of catalogue.providers) {
+    if (location.kind === "city" && city.slug === location.slug) return city.name;
+    if (location.kind === "country" && country.code === location.code) return country.name;
+  }
+  // Not reached: the URL codec drops a location that isn't in the catalogue.
+  return location.kind === "city" ? location.slug : location.code;
+}
+
+// "1,000.00 THB to 5,000.00 THB", "From 1,000.00 THB", "Up to 5,000.00 THB".
+function rangeLabel({ currency, min, max }: PriceFilter): string | undefined {
+  const minText = min === undefined ? undefined : formatMoney({ amount: min, currency });
+  const maxText = max === undefined ? undefined : formatMoney({ amount: max, currency });
+  if (minText !== undefined && maxText !== undefined) return `${minText} to ${maxText}`;
+  if (minText !== undefined) return `From ${minText}`;
+  if (maxText !== undefined) return `Up to ${maxText}`;
+  return undefined;
+}
+
+// Categories and subcategories carry their parent and type, since titles repeat: there are two
+// "Ultrasound" categories and three "Thyroid" subcategories.
+function categoryChips(catalogue: Catalogue, query: ServiceQuery): ChipView[] {
+  const keys = query.categoryKeys;
+  const chips: ChipView[] = [];
+  // In the panel's order: by type, then as MedEx lists them.
+  for (const type of SERVICE_TYPES) {
+    for (const category of catalogue.categories.filter((item) => item.type === type)) {
+      const typeLabel = TYPE_LABELS[type];
+      if (keys.includes(category.key)) {
+        chips.push({
+          id: `chip-cat-${category.key}`,
+          label: `${category.title} (${typeLabel})`,
+          change: { kind: "category", key: category.key },
+        });
+      }
+      for (const sub of category.subcategories.filter((item) => keys.includes(item.key))) {
+        chips.push({
+          id: `chip-cat-${sub.key}`,
+          label: `${category.title}: ${sub.title} (${typeLabel})`,
+          change: { kind: "category", key: sub.key },
+        });
+      }
+    }
+  }
+  if (keys.includes(OTHER_CATEGORY_KEY)) {
+    chips.push({
+      id: `chip-cat-${OTHER_CATEGORY_KEY}`,
+      label: "Other category",
+      change: { kind: "category", key: OTHER_CATEGORY_KEY },
+    });
+  }
+  return chips;
+}
+
+// One chip per chosen value. Each removes only its own value, with the same change the panel's
+// option sends, so a chip and its checkbox can't disagree. Removing the last subcategory chip
+// therefore goes back to its whole category, as unticking it does (WBS 3.6).
+function chipsOf(catalogue: Catalogue, query: ServiceQuery, result: QueryResult): ChipView[] {
+  const chips: ChipView[] = [];
+  for (const type of SERVICE_TYPES.filter((item) => query.types.includes(item))) {
+    chips.push({
+      id: `chip-type-${type}`,
+      label: TYPE_LABELS[type],
+      change: { kind: "type", type },
+    });
+  }
+  chips.push(...categoryChips(catalogue, query));
+  // filter() makes a copy, so sort() doesn't touch the catalogue. Not toSorted(): see mappers.ts.
+  const chosenProviders = catalogue.providers
+    .filter((item) => query.providerIds.includes(item.id))
+    .sort(byName);
+  for (const provider of chosenProviders) {
+    chips.push({
+      id: `chip-provider-${String(provider.id)}`,
+      label: provider.name,
+      change: { kind: "provider", id: provider.id },
+    });
+  }
+  if (query.location !== undefined) {
+    chips.push({
+      id: "chip-location",
+      label: locationName(catalogue, query.location),
+      change: { kind: "location" },
+    });
+  }
+  const { price } = query;
+  if (price !== undefined) {
+    if (canRemoveCurrency(price, result)) {
+      chips.push({
+        id: "chip-currency",
+        label: `Prices in ${price.currency}`,
+        change: { kind: "currency" },
+      });
+    }
+    const range = rangeLabel(price);
+    if (range !== undefined) {
+      chips.push({ id: "chip-range", label: range, change: withoutRange(price.currency, result) });
+    }
+  }
+  if (query.homeTestOnly) {
+    chips.push({
+      id: "chip-home-test",
+      label: "Home test available",
+      change: { kind: "home-test" },
+    });
+  }
+  if (searchTextOf(query.search) !== "") {
+    chips.push({
+      id: "chip-search",
+      label: `“${query.search.trim()}”`,
+      // Not a "search" change: the explorer treats those as typing and replaces the history
+      // entry, so Back couldn't bring the search back.
+      change: { kind: "remove-filter", filter: "search" },
+    });
+  }
+  return chips;
+}
+
+const WAY_OUT_LABELS: Record<FilterGroup, string> = {
+  search: "Clear the search",
+  type: "Remove the service type filter",
+  category: "Remove the category filter",
+  provider: "Remove the provider filter",
+  location: "Remove the location filter",
+  price: "Remove the price filter",
+  homeTest: "Remove the home test filter",
+};
+
+// The empty state's buttons (spec "Rendering and states"): one per filter in use, by how many
+// services removing it brings back, most first. A tie keeps the panel's order. One that brings
+// back nothing is left out. "Clear all filters" comes last, and only with two filters or more:
+// with one, it would do the same as that filter's button. Removal is per filter, not per value:
+// "Remove the price filter", as the handoff words it.
+function waysOutOf(catalogue: Catalogue, query: ServiceQuery, result: QueryResult): WayOutView[] {
+  if (result.serviceCount > 0) return [];
+  const countAfter = (change: FilterChange) =>
+    countMatches(catalogue, applyFilterChange(query, change, catalogue.categories));
+
+  const groups = activeFilterGroups(query);
+  // sort() is stable, so a tie keeps the panel's order.
+  const removals: { label: string; change: FilterChange; count: number }[] = groups
+    .map((filter) => {
+      const change: FilterChange = { kind: "remove-filter", filter };
+      return { label: WAY_OUT_LABELS[filter], change, count: countAfter(change) };
+    })
+    .sort((a, b) => b.count - a.count);
+  if (groups.length > 1) {
+    const clear: FilterChange = { kind: "clear" };
+    removals.push({ label: "Clear all filters", change: clear, count: countAfter(clear) });
+  }
+  return removals
+    .filter(({ count }) => count > 0)
+    .map(({ label, change, count }) => ({
+      label: `${label} (${countOf(count, "service")})`,
+      change,
+    }));
 }
 
 export function toFiltersView(
@@ -373,6 +571,8 @@ export function toFiltersView(
     },
     search: query.search,
     hasActiveFilters: hasActiveFilters(query),
+    chips: chipsOf(catalogue, query, result),
+    waysOut: waysOutOf(catalogue, query, result),
   };
 }
 
