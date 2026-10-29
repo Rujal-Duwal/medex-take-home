@@ -4,6 +4,7 @@ import { defaultQuery, type ServiceQuery } from "./engine";
 import {
   activeFilterGroups,
   applyFilterChange,
+  clearDrawerFilters,
   readPriceRange,
   type FilterChange,
 } from "./filter-changes";
@@ -125,6 +126,27 @@ describe("applyFilterChange", () => {
     };
     expect(apply({ kind: "clear" }, busy)).toEqual({
       ...defaultQuery,
+      sort: "rating",
+      openProviderIds: [48],
+    });
+  });
+});
+
+describe("clearDrawerFilters (the mobile drawer's Clear)", () => {
+  it("removes the drawer's filters and keeps the search, which is on the page", () => {
+    const busy: ServiceQuery = {
+      ...defaultQuery,
+      search: "thyroid",
+      types: ["package"],
+      providerIds: [48],
+      homeTestOnly: true,
+      sort: "rating",
+      page: 2,
+      openProviderIds: [48],
+    };
+    expect(clearDrawerFilters(busy, categories)).toEqual({
+      ...defaultQuery,
+      search: "thyroid",
       sort: "rating",
       openProviderIds: [48],
     });

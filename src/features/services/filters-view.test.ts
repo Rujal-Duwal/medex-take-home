@@ -6,6 +6,8 @@ import {
   PROVIDER_PREVIEW_SIZE,
   providersInShortList,
   providersMatchingName,
+  pendingCountText,
+  showResultsLabel,
   toFiltersView,
   type FilterOptionView,
 } from "./filters-view";
@@ -508,5 +510,25 @@ describe("providersInShortList", () => {
   it("keeps one the customer just unticked, so the checkbox doesn't vanish under focus", () => {
     const kept = `provider-${String(PROVIDER_PREVIEW_SIZE + 2)}`;
     expect(ids(providersInShortList(providers, new Set([kept])))).toEqual([...firstFew, kept]);
+  });
+});
+
+describe("showResultsLabel (the drawer's apply button)", () => {
+  it("counts the services the pending filters find", () => {
+    expect(showResultsLabel(42)).toBe("Show 42 results");
+    expect(showResultsLabel(1)).toBe("Show 1 result");
+    expect(showResultsLabel(2853)).toBe("Show 2,853 results");
+  });
+
+  it("says what to do when nothing matches", () => {
+    expect(showResultsLabel(0)).toBe("No results, change filters");
+  });
+});
+
+describe("pendingCountText (read out in the drawer)", () => {
+  it("reads the pending count as a count", () => {
+    expect(pendingCountText(42)).toBe("42 results with these filters");
+    expect(pendingCountText(1)).toBe("1 result with these filters");
+    expect(pendingCountText(0)).toBe("No results with these filters");
   });
 });

@@ -576,6 +576,21 @@ export function toFiltersView(
   };
 }
 
+// The mobile drawer's apply button (T1-11): what the pending filters would find, before they are
+// applied. It counts services, like the results heading. At 0 it says what to do instead, and
+// the drawer makes it do nothing.
+export function showResultsLabel(serviceCount: number): string {
+  if (serviceCount === 0) return "No results, change filters";
+  return `Show ${countOf(serviceCount, "result")}`;
+}
+
+// What the drawer reads out when its pending count settles: a count, not the button's
+// "Show 42 results", which would sound like an instruction.
+export function pendingCountText(serviceCount: number): string {
+  if (serviceCount === 0) return "No results with these filters";
+  return `${countOf(serviceCount, "result")} with these filters`;
+}
+
 // The provider list's own search box: part of the name, in any case and spacing. It only
 // narrows the list on screen; it isn't a filter and isn't in the URL.
 export function providersMatchingName(
