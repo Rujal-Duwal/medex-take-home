@@ -6,7 +6,7 @@ import {
   type ServiceQuery,
 } from "./engine";
 import type { Price, ProviderRating, Service, ServiceType } from "./types";
-import { toServicesSearchParams, type ServicesUrlState } from "./url-codec";
+import { servicesHref, type ServicesUrlState } from "./url-codec";
 
 // What the results list shows, worked out from the engine's result: every text and link as a
 // plain string. It exists for two reasons:
@@ -72,7 +72,8 @@ export interface ResultsView {
   pagination?: PaginationView;
 }
 
-const TYPE_LABELS: Record<ServiceType, string> = {
+// Also the service type options' labels in the filter panel (filters-view.ts).
+export const TYPE_LABELS: Record<ServiceType, string> = {
   package: "Package",
   lab_test: "Lab test",
   wellness: "Wellness",
@@ -80,12 +81,17 @@ const TYPE_LABELS: Record<ServiceType, string> = {
   insurance: "Insurance",
 };
 
-// en-US grouping for counts, the same as for prices: "2,853 services".
+// en-US grouping for counts, the same as for prices: "2,853". The filter panel's counts use
+// this too.
 const wholeNumber = new Intl.NumberFormat("en-US");
+
+export function formatCount(count: number): string {
+  return wholeNumber.format(count);
+}
 
 function countOf(count: number, noun: string): string {
   const word = count === 1 ? noun : `${noun}s`;
-  return `${wholeNumber.format(count)} ${word}`;
+  return `${formatCount(count)} ${word}`;
 }
 
 // Shown as the results heading and read out by the live region: "124 services from 18 providers".
@@ -94,14 +100,9 @@ export function resultCountText(serviceCount: number, providerCount: number): st
   return `${countOf(serviceCount, "service")} from ${countOf(providerCount, "provider")}`;
 }
 
-// Links stay on /services and change only the URL. Every link goes through the codec, so it
-// writes the same URL the filters will (defaults left out, params in the spec's order).
-function servicesHref(state: ServicesUrlState, changes: Partial<ServiceQuery>): string {
-  const search = toServicesSearchParams({
-    ...state,
-    query: { ...state.query, ...changes },
-  }).toString();
-  return search === "" ? "/services" : `/services?${search}`;
+// Links stay on /services and change only the URL, through the codec, like the filters.
+function changedHref(state: ServicesUrlState, changes: Partial<ServiceQuery>): string {
+  return servicesHref({ ...state, query: { ...state.query, ...changes } });
 }
 
 function priceView(price: Price): PriceView {
@@ -150,7 +151,7 @@ function groupToggle(
   if (group.isOpen) {
     return {
       label: "Show fewer",
-      href: servicesHref(state, {
+      href: changedHref(state, {
         page,
         openProviderIds: openIds.filter((id) => id !== providerId),
       }),
@@ -158,7 +159,7 @@ function groupToggle(
   }
   return {
     label: `View all ${countOf(group.matchingCount, "service")}`,
-    href: servicesHref(state, { page, openProviderIds: [...openIds, providerId] }),
+    href: changedHref(state, { page, openProviderIds: [...openIds, providerId] }),
   };
 }
 
@@ -198,11 +199,11 @@ function paginationOf(result: QueryResult, state: ServicesUrlState): PaginationV
   if (pageCount <= 1) return undefined;
   return {
     label: `Page ${String(page)} of ${String(pageCount)}`,
-    previousHref: page > 1 ? servicesHref(state, { page: page - 1 }) : undefined,
-    nextHref: page < pageCount ? servicesHref(state, { page: page + 1 }) : undefined,
+    previousHref: page > 1 ? changedHref(state, { page: page - 1 }) : undefined,
+    nextHref: page < pageCount ? changedHref(state, { page: page + 1 }) : undefined,
     pages: Array.from({ length: pageCount }, (_, index) => ({
       number: index + 1,
-      href: servicesHref(state, { page: index + 1 }),
+      href: changedHref(state, { page: index + 1 }),
       isCurrent: index + 1 === page,
     })),
   };

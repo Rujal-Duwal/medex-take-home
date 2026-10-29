@@ -89,6 +89,9 @@ export interface QueryResult {
   // The currency the price filter offers its range in: the one chosen, or the one the location
   // implies (D7). Undefined when results can span currencies and none is chosen.
   priceCurrency?: Currency;
+  // The currency the location implies on its own, chosen currency or not. The price filter
+  // offers "Change currency" only when this differs from the chosen one.
+  locationCurrency?: Currency;
   facetCounts: FacetCounts;
 }
 
@@ -312,17 +315,16 @@ export function runQuery(catalogue: Catalogue, query: ServiceQuery): QueryResult
       };
     });
 
+  const locationCurrency =
+    query.location === undefined ? undefined : impliedCurrency(query.location, catalogue.providers);
   return {
     groups,
     serviceCount: found.length,
     providerCount: allGroups.length,
     page,
     pageCount,
-    priceCurrency:
-      query.price?.currency ??
-      (query.location === undefined
-        ? undefined
-        : impliedCurrency(query.location, catalogue.providers)),
+    priceCurrency: query.price?.currency ?? locationCurrency,
+    locationCurrency,
     facetCounts: countAllFacets(rows, query),
   };
 }

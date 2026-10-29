@@ -112,7 +112,8 @@ function parseTypes(values: string[]): ServiceType[] {
 // A plain amount, like a customer would type: "1000" or "1000.50". Never negative, no exponent,
 // so "1e3" is dropped rather than read as 1000. Any number of decimals: a bound is not a price,
 // and anything toFixed() writes must read back, or a range would vanish on reload.
-function parseAmount(value: string | null): Big | undefined {
+// The price filter's boxes read what the customer types through this too (readPriceRange).
+export function parseAmount(value: string | null): Big | undefined {
   if (value === null || !/^\d+(\.\d+)?$/.test(value)) return undefined;
   return new Big(value);
 }
@@ -133,15 +134,24 @@ function parsePrice(params: URLSearchParams): PriceFilter | undefined {
   return price;
 }
 
+// The search text is kept as typed (the engine normalises it), but only spaces is no search.
+// The one place for that rule: the codec, the search box and the filters all go through it.
+export function searchTextOf(text: string): string {
+  return text.trim() === "" ? defaultQuery.search : text;
+}
+
+// Also read on its own by the search box when the customer goes Back.
+export function parseSearchText(params: URLSearchParams): string {
+  return searchTextOf(params.get("q") ?? "");
+}
+
 export function parseServicesUrl(params: URLSearchParams, catalogue: Catalogue): ServicesUrlState {
   const known = knownValues(catalogue);
-  const search = params.get("q") ?? "";
   const page = parseWholeNumber(params.get("page") ?? "");
   const sort = params.get("sort");
 
   const query: ServiceQuery = {
-    // Kept as typed (the engine normalises it), unless it is only spaces.
-    search: search.trim() === "" ? defaultQuery.search : search,
+    search: parseSearchText(params),
     types: parseTypes(params.getAll("type")),
     categoryKeys: unique(params.getAll("cat").filter((key) => known.categoryKeys.has(key))),
     providerIds: parseProviderIds(params.getAll("provider"), known),
@@ -172,7 +182,7 @@ export function parseServicesUrl(params: URLSearchParams, catalogue: Catalogue):
 export function toServicesSearchParams(state: ServicesUrlState): URLSearchParams {
   const { query } = state;
   const params = new URLSearchParams();
-  if (query.search.trim() !== "") params.set("q", query.search);
+  if (searchTextOf(query.search) !== "") params.set("q", query.search);
   for (const type of query.types) params.append("type", type);
   for (const key of query.categoryKeys) params.append("cat", key);
   for (const id of query.providerIds) params.append("provider", String(id));
@@ -191,4 +201,11 @@ export function toServicesSearchParams(state: ServicesUrlState): URLSearchParams
     params.set("compare", state.compareProviderIds.join(","));
   }
   return params;
+}
+
+// The /services address for a view. The result links and the filters both build it here, so
+// they write the same URL for the same view (defaults left out, params in the spec's order).
+export function servicesHref(state: ServicesUrlState): string {
+  const search = toServicesSearchParams(state).toString();
+  return search === "" ? "/services" : `/services?${search}`;
 }

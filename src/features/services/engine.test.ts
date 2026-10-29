@@ -297,7 +297,17 @@ describe("runQuery: price filter", () => {
   it("offers the currency a location implies, without filtering by it (D7)", () => {
     const result = runQuery(data, query({ location: { kind: "city", slug: "bangkok" } }));
     expect(result.priceCurrency).toBe("THB");
+    expect(result.locationCurrency).toBe("THB");
     expect(result.serviceCount).toBe(3);
+  });
+
+  it("a chosen currency wins over the location's, which is still reported", () => {
+    const result = runQuery(
+      data,
+      query({ location: { kind: "city", slug: "bangkok" }, price: priceFilter("NPR") }),
+    );
+    expect(result.priceCurrency).toBe("NPR");
+    expect(result.locationCurrency).toBe("THB");
   });
 
   it("offers no currency when results can span several", () => {
