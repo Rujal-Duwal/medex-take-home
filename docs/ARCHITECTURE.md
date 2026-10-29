@@ -113,6 +113,7 @@ flowchart LR
 - Hand-over (`src/app/services/page.tsx`, `components/service-explorer.tsx`): the server page reads the data through `src/lib/mock/task1-data.ts`, runs the codec and engine, and turns the result into a `ResultsView` (`results-view.ts`): plain strings and links, so it can be passed to a client component. `ServiceExplorer` shows it until `useCatalogue` has loaded the three endpoints, then renders the same `ServiceResults` from its own run of the engine on `useSearchParams()`. Same inputs, same output, so the swap can't be seen.
 - `useCatalogue` holds the client load: loading (with a slow flag after 3 s), ready, failed, offline. "Try again" starts a new attempt.
 - Filters (`filter-changes.ts`, `filters-view.ts`, `components/filter-panel.tsx`): `toFiltersView` turns the catalogue and the engine result into a plain `FiltersView` (labels, counts, D5 availability, the category tree, the currency step), handed over like `ResultsView`. Each option carries the `FilterChange` a click asks for. `ServiceExplorer` applies it with `applyFilterChange` to the query read from the address bar, writes the URL with `servicesHref` and `history.pushState` (`replaceState` after the first letter typed), and re-renders from `useSearchParams`. Next applies that URL in a transition, so typing stays responsive; the search box keeps its own text. The panel is disabled until the catalogue has loaded.
+- Chips and the empty state (`components/active-filters.tsx`, `components/no-results.tsx`): `FiltersView` also holds `chips` (one per chosen value, each with the `FilterChange` that removes it) and, only when nothing matches, `waysOut`. A way out is a `remove-filter` change for one whole filter (`activeFilterGroups`), ranked by `countMatches` (`engine.ts`), the engine's count without sorting, grouping or facet counts. Both come from the server too, so a shared link with no results shows its ways out at once.
 
 ### Task 2: Cart and checkout
 
@@ -213,7 +214,7 @@ Rules for writing tests:
 
 Where common changes would go:
 
-- New Task 1 filter: add to the filter state type, the URL codec, the engine's filter list and facet list, a `FilterChange` kind and a line in `hasActiveFilters` in `filter-changes.ts`, its options in `filters-view.ts`, then the panel. Tests in `engine.test.ts`, `filter-changes.test.ts` and `filters-view.test.ts`.
+- New Task 1 filter: add to the filter state type, the URL codec, the engine's filter list and facet list, a `FilterChange` kind and a line in `activeFilterGroups` in `filter-changes.ts`, its options, its chip and its way-out label in `filters-view.ts`, then the panel. Tests in `engine.test.ts`, `filter-changes.test.ts` and `filters-view.test.ts`.
 - New currency: `src/lib/money` currency list and formatter; nothing else should need to change.
 - New payment method: the checkout request type, the mock handler, and the payment choice component.
 - Different slot length or buffer: data only; the slot generator reads them.
