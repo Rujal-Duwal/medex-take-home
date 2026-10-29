@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { runQuery } from "@/features/services/engine";
 import { mapCatalogue } from "@/features/services/mappers";
+import { toFiltersView } from "@/features/services/filters-view";
 import { toResultsView } from "@/features/services/results-view";
 import type { Catalogue } from "@/features/services/types";
 import { parseServicesUrl, searchParamsFromRecord } from "@/features/services/url-codec";
@@ -18,18 +19,25 @@ function serverCatalogue(): Catalogue {
   return catalogue;
 }
 
-// Server-first render (T1-10): the first page of results for this URL, from the same codec and
-// engine the client uses, so a filtered link never flashes an unfiltered list. The data is read
-// directly here, not through the mock API, like a real server calling MedEx's API internally.
+// Server-first render (T1-10): the first page of results and the filter panel for this URL,
+// from the same codec and engine the client uses, so a filtered link never flashes an
+// unfiltered list. The data is read directly here, not through the mock API, like a real
+// server calling MedEx's API internally.
 // ServiceExplorer takes over on the client; it explains the hand-over.
 // While this waits (only with ?mockDelay), loading.tsx shows the skeleton.
 export default async function ServicesPage({ searchParams }: Readonly<PageProps<"/services">>) {
   const params = searchParamsFromRecord(await searchParams);
   await applyMockDelayToPage(params);
 
-  const urlState = parseServicesUrl(params, serverCatalogue());
-  const serverView = toResultsView(runQuery(serverCatalogue(), urlState.query), urlState);
+  const catalogue = serverCatalogue();
+  const urlState = parseServicesUrl(params, catalogue);
+  const result = runQuery(catalogue, urlState.query);
 
   // layout.tsx draws the page heading around this.
-  return <ServiceExplorer serverView={serverView} />;
+  return (
+    <ServiceExplorer
+      serverView={toResultsView(result, urlState)}
+      serverFilters={toFiltersView(catalogue, result, urlState.query)}
+    />
+  );
 }

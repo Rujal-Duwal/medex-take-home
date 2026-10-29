@@ -4,6 +4,8 @@ import type { ApiResult } from "@/lib/api/fetch-api";
 import { LiveAnnouncerProvider } from "@/lib/a11y/live-announcer";
 import { parseMoney } from "@/lib/money/money";
 import { loadCatalogue } from "../api";
+import { defaultQuery, runQuery } from "../engine";
+import { toFiltersView } from "../filters-view";
 import type { ResultsView } from "../results-view";
 import type { Catalogue } from "../types";
 import { ServiceExplorer } from "./service-explorer";
@@ -13,9 +15,30 @@ import { ServiceExplorer } from "./service-explorer";
 // the view model are real.
 
 vi.mock("../api", () => ({ loadCatalogue: vi.fn() }));
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(window.location.search),
-}));
+
+// Next.js re-renders useSearchParams after history.pushState and replaceState. The fake does
+// the same: beforeEach wraps both to tell the subscribers the URL changed.
+const urlStore = vi.hoisted(() => {
+  const listeners = new Set<() => void>();
+  return {
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    changed: () => {
+      for (const listener of listeners) listener();
+    },
+  };
+});
+vi.mock("next/navigation", async () => {
+  const { useSyncExternalStore } = await import("react");
+  return {
+    useSearchParams: () =>
+      new URLSearchParams(useSyncExternalStore(urlStore.subscribe, () => window.location.search)),
+  };
+});
 
 const mockedLoad = vi.mocked(loadCatalogue);
 
@@ -58,7 +81,8 @@ const catalogue: Catalogue = {
     type: "package" as const,
     providerId: 48,
     categoryKey: "other",
-    testAtHome: false,
+    // One of the two is a home test, so ticking that filter changes the count.
+    testAtHome: id === "0002",
     price: { kind: "fixed" as const, final: parseMoney("5970.60", "THB") },
     payableAmounts: [parseMoney("5970.60", "THB")],
     search: { title: "executive health check male", category: "", provider: "riverside" },
@@ -73,17 +97,33 @@ function liveRegion(): HTMLElement {
   return region;
 }
 
+// The server's panel, from the same catalogue (the server's names don't matter for it).
+const serverFilters = toFiltersView(catalogue, runQuery(catalogue, defaultQuery), defaultQuery);
+
 function renderExplorer() {
   render(
     <LiveAnnouncerProvider>
-      <ServiceExplorer serverView={serverView} />
+      <ServiceExplorer serverView={serverView} serverFilters={serverFilters} />
     </LiveAnnouncerProvider>,
   );
 }
 
+// Calls the real method, then tells useSearchParams, as Next.js does.
+function fakeHistoryMethod(method: "pushState" | "replaceState") {
+  const original = window.history[method].bind(window.history);
+  return vi.spyOn(window.history, method).mockImplementation((data, unused, url) => {
+    original(data, unused, url);
+    urlStore.changed();
+  });
+}
+let pushState: ReturnType<typeof fakeHistoryMethod>;
+let replaceState: ReturnType<typeof fakeHistoryMethod>;
+
 beforeEach(() => {
   window.history.replaceState({}, "", "/services");
   mockedLoad.mockReset();
+  pushState = fakeHistoryMethod("pushState");
+  replaceState = fakeHistoryMethod("replaceState");
 });
 
 afterEach(() => {
@@ -186,5 +226,76 @@ describe("ServiceExplorer", () => {
     });
     expect(screen.getByText(slow, { selector: "[data-slot=alert-description]" })).toBeVisible();
     expect(liveRegion()).toHaveTextContent(slow);
+  });
+  it("the filters wait for the catalogue; then a tick writes the URL and updates the results", async () => {
+    const loading = Promise.withResolvers<ApiResult<Catalogue>>();
+    mockedLoad.mockReturnValue(loading.promise);
+    renderExplorer();
+
+    const homeTest = screen.getByRole("checkbox", { name: /Available as a home test/ });
+    expect(homeTest).toBeDisabled();
+
+    loading.resolve(loaded);
+    await vi.waitFor(() => {
+      expect(homeTest).toBeEnabled();
+    });
+    fireEvent.click(homeTest);
+
+    expect(window.location.search).toBe("?home=1");
+    expect(await screen.findByRole("heading", { name: "1 service from 1 provider" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: /Available as a home test/ })).toBeChecked();
+    await vi.waitFor(() => {
+      expect(liveRegion()).toHaveTextContent("1 service from 1 provider");
+    });
+  });
+
+  it("a tick adds a history entry; typing adds one for the first letter, then replaces it", async () => {
+    mockedLoad.mockResolvedValue(loaded);
+    renderExplorer();
+    const homeTest = screen.getByRole("checkbox", { name: /Available as a home test/ });
+    await vi.waitFor(() => {
+      expect(homeTest).toBeEnabled();
+    });
+
+    fireEvent.click(homeTest);
+    expect(pushState).toHaveBeenCalledTimes(1);
+
+    const search = screen.getByRole("searchbox", { name: "Search" });
+    // Only a space is no search, so the view doesn't change and nothing is written.
+    fireEvent.change(search, { target: { value: " " } });
+    expect(pushState).toHaveBeenCalledTimes(1);
+    expect(replaceState).not.toHaveBeenCalled();
+
+    fireEvent.change(search, { target: { value: "e" } });
+    expect(pushState).toHaveBeenCalledTimes(2);
+    expect(pushState).toHaveBeenLastCalledWith(null, "", "/services?q=e&home=1");
+
+    fireEvent.change(search, { target: { value: "exec" } });
+    expect(pushState).toHaveBeenCalledTimes(2);
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/services?q=exec&home=1");
+
+    // After a tick, the next letter starts a new entry, so Back undoes the tick on its own.
+    fireEvent.click(screen.getByRole("checkbox", { name: /Available as a home test/ }));
+    fireEvent.change(search, { target: { value: "execu" } });
+    expect(pushState).toHaveBeenCalledTimes(4);
+    expect(pushState).toHaveBeenLastCalledWith(null, "", "/services?q=execu");
+  });
+
+  it("Clear all removes the filters and moves focus to the Filters heading", async () => {
+    window.history.replaceState({}, "", "/services?home=1&sort=rating");
+    mockedLoad.mockResolvedValue(loaded);
+    renderExplorer();
+
+    const clearAll = await screen.findByRole("button", { name: "Clear all" });
+    await vi.waitFor(() => {
+      expect(clearAll).toBeEnabled();
+    });
+    fireEvent.click(clearAll);
+
+    expect(window.location.search).toBe("?sort=rating");
+    expect(screen.getByRole("heading", { name: "Filters" })).toHaveFocus();
+    await vi.waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Clear all" })).not.toBeInTheDocument();
+    });
   });
 });
