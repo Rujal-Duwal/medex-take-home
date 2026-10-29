@@ -286,7 +286,8 @@ describe("ServiceExplorer", () => {
     mockedLoad.mockResolvedValue(loaded);
     renderExplorer();
 
-    const clearAll = await screen.findByRole("button", { name: "Clear all" });
+    const panel = screen.getByRole("complementary", { name: "Filters" });
+    const clearAll = await within(panel).findByRole("button", { name: "Clear all" });
     await vi.waitFor(() => {
       expect(clearAll).toBeEnabled();
     });
@@ -297,5 +298,97 @@ describe("ServiceExplorer", () => {
     await vi.waitFor(() => {
       expect(screen.queryByRole("button", { name: "Clear all" })).not.toBeInTheDocument();
     });
+  });
+});
+
+// Opens the page at url with the catalogue loaded and the chip row enabled.
+async function renderLoadedAt(url: string) {
+  window.history.replaceState({}, "", url);
+  mockedLoad.mockResolvedValue(loaded);
+  renderExplorer();
+  const chips = await screen.findByRole("list", { name: "Active filters" });
+  await vi.waitFor(() => {
+    expect(within(chips).getByRole("button", { name: "Clear all filters" })).toBeEnabled();
+  });
+  return chips;
+}
+
+describe("ServiceExplorer: active filter chips", () => {
+  it("removing a chip moves focus to the next one; removing the last moves it to the results", async () => {
+    const chips = await renderLoadedAt("/services?type=package&home=1");
+
+    fireEvent.click(within(chips).getByRole("button", { name: "Remove filter: Package" }));
+    expect(window.location.search).toBe("?home=1");
+    expect(
+      await screen.findByRole("button", { name: "Remove filter: Home test available" }),
+    ).toHaveFocus();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove filter: Home test available" }));
+    expect(window.location.search).toBe("");
+    await vi.waitFor(() => {
+      expect(screen.getByRole("region", { name: "Results" })).toHaveFocus();
+    });
+    expect(screen.queryByRole("list", { name: "Active filters" })).not.toBeInTheDocument();
+  });
+
+  it("removing the last chip in the row moves focus to Clear all filters", async () => {
+    const chips = await renderLoadedAt("/services?type=package&home=1");
+
+    fireEvent.click(
+      within(chips).getByRole("button", { name: "Remove filter: Home test available" }),
+    );
+    expect(window.location.search).toBe("?type=package");
+    await vi.waitFor(() => {
+      expect(within(chips).getByRole("button", { name: "Clear all filters" })).toHaveFocus();
+    });
+  });
+
+  it("Clear all filters in the row removes every filter and moves focus to the results", async () => {
+    const chips = await renderLoadedAt("/services?type=package&home=1&sort=rating");
+
+    fireEvent.click(within(chips).getByRole("button", { name: "Clear all filters" }));
+    expect(window.location.search).toBe("?sort=rating");
+    expect(screen.getByRole("region", { name: "Results" })).toHaveFocus();
+  });
+});
+
+describe("ServiceExplorer: search chip", () => {
+  it("removing the search right after typing adds a history entry, so Back brings it back", async () => {
+    await renderLoadedAt("/services?home=1");
+    const search = screen.getByRole("searchbox", { name: "Search" });
+    fireEvent.change(search, { target: { value: "e" } });
+    fireEvent.change(search, { target: { value: "exec" } });
+    expect(pushState).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Remove filter: “exec”" }));
+    expect(pushState).toHaveBeenCalledTimes(2);
+    expect(pushState).toHaveBeenLastCalledWith(null, "", "/services?home=1");
+  });
+});
+
+describe("ServiceExplorer: no results", () => {
+  it("offers the filters to remove, most results first, and moves focus to the results", async () => {
+    // "nothing" finds no service. Without the search: 1 home test. Without the home test
+    // filter: still nothing, so it isn't offered.
+    window.history.replaceState({}, "", "/services?q=nothing&home=1");
+    mockedLoad.mockResolvedValue(loaded);
+    renderExplorer();
+
+    expect(await screen.findByRole("heading", { name: "No services match" })).toBeVisible();
+    const results = screen.getByRole("region", { name: "Results" });
+    const buttons = within(results).getAllByRole("button");
+    expect(buttons.map((button) => button.textContent)).toEqual([
+      "Clear the search (1 service)",
+      "Clear all filters (2 services)",
+    ]);
+    await vi.waitFor(() => {
+      expect(buttons[0]).toBeEnabled();
+    });
+
+    fireEvent.click(within(results).getByRole("button", { name: "Clear the search (1 service)" }));
+
+    expect(window.location.search).toBe("?home=1");
+    expect(results).toHaveFocus();
+    expect(await screen.findByRole("heading", { name: "1 service from 1 provider" })).toBeVisible();
   });
 });

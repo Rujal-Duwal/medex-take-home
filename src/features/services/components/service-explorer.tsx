@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ErrorState } from "@/components/states/error-state";
 import { OfflineBanner } from "@/components/states/offline-banner";
@@ -12,8 +12,10 @@ import { toFiltersView, type FiltersView } from "../filters-view";
 import { toResultsView, type ResultsView } from "../results-view";
 import { useCatalogue } from "../use-catalogue";
 import { parseServicesUrl, servicesHref } from "../url-codec";
+import { ActiveFilters } from "./active-filters";
 import { ExplorerColumns } from "./explorer-columns";
 import { FilterPanel, SortSelect } from "./filter-panel";
+import { NoResults } from "./no-results";
 import { ResultsSkeleton } from "./results-skeleton";
 import { ServiceResults } from "./service-results";
 
@@ -103,6 +105,18 @@ export function ServiceExplorer({
     if (isSlow) announce(SLOW_MESSAGE);
   }, [isSlow, announce]);
 
+  // The slow note floats over the bottom of the window. While it shows, the page keeps room
+  // under it when scrolling to a focused element, so the note never hides what has focus
+  // (WCAG 2.4.11; technique C43: https://www.w3.org/WAI/WCAG22/Techniques/css/C43).
+  useEffect(() => {
+    if (!isSlow) return;
+    const root = document.documentElement;
+    root.style.scrollPaddingBottom = "6rem";
+    return () => {
+      root.style.scrollPaddingBottom = "";
+    };
+  }, [isSlow]);
+
   function handleFilterChange(change: FilterChange) {
     if (state.kind !== "ready") return;
     // Read from the address bar, not useSearchParams, so a change made before the last one
@@ -121,15 +135,33 @@ export function ServiceExplorer({
     isTypingEntry.current = isSearch;
   }
 
+  // Focus waits on the results area when the control that had it goes away: a way out of the
+  // empty state, the last chip, Clear all in the chip row. Stable, so ActiveFilters' focus
+  // effect runs only when its chips change.
+  const focusResults = useCallback(() => {
+    resultsRef.current?.focus();
+  }, []);
+
   function handleRetry() {
     // Read the count out again when the results come back, even if it is the same as before.
     lastAnnounced.current = "";
     retry();
     // The error and its button are about to go; focus waits on the results area instead.
-    resultsRef.current?.focus();
+    focusResults();
   }
 
   function renderResults() {
+    // No sections means no results (results-view.ts).
+    if (shownView?.sections.length === 0) {
+      return (
+        <NoResults
+          waysOut={shownFilters.waysOut}
+          isEnabled={isReady}
+          onChange={handleFilterChange}
+          onWayOut={focusResults}
+        />
+      );
+    }
     if (shownView) return <ServiceResults view={shownView} />;
     if (state.kind === "failed") {
       return (
@@ -150,10 +182,14 @@ export function ServiceExplorer({
   return (
     <div className="flex flex-col gap-4">
       <OfflineBanner message="You're offline. We'll update these results when you're back online." />
+      {/* Fixed at the bottom of the window, out of the page flow, so it appears without moving
+          the results (CLS 0). The live region reads it out (the effects above). */}
       {isSlow && (
-        <Alert variant="info">
-          <AlertDescription>{SLOW_MESSAGE}</AlertDescription>
-        </Alert>
+        <div className="fixed inset-x-4 bottom-4 z-10 mx-auto max-w-md">
+          <Alert variant="info">
+            <AlertDescription>{SLOW_MESSAGE}</AlertDescription>
+          </Alert>
+        </div>
       )}
       <ExplorerColumns
         filters={
@@ -161,6 +197,12 @@ export function ServiceExplorer({
         }
       >
         <SortSelect sort={shownFilters.sort} isEnabled={isReady} onChange={handleFilterChange} />
+        <ActiveFilters
+          chips={shownFilters.chips}
+          isEnabled={isReady}
+          onChange={handleFilterChange}
+          onFiltersGone={focusResults}
+        />
         {/* tabIndex -1: focus can be moved here (after Try again) without adding a tab stop. */}
         <section
           ref={resultsRef}
