@@ -203,10 +203,12 @@ export function FilterPanel({
     // Its height fits the window once it has stuck. Before that (page at the top) it starts
     // lower, so its end is below the window. The wheel must then carry on to the page when the
     // panel reaches its end, so there is no overscroll-contain here.
+    // Its height also leaves out whatever floats at the bottom of the window (the compare tray,
+    // the slow note: BottomDock), so its last options never sit behind them (WCAG 2.4.11).
     // Below the large breakpoint it is hidden; the Filters button and drawer replace it.
     <aside
       aria-labelledby="filters-heading"
-      className="hidden rounded-xl border bg-card px-5 pb-5 lg:sticky lg:block lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:w-76 lg:flex-none lg:overflow-y-auto"
+      className="hidden rounded-xl border bg-card px-5 pb-5 lg:sticky lg:block lg:top-6 lg:max-h-[calc(100dvh_-_3rem_-_var(--bottom-dock-height,0px))] lg:w-76 lg:flex-none lg:overflow-y-auto"
     >
       {/* A fixed-height row, so "Clear all" appearing doesn't move the panel. */}
       <div className="flex h-14 items-center justify-between gap-2">
