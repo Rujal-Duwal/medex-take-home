@@ -13,7 +13,13 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
     benchmark: {
-      include: ["src/**/*.bench.ts"],
+      // The engine bench reads data/, so it lives in scripts/ like the real-data tests.
+      include: ["scripts/**/*.bench.ts"],
+      // Calls between our own modules (engine to money) go through Vitest's import getters,
+      // which a production bundle doesn't have, so the numbers run slightly high: safe for a
+      // budget. The docs' fix, running without the module runner, can't resolve the @/ alias.
+      // https://vitest.dev/guide/benchmarking#module-runner-overhead
+      suppressExportGetterWarnings: true,
     },
   },
 });
