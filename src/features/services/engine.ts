@@ -169,10 +169,11 @@ function searchRank(service: Service, search: string): number | undefined {
   return undefined;
 }
 
-type Facet = "type" | "category" | "provider" | "location" | "price" | "homeTest";
+export type Facet = "type" | "category" | "provider" | "location" | "price" | "homeTest";
 
-// The query with one facet's filter cleared, for that facet's counts (T1-04).
-function withoutFacet(query: ServiceQuery, facet: Facet): ServiceQuery {
+// The query with one facet's filter cleared, for that facet's counts (T1-04). The empty
+// state's "Remove the price filter" uses it too (filter-changes.ts).
+export function withoutFacet(query: ServiceQuery, facet: Facet): ServiceQuery {
   switch (facet) {
     case "type": {
       return { ...query, types: [] };
@@ -281,11 +282,11 @@ function groupByProvider(rows: Row[]): ProviderMatches[] {
   return [...groups.values()];
 }
 
-export function runQuery(catalogue: Catalogue, query: ServiceQuery): QueryResult {
+// The services that match the search, with their provider and search rank. Search applies to
+// the results and to every facet's counts, so it is applied once, here, before the filters.
+function searchedRows(catalogue: Catalogue, query: ServiceQuery): Row[] {
   const providerById = new Map(catalogue.providers.map((provider) => [provider.id, provider]));
   const search = normalizeForSearch(query.search);
-
-  // Search applies to the results and to every facet's counts, so it is applied once, here.
   const rows: Row[] = [];
   for (const service of catalogue.services) {
     const provider = providerById.get(service.providerId);
@@ -293,6 +294,17 @@ export function runQuery(catalogue: Catalogue, query: ServiceQuery): QueryResult
     const rank = search === "" ? 0 : searchRank(service, search);
     if (rank !== undefined) rows.push({ service, provider, rank });
   }
+  return rows;
+}
+
+// How many services a query finds: runQuery's serviceCount without the sorting, grouping and
+// facet counts. The empty state runs it once per filter to rank its ways out (filters-view.ts).
+export function countMatches(catalogue: Catalogue, query: ServiceQuery): number {
+  return searchedRows(catalogue, query).filter((row) => matchesFilters(row, query)).length;
+}
+
+export function runQuery(catalogue: Catalogue, query: ServiceQuery): QueryResult {
+  const rows = searchedRows(catalogue, query);
 
   // One pass with every filter for the results. sort() is stable, so ties keep the data order.
   const found = rows.filter((row) => matchesFilters(row, query));

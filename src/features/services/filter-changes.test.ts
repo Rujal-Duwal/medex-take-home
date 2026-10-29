@@ -1,7 +1,12 @@
 import Big from "big.js";
 import { describe, expect, it } from "vitest";
 import { defaultQuery, type ServiceQuery } from "./engine";
-import { applyFilterChange, readPriceRange, type FilterChange } from "./filter-changes";
+import {
+  activeFilterGroups,
+  applyFilterChange,
+  readPriceRange,
+  type FilterChange,
+} from "./filter-changes";
 import { OTHER_CATEGORY_KEY, type Category } from "./types";
 
 // Keys follow the real data: "thyroid" sits under three parents, and the two ultrasound
@@ -49,6 +54,7 @@ describe("applyFilterChange", () => {
       { kind: "home-test" },
       { kind: "search", text: "thyroid" },
       { kind: "sort", sort: "rating" },
+      { kind: "remove-filter", filter: "type" },
       { kind: "clear" },
     ];
     for (const change of changes) expect(apply(change, onPage3).page).toBe(1);
@@ -122,6 +128,68 @@ describe("applyFilterChange", () => {
       sort: "rating",
       openProviderIds: [48],
     });
+  });
+});
+
+describe("remove-filter (the empty state's ways out)", () => {
+  const busy: ServiceQuery = {
+    search: "thyroid",
+    types: ["package", "lab_test"],
+    categoryKeys: ["package.ultrasound", "lab_test.blood-tests.thyroid"],
+    providerIds: [48, 61],
+    location: { kind: "city", slug: "bangkok" },
+    price: { currency: "THB", max: new Big(5000) },
+    homeTestOnly: true,
+    sort: "rating",
+    page: 1,
+    openProviderIds: [48],
+  };
+
+  it("removes the whole of one filter and keeps the rest", () => {
+    expect(apply({ kind: "remove-filter", filter: "search" }, busy)).toEqual({
+      ...busy,
+      search: "",
+    });
+    expect(apply({ kind: "remove-filter", filter: "type" }, busy)).toEqual({ ...busy, types: [] });
+    expect(apply({ kind: "remove-filter", filter: "category" }, busy)).toEqual({
+      ...busy,
+      categoryKeys: [],
+    });
+    expect(apply({ kind: "remove-filter", filter: "provider" }, busy)).toEqual({
+      ...busy,
+      providerIds: [],
+    });
+    expect(apply({ kind: "remove-filter", filter: "location" }, busy)).toEqual({
+      ...busy,
+      location: undefined,
+    });
+    expect(apply({ kind: "remove-filter", filter: "price" }, busy)).toEqual({
+      ...busy,
+      price: undefined,
+    });
+    expect(apply({ kind: "remove-filter", filter: "homeTest" }, busy)).toEqual({
+      ...busy,
+      homeTestOnly: false,
+    });
+  });
+});
+
+describe("activeFilterGroups", () => {
+  it("lists the filters in use, in the panel's order", () => {
+    expect(activeFilterGroups(defaultQuery)).toEqual([]);
+    expect(
+      activeFilterGroups({
+        ...defaultQuery,
+        homeTestOnly: true,
+        search: "thyroid",
+        price: { currency: "THB" },
+        providerIds: [48],
+      }),
+    ).toEqual(["search", "provider", "price", "homeTest"]);
+  });
+
+  it("search text that is only spaces is not a filter", () => {
+    expect(activeFilterGroups({ ...defaultQuery, search: "   " })).toEqual([]);
   });
 });
 

@@ -2,6 +2,7 @@ import Big from "big.js";
 import { describe, expect, it } from "vitest";
 import type { Currency } from "@/lib/money/money";
 import {
+  countMatches,
   defaultQuery,
   runQuery,
   type PriceFilter,
@@ -359,6 +360,21 @@ describe("runQuery: search", () => {
 
   it("finds nothing when no field holds the whole phrase", () => {
     expect(runQuery(data, query({ search: "thyroid riverside" })).serviceCount).toBe(0);
+  });
+});
+
+describe("countMatches", () => {
+  it("gives the same count as runQuery, for filters and search together", () => {
+    const queries = [
+      defaultQuery,
+      query({ types: ["lab_test"], homeTestOnly: true }),
+      query({ location: { kind: "country", code: "TH" }, price: priceFilter("THB", "1000") }),
+      query({ search: "riverside", types: ["package"] }),
+      query({ search: "nothing like this" }),
+    ];
+    for (const each of queries) {
+      expect(countMatches(mixed, each)).toBe(runQuery(mixed, each).serviceCount);
+    }
   });
 });
 
