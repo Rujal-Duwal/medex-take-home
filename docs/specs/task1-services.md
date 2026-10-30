@@ -204,6 +204,7 @@ One line per decision. D5 to D10 are the plan's defaults; the rest were made whi
 - **Filters write the URL with `history.pushState`, not the router.** Next syncs `useSearchParams` with no server round trip, inside a transition, so input stays responsive. Each change is a history entry; the first letter typed adds one and later letters replace it. A change that leaves the URL the same adds nothing. Mock flags drop on the first change.
 - **Typing sends the search at most every 250 ms**: the first letter at once, the latest text after, and any waiting text on blur. Safari throws past 100 history changes per 10 seconds, and each change costs two (ours and Next's). The box shows every letter at once.
 - **The panel is server-rendered but disabled until the client has the catalogue**, so nothing moves and no change goes uncounted.
+- **The cursor shows `progress` over the explorer while the catalogue loads**, not `not-allowed`, so a click too early reads as "wait". Not after an error or offline, when nothing is on its way. Links in the results keep working and show it too; accepted, since `progress` means busy but still usable. It is only the pointer, so skeletons still stand in for missing content. A mouse cue only: touch and keyboard users still see just the muted controls.
 - **Category tree.** Ticking a category chooses all of it and shows its subcategories. Ticking subcategories narrows to them; unticking the last goes back to the whole category. A partly chosen category shows a dash. Each type's categories sit in their own group, so the two Ultrasound options are told apart. Other comes last.
 - **Simpler controls than the handoff.** Provider is a name box over the checkbox list (the first 8 plus any ticked, with "Show all 64 providers"); location and sort are native selects with their own chevron; price is Min and Max with "Apply price", no slider; home test is a checkbox; the currency step is a row of buttons.
 - **Only types and currencies in the catalogue are offered.**
@@ -237,6 +238,7 @@ One line per decision. D5 to D10 are the plan's defaults; the rest were made whi
 - **The bench runs on the real data** (`scripts/engine.bench.ts`) and works out p95 itself (nearest rank). Vitest's module getters make it run slightly high.
 - **Timings are recorded, not logged:** a `filter-change` `performance.measure` from the change reaching the explorer to the commit that shows it. Rujal chose no console output on the customer's side.
 - **INP and CLS come from DevTools live metrics**, not the `web-vitals` library: no new dependency, nothing shipped to customers.
+- **The server runs in Mumbai (`bom1`, in `vercel.json`)**, not Vercel's default Washington, since the providers are in Thailand, Nepal and India and the service list is a large download. The filters stay disabled until it arrives: 2.0 to 3.1 s over three live loads before the move, not measured since.
 
 ### Compare
 
