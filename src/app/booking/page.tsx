@@ -1,20 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { NotBuiltPage } from "@/components/not-built";
 
-// Placeholder until booking is built in WBS 5.x.
+// Task 3 is not built in this submission. The README's Task 3 section has the plan.
 export const metadata: Metadata = { title: "Book an appointment" };
 
 export default function BookingPage() {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col items-start gap-4 px-4 py-10 md:px-6">
-      <h1 className="text-2xl font-semibold md:text-3xl">Book an appointment</h1>
-      <p className="text-text-secondary">This page is not ready yet.</p>
-      <Link
-        href="/"
-        className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4"
-      >
-        Back to home
-      </Link>
-    </div>
+    <NotBuiltPage
+      title="Book an appointment"
+      summary="This page would let you pick a specialist and a time, shown in the clinic's time and yours."
+      readmeAnchor="task-3"
+    />
   );
 }

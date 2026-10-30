@@ -60,7 +60,7 @@ One Next.js App Router project, deployed as one Vercel app.
 | Mock core (`src/lib/mock`) | Server | The only code that reads `data/` (`task1-data.ts` and the like, used by the route handlers and by the `/services` server render); latency, faked failures, in-memory state. `flags.ts` is the exception: pure, no `data/` imports, also used by the client |
 | Fetch wrapper (`src/lib/api`) | Client | `fetchApi` and `ApiResult`: reads the page's mock flags, picks the failure for each call, returns a typed result. `isOffline()` for the offline banner |
 | Shared libs (`src/lib/money`, `src/lib/a11y`) | Both | Money maths and formatting; the live announcer (`LiveAnnouncerProvider` in the root layout, `useAnnounce()` in components) |
-| Shared UI (`src/components/ui`, `src/components/states`) | Client | shadcn components adjusted to the design tokens; the shared states: `EmptyState`, `ErrorState`, `OfflineBanner` (via `useIsOffline` in `src/lib/api`) and `Skeleton` |
+| Shared UI (`src/components/ui`, `src/components/states`) | Client | shadcn components adjusted to the design tokens; the shared states: `EmptyState`, `ErrorState`, `OfflineBanner` (via `useIsOffline` in `src/lib/api`) and `Skeleton`; `not-built.tsx`, the label and placeholder page for Tasks 2 and 3, which are not built in this submission |
 | Browser storage | Client | Checkout attempts (Task 2) so a reload shows the true state |
 
 ## 3. Layers and the direction of dependencies

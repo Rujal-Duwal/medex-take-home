@@ -1,20 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { NotBuiltPage } from "@/components/not-built";
 
-// Placeholder until the cart is built in WBS 4.x.
+// Task 2 is not built in this submission. The README's Task 2 section has the plan.
 export const metadata: Metadata = { title: "Your cart" };
 
 export default function CartPage() {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col items-start gap-4 px-4 py-10 md:px-6">
-      <h1 className="text-2xl font-semibold md:text-3xl">Your cart</h1>
-      <p className="text-text-secondary">This page is not ready yet.</p>
-      <Link
-        href="/"
-        className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4"
-      >
-        Back to home
-      </Link>
-    </div>
+    <NotBuiltPage
+      title="Your cart"
+      summary="This page would let you review what you picked and pay for each type of service as its own order."
+      readmeAnchor="task-2"
+    />
   );
 }

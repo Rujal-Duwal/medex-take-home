@@ -1,22 +1,27 @@
 import Link from "next/link";
+import { NotBuiltBadge } from "@/components/not-built";
 
 // One entry per task. The name matches the h1 of the page it opens. The link text is the
 // name only, so a screen reader's link list stays short; the description sits beside it.
+// `built: false` adds the same "Not built in this submission" label the page itself shows.
 const tasks = [
   {
     href: "/services",
     name: "Services",
     description: "Search and filter health checks, tests and wellness from every provider.",
+    built: true,
   },
   {
     href: "/cart",
     name: "Your cart",
     description: "Review what you picked and pay for each type of service as its own order.",
+    built: false,
   },
   {
     href: "/booking",
     name: "Book an appointment",
     description: "Pick a specialist and a time, shown in the clinic's time and yours.",
+    built: false,
   },
 ] as const;
 
@@ -40,6 +45,7 @@ export default function HomePage() {
                 {task.name}
               </Link>
             </h2>
+            {!task.built && <NotBuiltBadge />}
             <p className="text-text-secondary">{task.description}</p>
           </li>
         ))}

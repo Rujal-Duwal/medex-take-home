@@ -16,4 +16,13 @@ describe("HomePage", () => {
       "/booking",
     );
   });
+
+  it("labels the cart and booking as not built, and only those", () => {
+    render(<HomePage />);
+
+    const labels = screen.getAllByText("Not built in this submission");
+    expect(labels).toHaveLength(2);
+    expect(labels[0]?.closest("li")).toHaveTextContent("Your cart");
+    expect(labels[1]?.closest("li")).toHaveTextContent("Book an appointment");
+  });
 });
