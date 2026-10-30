@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { COMPARE_LIMIT_HINT } from "../compare";
+import { GROUP_PREVIEW_SIZE } from "../engine";
 import type { ProviderGroupView, RatingView } from "../results-view";
 import { PriceTag } from "./price-tag";
 
@@ -95,6 +97,20 @@ export function ProviderGroupCard({
   onCompareToggle: (providerId: number) => void;
 }>) {
   const Heading = headingLevel === 3 ? "h3" : "h4";
+  const firstNewServiceRef = useRef<HTMLLIElement>(null);
+  const isOpening = useRef(false);
+  const serviceCount = group.services.length;
+
+  // D10: after "View all", focus moves to the first newly shown service once the URL has
+  // caught up and it is on screen. Only for a click here, not a reload or Back with the group
+  // open. Any change to the list ends the wait, so a later one can't steal focus.
+  useEffect(() => {
+    if (isOpening.current && serviceCount > GROUP_PREVIEW_SIZE) {
+      firstNewServiceRef.current?.focus();
+    }
+    isOpening.current = false;
+  }, [serviceCount]);
+
   return (
     <article className="flex flex-col rounded-xl border bg-card px-4 pt-4">
       <header className="flex flex-wrap items-start justify-between gap-3 border-b pb-3">
@@ -106,9 +122,13 @@ export function ProviderGroupCard({
         <CompareBox group={group} isEnabled={isCompareEnabled} onToggle={onCompareToggle} />
       </header>
       <ul>
-        {group.services.map((service) => (
+        {group.services.map((service, index) => (
           <li
             key={service.id}
+            // tabIndex -1: focus can be moved to the first newly shown service (D10) without
+            // adding a tab stop per service.
+            ref={index === GROUP_PREVIEW_SIZE ? firstNewServiceRef : undefined}
+            tabIndex={index === GROUP_PREVIEW_SIZE ? -1 : undefined}
             className="flex items-start justify-between gap-6 border-b border-muted py-3 last:border-b-0"
           >
             <div className="flex flex-col items-start gap-1">
@@ -123,15 +143,24 @@ export function ProviderGroupCard({
       </ul>
       {/* A link, not a button: the open groups live in the URL (D10), so it works before the
           client has taken over, and back and forward restore it. scroll={false} keeps the card
-          where it is. "Show fewer" is the same link in the same place, so focus stays on it. */}
+          where it is. After "Show fewer", focus stays on the link, which is in the same place. */}
       {group.toggle && (
         <div className="flex min-h-13 items-center border-t">
           <Link
             href={group.toggle.href}
             scroll={false}
+            onClick={(event) => {
+              // A click that opens a new tab or window leaves this page as it is.
+              const opensElsewhere = event.metaKey || event.ctrlKey || event.shiftKey;
+              isOpening.current = !opensElsewhere && serviceCount <= GROUP_PREVIEW_SIZE;
+            }}
             className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline"
           >
-            {group.toggle.label}
+            {/* The visible words come first in the name (WCAG 2.5.3). One span, so the
+                link's flex layout doesn't drop the space before the hidden text. */}
+            <span>
+              {group.toggle.label} <span className="sr-only">{group.toggle.hiddenText}</span>
+            </span>
           </Link>
         </div>
       )}

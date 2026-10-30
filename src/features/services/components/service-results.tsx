@@ -7,7 +7,12 @@ import { ProviderGroupCard } from "./provider-group-card";
 // pagination. No hooks and no state: the server's first view and the client's views both
 // render through this, from a ResultsView.
 
-function Pagination({ pagination }: Readonly<{ pagination: PaginationView }>) {
+// onPageChange runs on every page link. The link the customer used can go (Next on the last
+// page but one becomes plain text), so the explorer moves focus to the results first.
+function Pagination({
+  pagination,
+  onPageChange,
+}: Readonly<{ pagination: PaginationView; onPageChange: () => void }>) {
   return (
     <nav aria-label="Pagination" className="flex flex-col items-center gap-2 pt-4">
       <p className="text-sm text-text-secondary">{pagination.label}</p>
@@ -15,7 +20,9 @@ function Pagination({ pagination }: Readonly<{ pagination: PaginationView }>) {
         <li>
           {pagination.previousHref ? (
             <Button asChild variant="outline">
-              <Link href={pagination.previousHref}>Previous</Link>
+              <Link href={pagination.previousHref} onClick={onPageChange}>
+                Previous
+              </Link>
             </Button>
           ) : (
             // Not a link on the first page, so there is nothing to tab to that goes nowhere.
@@ -31,6 +38,7 @@ function Pagination({ pagination }: Readonly<{ pagination: PaginationView }>) {
                 href={page.href}
                 aria-current={page.isCurrent ? "page" : undefined}
                 aria-label={`Page ${String(page.number)}`}
+                onClick={onPageChange}
               >
                 {page.number}
               </Link>
@@ -40,7 +48,9 @@ function Pagination({ pagination }: Readonly<{ pagination: PaginationView }>) {
         <li>
           {pagination.nextHref ? (
             <Button asChild variant="outline">
-              <Link href={pagination.nextHref}>Next</Link>
+              <Link href={pagination.nextHref} onClick={onPageChange}>
+                Next
+              </Link>
             </Button>
           ) : (
             <span className="inline-flex h-11 items-center px-4 text-sm text-muted-foreground">
@@ -53,15 +63,17 @@ function Pagination({ pagination }: Readonly<{ pagination: PaginationView }>) {
   );
 }
 
-// isCompareEnabled and onCompareToggle go to each card's Compare box (WBS 3.10).
+// isCompareEnabled and onCompareToggle go to each card's Compare box.
 export function ServiceResults({
   view,
   isCompareEnabled,
   onCompareToggle,
+  onPageChange,
 }: Readonly<{
   view: ResultsView;
   isCompareEnabled: boolean;
   onCompareToggle: (providerId: number) => void;
+  onPageChange: () => void;
 }>) {
   return (
     <>
@@ -90,7 +102,7 @@ export function ServiceResults({
           </ul>
         </div>
       ))}
-      {view.pagination && <Pagination pagination={view.pagination} />}
+      {view.pagination && <Pagination pagination={view.pagination} onPageChange={onPageChange} />}
     </>
   );
 }

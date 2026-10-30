@@ -203,6 +203,7 @@ describe("toResultsView: View all N services (D10)", () => {
     );
     expect(onlyGroup(view).toggle).toEqual({
       label: "View all 14 services",
+      hiddenText: "from Riverside International Hospital",
       href: "/services?q=check+up&open=48",
     });
   });
@@ -214,6 +215,7 @@ describe("toResultsView: View all N services (D10)", () => {
     );
     expect(onlyGroup(view).toggle).toEqual({
       label: "Show fewer",
+      hiddenText: "services from Riverside International Hospital",
       href: "/services?open=70",
     });
   });

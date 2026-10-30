@@ -223,9 +223,9 @@ export function ServiceExplorer({
     setIsDrawerOpen(isOpen);
   }
 
-  // Focus waits on the results area when the control that had it goes away: a way out of the
-  // empty state, the last chip, Clear all in the chip row. Stable, so ActiveFilters' focus
-  // effect runs only when its chips change.
+  // Focus waits on the results area when the control that had it goes away (a way out of the
+  // empty state, the last chip, Clear all in the chip row) and after any page link. Stable, so
+  // ActiveFilters' focus effect runs only when its chips change.
   const focusResults = useCallback(() => {
     resultsRef.current?.focus();
   }, []);
@@ -256,6 +256,7 @@ export function ServiceExplorer({
           view={shownView}
           isCompareEnabled={isReady}
           onCompareToggle={handleCompareToggle}
+          onPageChange={focusResults}
         />
       );
     }

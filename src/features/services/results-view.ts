@@ -32,8 +32,11 @@ export interface ServiceView {
 export type RatingView = { kind: "rated"; stars: string; reviews: string } | { kind: "new" };
 
 // "View all 14 services" on a closed group, "Show fewer" on an open one (D10).
+// hiddenText follows the label for screen readers only, so two cards' links can be told apart
+// (WCAG 2.4.9): "View all 14 services from Riverside International Hospital".
 export interface GroupToggleView {
   label: string;
+  hiddenText: string;
   href: string;
 }
 
@@ -171,6 +174,7 @@ function groupToggle(
   if (group.isOpen) {
     return {
       label: "Show fewer",
+      hiddenText: `services from ${group.provider.name}`,
       href: changedHref(state, {
         page,
         openProviderIds: openIds.filter((id) => id !== providerId),
@@ -179,6 +183,7 @@ function groupToggle(
   }
   return {
     label: `View all ${countOf(group.matchingCount, "service")}`,
+    hiddenText: `from ${group.provider.name}`,
     href: changedHref(state, { page, openProviderIds: [...openIds, providerId] }),
   };
 }

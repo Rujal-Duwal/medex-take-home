@@ -625,3 +625,33 @@ describe("ServiceExplorer: mobile filters drawer", () => {
     expect(window.location.search).toBe("?q=exec");
   });
 });
+
+describe("ServiceExplorer: pagination", () => {
+  const [provider] = catalogue.providers;
+  const [service] = catalogue.services;
+  if (provider === undefined || service === undefined) throw new Error("the fixture is empty");
+
+  // 11 providers with one service each: 10 groups on page 1, so there is a page 2.
+  const elevenProviders: Catalogue = {
+    ...catalogue,
+    providers: Array.from({ length: 11 }, (_, index) => ({
+      ...provider,
+      id: index + 1,
+      name: `Provider ${String(index + 1)}`,
+    })),
+    services: Array.from({ length: 11 }, (_, index) => ({
+      ...service,
+      id: `s${String(index + 1)}`,
+      providerId: index + 1,
+    })),
+  };
+
+  it("a page link moves focus to the results, since Next goes away on the last page", async () => {
+    mockedLoad.mockResolvedValue({ kind: "ok", data: elevenProviders });
+    renderExplorer();
+
+    const next = await screen.findByRole("link", { name: "Next" });
+    fireEvent.click(next);
+    expect(screen.getByRole("region", { name: "Results" })).toHaveFocus();
+  });
+});
