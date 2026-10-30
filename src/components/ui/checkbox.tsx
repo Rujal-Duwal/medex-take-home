@@ -5,8 +5,7 @@ import { Checkbox as CheckboxPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 
 // shadcn Checkbox, adjusted to design/HANDOFF.md (18px box, 4px radius, 1.5px border):
-// - the icons are inline SVG, so lucide-react isn't needed (the CLI also adds a stray "cn"
-//   package; it was removed again, as in WBS 2.4)
+// - the icons are inline SVG, so lucide-react isn't needed
 // - no focus ring classes: the global :focus-visible outline in globals.css draws it
 // - no dark: classes, because the app is light theme only
 // - checked="indeterminate" draws a dash: the Task 1 category tree uses it when some of a

@@ -15,7 +15,7 @@ import { fieldClassName } from "./field-class-name";
 // with focus elsewhere, so the box catches up with them. Back from the keyboard (Alt+Left)
 // can happen while typing, so popstate sets the box from the address bar too.
 //
-// Typing is sent on at most once every SEARCH_SEND_INTERVAL_MS (WBS 3.9). Safari allows 100
+// Typing is sent on at most once every SEARCH_SEND_INTERVAL_MS. Safari allows 100
 // history changes per 10 seconds and throws past that (WebKit, History.cpp), and each letter
 // the explorer writes costs two: its own, and the one Next.js makes after it. So a letter typed
 // sooner waits, and the latest text is sent when the time is up: at most 4 sends a second, so
@@ -24,7 +24,7 @@ import { fieldClassName } from "./field-class-name";
 // Filters button) builds on everything typed. Back drops it: the address bar wins.
 //
 // There are two: one in the filter panel on large screens, one above the results on small
-// screens (WBS 3.8). Both are in the page, one hidden by CSS, so each needs its own id.
+// screens. Both are in the page, one hidden by CSS, so each needs its own id.
 export const SEARCH_SEND_INTERVAL_MS = 250;
 
 interface WaitingText {

@@ -35,7 +35,7 @@ export function isCompareFull(ids: number[]): boolean {
 
 export interface ServicesUrlState {
   query: ServiceQuery;
-  // Providers chosen for side-by-side compare (WBS 3.10). Kept out of ServiceQuery because it
+  // Providers chosen for side-by-side compare. Kept out of ServiceQuery because it
   // doesn't change the results.
   compareProviderIds: number[];
 }
@@ -125,7 +125,7 @@ export function parseAmount(value: string | null): Big | undefined {
 }
 
 // min and max only mean something in a currency, so without a valid cur they are dropped
-// (spec Decisions, WBS 3.3). A range with min above max is dropped and the currency kept: there
+// (spec Decisions). A range with min above max is dropped and the currency kept: there
 // is no way to tell which end the customer meant.
 function parsePrice(params: URLSearchParams): PriceFilter | undefined {
   const cur = params.get("cur");

@@ -11,7 +11,7 @@ import {
   type ServicesUrlState,
 } from "./url-codec";
 
-// Compare up to 3 providers side by side (T1-16, spec "Compare", WBS 3.10). The selection lives
+// Compare up to 3 providers side by side (T1-16, spec "Compare"). The selection lives
 // in the URL (compare=48,61), so these rules work on a list of provider ids, and the explorer
 // writes the list back with the codec. What the tray and the comparison show is worked out here
 // as plain strings, like ResultsView, so the components stay markup.

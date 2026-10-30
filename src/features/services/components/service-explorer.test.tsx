@@ -458,7 +458,7 @@ async function openDrawerAt(url: string) {
   return { trigger, drawer: screen.getByRole("dialog", { name: "Filters" }) };
 }
 
-describe("ServiceExplorer: compare (WBS 3.10)", () => {
+describe("ServiceExplorer: compare", () => {
   it("ticking Compare on a card adds the provider to the URL and the tray", async () => {
     mockedLoad.mockResolvedValue(loaded);
     renderExplorer();

@@ -313,9 +313,6 @@ function locationView(
   };
 }
 
-// What emptying the range asks for: an empty Apply, or removing the range's chip. In the
-// location's currency that is no price filter at all: keeping cur would leave other countries at
-// 0 with no way to remove it. In a chosen currency the currency stays, with no bounds.
 // Whether removing the chosen currency would change anything: the panel's Change currency and
 // the "Prices in THB" chip both show only then. When the location's currency is the chosen one,
 // the location already limits results to it, so removing the currency would only clear the range.
@@ -323,6 +320,9 @@ function canRemoveCurrency(price: PriceFilter | undefined, result: QueryResult):
   return price !== undefined && price.currency !== result.locationCurrency;
 }
 
+// What emptying the range asks for: an empty Apply, or removing the range's chip. In the
+// location's currency that is no price filter at all: keeping cur would leave other countries at
+// 0 with no way to remove it. In a chosen currency the currency stays, with no bounds.
 function withoutRange(currency: Currency, result: QueryResult): FilterChange {
   return result.locationCurrency === currency
     ? { kind: "currency" }
@@ -424,7 +424,7 @@ function categoryChips(catalogue: Catalogue, query: ServiceQuery): ChipView[] {
 
 // One chip per chosen value. Each removes only its own value, with the same change the panel's
 // option sends, so a chip and its checkbox can't disagree. Removing the last subcategory chip
-// therefore goes back to its whole category, as unticking it does (WBS 3.6).
+// therefore goes back to its whole category, as unticking it does.
 function chipsOf(catalogue: Catalogue, query: ServiceQuery, result: QueryResult): ChipView[] {
   const chips: ChipView[] = [];
   for (const type of SERVICE_TYPES.filter((item) => query.types.includes(item))) {

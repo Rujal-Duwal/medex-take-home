@@ -28,7 +28,7 @@ import { ProviderRating } from "./provider-group-card";
 // The grid is a real <table>: provider names are column headers, row labels are row headers,
 // so a screen reader reads "Price range, Chao Phraya Hospital, 1,800.00 THB to 2,500.00 THB".
 // The handoff draws a swipeable carousel on phones; here the table scrolls sideways with the
-// row labels pinned, which needs no carousel library (spec Decisions, WBS 3.10).
+// row labels pinned, which needs no carousel library (spec Decisions).
 
 export interface CompareLoaded {
   catalogue: Catalogue;

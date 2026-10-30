@@ -30,7 +30,7 @@ export function ProviderRating({ rating }: Readonly<{ rating: RatingView }>) {
   );
 }
 
-// The card's "Compare" box (WBS 3.10, HANDOFF "Compare tray and comparison"). Its name is
+// The card's "Compare" box (HANDOFF "Compare tray and comparison"). Its name is
 // "Compare Riverside International Hospital", which starts with the visible "Compare" (WCAG
 // 2.5.3). With 3 others chosen it is aria-disabled, not disabled, so it stays focusable and its
 // hint "You can compare up to 3" is still heard; a click then does nothing. It is disabled

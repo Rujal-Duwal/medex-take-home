@@ -34,7 +34,7 @@ function addressBarState(catalogue: Catalogue): ServicesUrlState {
 const SLOW_MESSAGE = "This is taking longer than usual. We're still loading services.";
 
 // Each change is timed from the moment it reaches the explorer (a click, or typing that
-// SearchBox sends on) to the commit that shows its results (T1-12, WBS 3.9). It shows as
+// SearchBox sends on) to the commit that shows its results (T1-12). It shows as
 // "filter-change" in the Timings track of the DevTools Performance panel; in the console,
 // performance.getEntriesByName("filter-change") lists them. Nothing is logged: customers'
 // consoles stay clean.
@@ -52,18 +52,18 @@ const CHANGE_MEASURE = "filter-change";
 //
 // The filter panel goes through the same hand-over, from serverFilters.
 //
-// Filters (WBS 3.6): the panel reports a FilterChange; handleFilterChange applies it to the
+// Filters: the panel reports a FilterChange; handleFilterChange applies it to the
 // URL with the native history API, which Next.js syncs into useSearchParams without asking the
 // server again (https://nextjs.org/docs/app/getting-started/linking-and-navigating, "Native
 // History API"). This then re-renders from the new URL. Next applies that URL in a transition,
 // so React can drop a render that a newer keystroke makes stale. The search box keeps its own
 // text, so typing shows at once; a tick shows together with the new results.
 //
-// Small screens (WBS 3.8): the panel is hidden. The search box sits above the results and
+// Small screens: the panel is hidden. The search box sits above the results and
 // applies as you type, as on large screens; the other filters open in FiltersDrawer, which
 // edits a draft and hands it to handleApply.
 //
-// Compare (WBS 3.10): each card's Compare box and the tray change the compare list in the URL
+// Compare: each card's Compare box and the tray change the compare list in the URL
 // through handleCompareChange. The tray goes through the same hand-over, from serverCompareTray.
 export function ServiceExplorer({
   serverView,
@@ -88,7 +88,6 @@ export function ServiceExplorer({
     const result = runQuery(state.catalogue, urlState.query);
     return {
       urlState,
-      urlQuery: urlState.query,
       results: toResultsView(result, urlState),
       filters: toFiltersView(state.catalogue, result, urlState.query),
       compareTray: toCompareTrayView(state.catalogue, urlState.compareProviderIds),
@@ -185,7 +184,7 @@ export function ServiceExplorer({
     writeQuery(current, query, change.kind === "search", startedAt);
   }
 
-  // Compare (WBS 3.10): update gets the address bar's compare list and returns the new one
+  // Compare: update gets the address bar's compare list and returns the new one
   // (compare.ts has the rules). A history entry each, like a filter, so Back undoes a tick.
   // Not timed: it doesn't change the results.
   function handleCompareChange(update: (ids: number[]) => number[]) {
@@ -309,7 +308,7 @@ export function ServiceExplorer({
               state.kind === "ready" && clientViews
                 ? {
                     catalogue: state.catalogue,
-                    urlQuery: drawerStartQuery ?? clientViews.urlQuery,
+                    urlQuery: drawerStartQuery ?? clientViews.urlState.query,
                   }
                 : undefined
             }

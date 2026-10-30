@@ -10,8 +10,8 @@ import type { ChipView } from "../filters-view";
 // "filters" tells it apart from the panel's Clear all, which moves focus somewhere else.
 //
 // Focus (HANDOFF section 5): after a chip is removed it goes to the next chip, which now sits
-// where the removed one was, or to "Clear all filters" if it was the last chip. With no chips left the
-// row goes, so onFiltersGone moves focus to the results. Clear all calls it straight away.
+// where the removed one was, or to "Clear all filters" if it was the last chip. With no chips
+// left the row goes, so onFiltersGone moves focus to the results. Clear all calls it at once.
 export function ActiveFilters({
   chips,
   isEnabled,

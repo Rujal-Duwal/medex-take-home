@@ -69,7 +69,7 @@ export async function fetchApi<T>(path: string, call: ApiCall): Promise<ApiResul
   const rule = findFailRule(flags.failRules, call.endpoint, call.group, firedOnceRules);
   if (rule?.once) firedOnceRules.add(rule.text);
 
-  // path may already carry the endpoint's own params (?date=...). The mock params are added to them.
+  // path may already carry the endpoint's own params (?date=...). The mock params are added.
   const url = new URL(path, window.location.origin);
   for (const [name, value] of forwardedMockParams(flags.delayMs, rule?.kind)) {
     url.searchParams.set(name, value);

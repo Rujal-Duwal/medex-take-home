@@ -28,7 +28,7 @@ export interface PriceFilter {
   max?: Big;
 }
 
-// Everything the URL can hold that changes the results (the URL codec builds this, WBS 3.4).
+// Everything the URL can hold that changes the results (the URL codec builds this).
 // An empty list means "no filter", not "match nothing".
 export interface ServiceQuery {
   search: string;

@@ -230,7 +230,7 @@ function compareFor(compareProviderIds: number[]) {
   return onlyGroup(view).compare;
 }
 
-describe("toResultsView: the card's Compare box (WBS 3.10)", () => {
+describe("toResultsView: the card's Compare box", () => {
   it("is ticked when the provider is in compare", () => {
     expect(compareFor([70, 48])).toEqual({ isChosen: true, isFull: false });
     expect(compareFor([70])).toEqual({ isChosen: false, isFull: false });

@@ -2,6 +2,11 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+// Extra room above the dock when the page scrolls a focused element into view. Scrolling only
+// counts the element's own box; the focus ring is drawn 2px outside it, 2px thick, and would
+// otherwise end right under the dock's edge.
+const FOCUS_RING_ROOM_PX = 16;
+
 // What floats at the bottom of the window: the slow note and the compare tray, stacked so the
 // note sits above the tray, never under it. Out of the page flow, so either one appears
 // without moving the results (CLS 0).
@@ -16,11 +21,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 //   its height leaves out --bottom-dock-height (FilterPanel) and its end stays above the dock
 // The height is measured, not guessed: the slow note comes and goes, the hint takes a line on
 // a phone, and the chips wrap on wider screens.
-// Extra room above the dock when the page scrolls a focused element into view. Scrolling only
-// counts the element's own box; the focus ring is drawn 2px outside it, 2px thick, and would
-// otherwise end right under the dock's edge.
-const FOCUS_RING_ROOM_PX = 16;
-
 export function BottomDock({ children }: Readonly<{ children: React.ReactNode }>) {
   const dockRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);

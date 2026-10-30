@@ -402,7 +402,7 @@ describe("toFiltersView: active filter chips", () => {
       { kind: "provider", id: 70 },
       { kind: "location" },
       // In the location's currency: removing the range removes the price filter, like an
-      // empty Apply (WBS 3.6).
+      // empty Apply.
       { kind: "currency" },
       { kind: "home-test" },
       { kind: "remove-filter", filter: "search" },

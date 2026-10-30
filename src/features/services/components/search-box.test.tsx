@@ -4,7 +4,7 @@ import type { FilterChange } from "../filter-changes";
 import { SEARCH_SEND_INTERVAL_MS, SearchBox } from "./search-box";
 
 // Typing is sent on at most once every 250 ms, so the explorer's history writes stay under
-// Safari's limit (WBS 3.9).
+// Safari's limit.
 
 function renderSearchBox() {
   const onChange = vi.fn<(change: FilterChange) => void>();

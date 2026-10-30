@@ -257,9 +257,7 @@ describe("toCompareView", () => {
       { id: "chip-provider-48", label: "Riverside", change: { kind: "provider", id: 48 } },
       { id: "chip-location", label: "Bangkok", change: { kind: "location" } },
     ];
-    expect(viewFor([48, 52], {}, chips).filtersText).toBe(
-      "With your filters: Package, Bangkok",
-    );
+    expect(viewFor([48, 52], {}, chips).filtersText).toBe("With your filters: Package, Bangkok");
     expect(viewFor([48, 52]).filtersText).toBe("With no filters applied");
   });
 

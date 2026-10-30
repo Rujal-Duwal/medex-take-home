@@ -10,7 +10,7 @@ import { Slot } from "radix-ui";
 // - disabled is shown with muted colours (5.3:1) and cursor-not-allowed, never opacity.
 //   aria-disabled gets the same look: checkout and confirm buttons stay focusable while
 //   unavailable so their reason can be read, and their click handler must do nothing then.
-// - aria-expanded styles are for menu triggers (the Task 1 sort menu)
+// - aria-expanded styles are for menu and disclosure triggers
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-transparent px-4 text-sm font-medium whitespace-nowrap transition-colors select-none disabled:cursor-not-allowed disabled:border-input disabled:bg-muted disabled:text-muted-foreground aria-disabled:cursor-not-allowed aria-disabled:border-input aria-disabled:bg-muted aria-disabled:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {

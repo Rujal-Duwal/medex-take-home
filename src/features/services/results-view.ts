@@ -40,7 +40,7 @@ export interface GroupToggleView {
   href: string;
 }
 
-// The card's "Compare" box (WBS 3.10). isFull: 3 other providers are chosen, so this one can't
+// The card's "Compare" box. isFull: 3 other providers are chosen, so this one can't
 // be added ("You can compare up to 3").
 export interface GroupCompareView {
   isChosen: boolean;

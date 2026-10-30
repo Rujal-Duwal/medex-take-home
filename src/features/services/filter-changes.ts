@@ -149,7 +149,7 @@ export function applyFilterChange(
   return { ...changedQuery(query, change, categories), page: 1 };
 }
 
-// The mobile drawer's Clear (WBS 3.8): "clear", but the search stays. On small screens the
+// The mobile drawer's Clear: "clear", but the search stays. On small screens the
 // search box is on the page, not in the drawer, so clearing it from there would remove
 // something the customer can't see being removed.
 export function clearDrawerFilters(query: ServiceQuery, categories: Category[]): ServiceQuery {
@@ -157,7 +157,7 @@ export function clearDrawerFilters(query: ServiceQuery, categories: Category[]):
 }
 
 // What the price boxes hold once read. field says which box to point at.
-export type PriceRangeInput =
+type PriceRangeInput =
   { kind: "ok"; min?: Big; max?: Big } | { kind: "invalid"; field: "min" | "max"; message: string };
 
 const NOT_A_NUMBER = "Enter an amount in numbers, like 5000.";
