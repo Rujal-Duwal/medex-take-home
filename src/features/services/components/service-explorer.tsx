@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ErrorState } from "@/components/states/error-state";
 import { OfflineBanner } from "@/components/states/offline-banner";
 import { useAnnounce } from "@/lib/a11y/live-announcer";
+import { cn } from "@/lib/utils";
 import { toCompareTrayView, toggleCompared, type CompareTrayView } from "../compare";
 import { runQuery, type ServiceQuery } from "../engine";
 import { applyFilterChange, type FilterChange } from "../filter-changes";
@@ -103,6 +104,7 @@ export function ServiceExplorer({
   const shownFilters = clientViews?.filters ?? serverFilters;
   const shownCompareTray = clientViews?.compareTray ?? serverCompareTray;
   const isReady = state.kind === "ready";
+  const isLoading = state.kind === "loading";
 
   // The count (and page) is read out when it changes (T1-14), whichever side rendered it. It
   // starts at the server's, so the hand-over itself is silent: nothing changed for the customer.
@@ -276,7 +278,12 @@ export function ServiceExplorer({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    // While the catalogue loads the cursor says "wait", not "not allowed", over the whole explorer.
+    // The ! beats each control's own cursor (the labels' pointer, the disabled controls'
+    // not-allowed). Only while loading: after an error or offline, nothing is on its way.
+    <div
+      className={cn("flex flex-col gap-4", isLoading && "cursor-progress [&_*]:cursor-progress!")}
+    >
       <OfflineBanner message="You're offline. We'll update these results when you're back online." />
       <ExplorerColumns
         filters={

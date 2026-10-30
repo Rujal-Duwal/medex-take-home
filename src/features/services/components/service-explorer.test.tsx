@@ -128,6 +128,12 @@ function searchInPanel(): HTMLElement {
   return within(panel).getByRole("searchbox", { name: "Search" });
 }
 
+// The element carrying the loading cursor, or null. jsdom has no Tailwind CSS, so these tests
+// only see the classes. That they beat each control's own cursor was checked in Chrome.
+function progressCursorRoot(): Element | null {
+  return screen.getByRole("complementary", { name: "Filters" }).closest(".cursor-progress");
+}
+
 // Calls the real method, then tells useSearchParams, as Next.js does.
 function fakeHistoryMethod(method: "pushState" | "replaceState") {
   const original = window.history[method].bind(window.history);
@@ -169,6 +175,27 @@ describe("ServiceExplorer", () => {
     expect(liveRegion()).toHaveTextContent("");
   });
 
+  it("sets the progress cursor classes only while the catalogue is loading", async () => {
+    const loading = Promise.withResolvers<ApiResult<Catalogue>>();
+    mockedLoad.mockReturnValue(loading.promise);
+    renderExplorer();
+
+    // The second class is the one that overrides the controls' own cursors.
+    expect(progressCursorRoot()).toHaveClass("[&_*]:cursor-progress!");
+
+    loading.resolve(loaded);
+    await screen.findByRole("heading", { name: "Riverside International Hospital" });
+    expect(progressCursorRoot()).toBeNull();
+  });
+
+  it("a failed load doesn't set the progress cursor, since nothing is on its way", async () => {
+    mockedLoad.mockResolvedValue({ kind: "server", status: 500 });
+    renderExplorer();
+
+    await screen.findByRole("alert");
+    expect(progressCursorRoot()).toBeNull();
+  });
+
   it("a failed load shows the error; Try again moves focus to the results and loads again", async () => {
     mockedLoad.mockResolvedValueOnce({ kind: "server", status: 500 }).mockResolvedValueOnce(loaded);
     renderExplorer();
@@ -200,6 +227,10 @@ describe("ServiceExplorer", () => {
     expect(await screen.findByText(/You're offline/)).toBeVisible();
     expect(screen.getByRole("heading", { name: "Riverside (server render)" })).toBeVisible();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    // The banner reads the URL flag and shows first; the cursor goes when the load comes back.
+    await vi.waitFor(() => {
+      expect(progressCursorRoot()).toBeNull();
+    });
   });
 
   it("back online it loads again and keeps the results up meanwhile", async () => {
