@@ -198,5 +198,12 @@ export function mapCatalogue(
     if (mapped !== undefined) services.push(mapped);
   }
 
-  return { categories, providers, services };
+  // A provider with nothing to show is left out, like a service type no service has. Provider 163
+  // is active with no services in the data; kept, it would sit in the filter at 0 for good.
+  const providerIdsWithServices = new Set(services.map((service) => service.providerId));
+  const providersWithServices = providers.filter((provider) =>
+    providerIdsWithServices.has(provider.id),
+  );
+
+  return { categories, providers: providersWithServices, services };
 }

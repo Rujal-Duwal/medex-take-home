@@ -364,7 +364,7 @@ describe("mapCatalogue: category keys", () => {
 
 describe("mapCatalogue: providers", () => {
   it("maps location, currency and rating", () => {
-    expect(mapCatalogue([], [provider(48)], []).providers).toEqual([
+    expect(mapCatalogue([checkup], [provider(48)], [service("a")]).providers).toEqual([
       {
         id: 48,
         name: "Riverside International Hospital",
@@ -383,11 +383,23 @@ describe("mapCatalogue: providers", () => {
       rating: null,
       reviewCount: 0,
     };
-    expect(mapCatalogue([], [newProvider], []).providers[0]?.rating).toEqual({ kind: "new" });
+    const services = [service("a", { userId: 61 })];
+    expect(mapCatalogue([checkup], [newProvider], services).providers[0]?.rating).toEqual({
+      kind: "new",
+    });
   });
 
   it("leaves inactive providers out", () => {
     const inactive = provider(161, { status: "inactive" });
-    expect(mapCatalogue([], [inactive, provider(48)], []).providers.map((p) => p.id)).toEqual([48]);
+    const services = [service("a", { userId: 161 }), service("b", { userId: 48 })];
+    expect(
+      mapCatalogue([checkup], [inactive, provider(48)], services).providers.map((p) => p.id),
+    ).toEqual([48]);
+  });
+
+  it("leaves out an active provider with no visible services (163)", () => {
+    const providers = [provider(163), provider(48)];
+    const services = [service("a", { userId: 163, status: false }), service("b", { userId: 48 })];
+    expect(mapCatalogue([checkup], providers, services).providers.map((p) => p.id)).toEqual([48]);
   });
 });

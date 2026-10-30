@@ -22,6 +22,11 @@ describe("the engine over the real data", () => {
     expect(runQuery(catalogue, defaultQuery).serviceCount).toBe(2853);
   });
 
+  it("offers 64 providers: the 65 active ones less 163, which has no services", () => {
+    expect(catalogue.providers).toHaveLength(64);
+    expect(catalogue.providers.some((provider) => provider.id === 163)).toBe(false);
+  });
+
   it("shows 20 services under Other (22 with no category, 2 of them hidden)", () => {
     const result = runQuery(catalogue, { ...defaultQuery, categoryKeys: [OTHER_CATEGORY_KEY] });
     expect(result.serviceCount).toBe(20);

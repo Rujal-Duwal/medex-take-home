@@ -55,6 +55,12 @@ check("13 top-level categories", categories.length, 13);
 check("21 subcategories", subcategories.length, 21);
 check("67 providers", providers.length, 67);
 check("3,200 services", services.length, 3200);
+check(
+  "provider 163 is active with no services",
+  services.filter((s) => s.userId === 163).length === 0 &&
+    providers.find((p) => p.id === 163)?.status === "active",
+  true,
+);
 
 // The cast above claims these value sets; check them, so it stays true.
 const serviceTypes = new Set(["package", "lab_test", "wellness", "service", "insurance"]);
