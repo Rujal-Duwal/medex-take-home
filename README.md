@@ -1,18 +1,14 @@
 # MedEx take-home
 
-One Next.js app for all three tasks: `/services` (service explorer), `/cart` (cart and split checkout) and `/booking` (booking across time zones).
+My take-home for MedEx (Senior Frontend Engineer): one Next.js app with a route for each brief. Task 1, the service explorer at `/services`, is built and tested. `/cart` and `/booking` say they are not built and link to how I would build them. Live at https://medex.rujalduwal.com.np (Vercel Hobby, deployed from `main`). To run it locally with Node 24 and npm:
 
-Live: https://medex.rujalduwal.com.np (Vercel Hobby, deployed from `main`).
+```sh
+nvm install && npm install && npm run dev    # http://localhost:3000
+```
 
 ## How to run
 
-You need Node 24 (the version is pinned in `.nvmrc`) and npm.
-
-```sh
-nvm use        # or install the version in .nvmrc another way
-npm install
-npm run dev    # http://localhost:3000
-```
+The Node version is pinned in `.nvmrc`; `nvm install` installs it if needed and switches to it. Without nvm, install that version another way, then run the same two npm commands.
 
 | Command                           | What it does                                                                                                                                                                  |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -26,11 +22,27 @@ npm run dev    # http://localhost:3000
 | `npm run format`                  | Prettier over the code (the docs, data and design folders are left alone)                                                                                                     |
 | `npm run audit:data`              | Checks the data audit counts in the specs against the raw data                                                                                                                |
 
-## Why all three tasks
+## What I built and why
+
+I built Task 1 completely, plus a shared foundation that Tasks 2 and 3 would reuse:
+
+- **Mock API** (`src/lib/mock`, `src/app/api/mock`): every endpoint goes through one helper that adds latency and the failures you ask for in the page URL ([flags below](#mock-api-flags)).
+- **Fetch layer** (`src/lib/api`): returns a typed result the UI branches on (`ok`, `offline`, `network`, `server`, `declined`, `conflict`) instead of throwing.
+- **Money** (`src/lib/money`): big.js, a currency on every amount, refuses to add two currencies, rounds only when it formats.
+- **Live announcer** (`src/lib/a11y`): one polite region that every result change is announced through.
+- **States** (`src/components/states`, `src/components/ui/skeleton.tsx`): skeleton, empty with a way out, error with "Try again", offline banner.
+
+MedEx's email described one brief and 6 to 8 hours, so I chose one task done properly over three half-finished ones. Task 1 has every state, works by keyboard and screen reader, is measured for speed, and has 366 tests.
 
 ## Architecture
 
-How the app is put together, and why: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). The big decisions each have a record in [docs/adr/](docs/adr/).
+- One Next.js App Router app, one folder per task in `src/features/`, shared code in `src/lib/` ([ADR 0002](docs/adr/0002-one-nextjs-app-for-three-tasks.md)).
+- Raw API field names stop at each feature's `mappers.ts`. Components only see UI shapes.
+- Business rules are small pure functions with tests (`pricing.ts`, `engine.ts`, `url-codec.ts`). Hooks and components are a thin shell around them.
+- Task 1's view lives in the URL, and the same engine runs on the server for the first HTML and in the browser for every change ([ADR 0006](docs/adr/0006-url-source-of-truth-and-shared-query-engine.md)).
+- The mock API is Next route handlers ([ADR 0003](docs/adr/0003-mock-api-route-handlers-and-query-flags.md)). Only `src/lib/mock` and `scripts/` read `data/`, and an ESLint rule enforces it.
+
+The full picture is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and each big decision has a record in [docs/adr/](docs/adr/).
 
 ## Task 1
 
@@ -87,7 +99,7 @@ The other edge cases are not mistakes but are tested: 0002 (3,000.00 NPR after a
 
 ### Tests
 
-366 Task 1 tests, all passing (`npm run check`: 463 in the whole app).
+366 Task 1 tests, all passing (`npm run check`: 464 in the whole app).
 
 | Area                                                                                                | File                                                              | Tests           |
 | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | --------------- |
@@ -193,28 +205,32 @@ Links inside the page (pages, "View all") don't carry the flags, so type them ag
 | T1-15 Data mistakes handled and documented                 | Verified                  | Table above, spec Decisions, `npm run audit:data`                                                                                                                                                     |
 | T1-16 Compare up to 3                                      | Verified                  | `compare.test.ts`, `compare-tray.test.tsx`; browser: 3 chosen, the 4th says "You can compare up to 3", survives reload, the mixed-currency note, "Lowest price in NPR" only between the NPR providers |
 
-## Task 2
+## Tasks 2 and 3: how I would build them
 
-**Not built in this submission.** I chose to finish Task 1 to the standard I'd ship (every state, keyboard and screen reader, performance, tests) rather than hand in three half-done tasks. `/cart` says so and links here. The full plan, with the data audit, decisions and required tests, is in [docs/specs/task2-cart.md](docs/specs/task2-cart.md).
+Neither is built in this submission. Both would sit on the same layers as Task 1 ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), section 4) and reuse the foundation above. The full design for each, with the data audit, decisions and required tests, is in its spec.
 
-How it would be built, on the same layers as Task 1 ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), section 4):
+### Task 2
 
-- **Mapping and money.** `mapCart` turns the API cart into lines whose price is `Money` or `'unknown'` (a facial with no duration chosen), so unknown can never be added as zero. `groupSubtotals` recomputes one subtotal per currency from the lines after every change, using `src/lib/money`, which already refuses to add two currencies.
-- **Quantity.** A small pure queue per line: the screen shows the latest tap at once, one request is in flight, each request sends the absolute quantity with a sequence number, and stale replies are ignored. A 409 (more than 10) rolls back to the last confirmed quantity and says why.
-- **Checkout.** One state machine per group (`idle`, `submitting`, `succeeded`, `declined`, `conflict`, `unknown`). An idempotency key is saved to `localStorage` before each request and reused after a 500, timeout or network error, so a retry returns the same order instead of charging twice. A new key only after a definite 402 or 409 and a change by the customer. On reload, unfinished attempts are re-sent with their saved key ([ADR 0007](docs/adr/0007-idempotent-checkout-and-saved-attempts.md)).
-- **Guest cart merge.** A pure `mergeCarts` for the four overlap cases in the data, returning a plain-language list of what changed.
-- **Already in place:** the money library, the fetch layer with typed results, the `checkout@package:500:once` flag form for "the second of three groups fails", the shared states and the live region.
+Cart and split checkout. Full design: [docs/specs/task2-cart.md](docs/specs/task2-cart.md).
 
-## Task 3
+- **Per-currency subtotals.** `mapCart` gives each line a price that is `Money` or `'unknown'` (a facial with no duration chosen), so unknown can never be added as zero. `groupSubtotals` recomputes one subtotal per currency from the lines after every change. There is no grand total across currencies.
+- **Checkout state machine,** one per group: `idle`, `submitting`, then `succeeded`, `declined` (402), `conflict` (409) or `unknown` (500, timeout, network error, offline). "Check out all" runs the groups one at a time, and one failure doesn't stop the rest.
+- **Idempotency keys.** Each group attempt gets a key, saved to `localStorage` before the request is sent. After an `unknown` result, the retry reuses the key, so the mock returns the same order instead of charging twice. A new key only after a definite 402 or 409 and a change by the customer ([ADR 0007](docs/adr/0007-idempotent-checkout-and-saved-attempts.md)).
+- **Reload safety.** On load, any group left in `submitting` or `unknown` is re-sent with its saved key, and shows "Checking your order" until it settles.
+- **Guest cart merge.** A pure `mergeCarts` for the four overlap cases in the data: the same test in both carts (keep the larger quantity, not the sum), a test only in the guest cart (add it), a facial whose duration was picked as a guest (apply it), a product no longer in the catalogue (drop it). Each change comes with a sentence for the customer.
+- **Several currencies in one group.** The lab tests are in THB and NPR. The brief makes each group one order, so that order shows one amount per currency. In production it would likely split by provider.
+- **The hard parts.** A `network` failure drops the reply after the server did the work, so the result is unknown: retry with the same key, and never show a group as both paid and retryable. And five fast "+" taps with replies out of order must end at the right quantity: one request in flight per line, absolute quantities, sequence numbers.
 
-**Not built in this submission,** for the same reason as Task 2. `/booking` says so and links here. The full plan is in [docs/specs/task3-booking.md](docs/specs/task3-booking.md).
+### Task 3
 
-How it would be built:
+Booking across time zones. Full design: [docs/specs/task3-booking.md](docs/specs/task3-booking.md).
 
-- **Time zones.** `resolveTimeZone(raw, country)` turns each stored value (`" UTC+05:45"`, `"Nepal Standard Time"`, `"Asia/Katmandu "`, an empty string) into an IANA zone and records how it got there; nothing unresolved reaches Luxon or `Intl` ([ADR 0005](docs/adr/0005-time-zones-with-luxon-and-a-resolver.md)).
-- **Slots.** A pure `generateSlots` works in the provider's wall-clock time and keeps only slots inside both the specialist's hours and the clinic's opening hours, with a note when they differ ("the hospital closes at 20:00 on Thursdays, so the last appointment is 19:40"). It takes `now` as an argument, so "already started" is judged by the clinic's clock and tested without the real one.
-- **Groups and conflicts.** For N people, a start time is offered only when N consecutive slots with the same specialist are free. A 409 keeps every choice and offers the 3 closest free times.
-- **Screen.** Provider time first, the customer's own time beneath it ("next day" in words when the date differs), a keyboard calendar and slot grid following the APG grid pattern, and a reschedule step that shows from and to side by side. `?tz=Asia/Kathmandu` replays the Kathmandu story from anywhere.
+- **Time zone resolver.** `resolveTimeZone(raw, country)` turns each of the six stored values into an IANA zone and records how: `"Asia/Bangkok"` as is, `"Asia/Katmandu "` trimmed and mapped from the old name, `"Nepal Standard Time"` from the Windows name, `" UTC+05:45"` and `"(GMT+5:45)"` by offset matched to the country's zone, and `""` from the country (India, Asia/Kolkata). Nothing unresolved reaches Luxon ([ADR 0005](docs/adr/0005-time-zones-with-luxon-and-a-resolver.md)).
+- **Slots inside opening hours.** A pure `generateSlots` works in the provider's wall-clock time and keeps a slot only if it fits both the specialist's hours and that day's opening hours. When they differ, the customer is told why: "the hospital closes at 20:00 on Thursdays, so the last appointment is 19:40."
+- **Consecutive group slots.** For N people (up to 4), a start time is offered only when it and the next N-1 slots with the same specialist are all free, not started, and inside opening hours. A 409 keeps every choice and offers up to 3 of the closest free times.
+- **Two clocks.** The provider's time first, the customer's own time beneath it, with "next day" in words when the date differs. `?tz=Asia/Kathmandu` replays the Kathmandu story from anywhere.
+- **One endpoint we add.** The brief's API has no day-level view, so the mock would add `GET /providers/:id/availability`: 90 days of status (past, closed weekly, closure, outside hours, full) in one call instead of 90 slot calls.
+- **The hard parts.** "Already started" is judged by the clinic's clock, with `now` passed in so tests never read the real one. Dr. Mehra's 21:00 to 23:30 in India crosses midnight for a customer in Bangkok. The calendar and slot grid need full arrow-key support (APG grid pattern).
 
 ## Mock API flags
 
@@ -229,18 +245,38 @@ Every mock endpoint waits a random 300 to 800 ms. Add these to the page URL (not
 | several       | `?mockFail=services:500:once,providers:network` | Comma-separate rules. The first rule that matches a call wins                 |
 | `mockOffline` | `?mockOffline=1`                                | The app behaves as if the device is offline. Nothing is sent                  |
 
-Endpoint names for `mockFail` are listed in each spec under "Mock endpoints": `categories`, `providers`, `services`, `cart`, `cart-item`, `cart-delete`, `merge`, `checkout`, `orders`, `provider`, `slots`, `availability`, `book`, `reschedule`. A rule with a mistyped endpoint or kind is ignored.
+Endpoint names for `mockFail` are listed in each spec under "Mock endpoints". The ones you can try today are Task 1's: `categories`, `providers`, `services`. The specs also name `cart`, `cart-item`, `cart-delete`, `merge`, `checkout`, `orders` (Task 2) and `provider`, `slots`, `availability`, `book`, `reschedule` (Task 3); the flags accept them, but those endpoints aren't built. A rule with a mistyped endpoint or kind is ignored.
 
-Cart groups for `@group` are the cart's group types: `lab_test`, `package`, `wellness`, `unknown`. A group name that doesn't exist is accepted but never matches a call.
+Cart groups for `@group` are the cart's group types: `lab_test`, `package`, `wellness`, `unknown`. The parsing is built and tested, ready for Task 2's checkout. A group name that doesn't exist is accepted but never matches a call.
 
 How it works (ADR 0011): the browser reads these flags, decides whether each call fails, and forwards only `mockDelay` and `mockStatus` to the endpoint. You can see them in the DevTools network tab. `:once` is remembered until the page reloads, so reloading replays a demo. A `network` failure sends the request and then drops the reply, so the server may have done the work. That is the case where checkout must not charge twice.
 
-## Accessibility
+## Time spent (planned vs actual)
+
+Hours. Planned is from the plan I made on 22 Oct. I didn't keep a timesheet, so actual is an estimate from the Claude Code session logs (25 to 30 Oct): the time between one event and the next, leaving out any gap over 20 minutes. It misses work done away from Claude Code, such as some browser checks, so treat it as a floor. Counting gaps up to 10 or 30 minutes instead gives 16 to 22 hours for the three phases it covers.
+
+| Phase                                                | Planned | Actual (estimate)   |
+| ---------------------------------------------------- | ------- | ------------------- |
+| Planning: plan, specs, ADRs, design screens          | TODO    | TODO                |
+| Foundation: WBS 2.1 to 2.5 (2.3, the dev panel, cut) | 3.0     | about 5             |
+| Task 1: WBS 3.1 to 3.10                              | 11.5    | about 11.5          |
+| Closing: acceptance, README, deploy                  | TODO    | about 2.5 (so far)  |
+| Total                                                | TODO    | about 19 + planning |
+
+Tasks 2 and 3 were planned at 8.25 and 7.25 hours and not built. Foundation ran over mostly on WBS 2.2, the mock API kit (about 2 hours against 1).
+
+## Where AI was used
+
+AI wrote much of this project, and I reviewed all of it. The record, package by package, is in [AI_LOG.md](AI_LOG.md); the approach is [ADR 0010](docs/adr/0010-ai-assisted-build-with-human-review.md).
+
+- **Claude (claude.ai)** drafted the project plan and the setup pack: `CLAUDE.md`, the three specs, `docs/ARCHITECTURE.md`, the first ADRs, the design system and the standards list. I set the scope and hours, and accepted or changed the default decisions.
+- **Claude Design** made the screens in `design/`. I used them as a guide for layout and tone, not as a spec. Where a screen disagreed with the brief or a spec, the spec won, and the Decisions list says so.
+- **Claude Code** wrote the code one work package at a time. `/wbs <id>` read the docs and spec, gave a plan, and waited for my "go". Logic packages got tests first.
+- **Review.** After each package, `/review-package` ran `npm run check` and a read-only `package-reviewer` subagent against the hard rules in `CLAUDE.md`. The bigger packages (the query engine, the URL codec, the filter panel) also ran `/simplify` and `/code-review`. Task 1 acceptance used Claude in Chrome for the browser walkthrough.
+- **My part.** I read every diff, changed what I disagreed with, and committed it myself. Claude Code is not allowed to commit or push. I made the product calls (for example, the struck-through price includes the service charge), found the layout problems at 375 px in the browser, and ran DevTools at 4x CPU, Lighthouse, axe and VoiceOver by hand.
+- **Guardrails** live in [.claude/](.claude/README.md): permissions that ask before installing packages and block editing `data/`, a Prettier hook, `/adr` for new decisions, and `/quiz` to practise explaining the code without AI.
+- This README was drafted with Claude Code from the specs and the log, then edited by me.
 
 ## Compliance note
 
 All data in this project is fictional, and nothing personal is stored or sent anywhere. A production version would need to meet the data protection law of each country it serves: Thailand's Personal Data Protection Act (PDPA), India's Digital Personal Data Protection Act (DPDP Act) and Nepal's Individual Privacy Act. It would also need to meet WCAG 2.2 AA for accessibility.
-
-## Time spent (planned vs actual)
-
-## Where AI was used
