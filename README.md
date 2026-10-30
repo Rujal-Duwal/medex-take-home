@@ -193,27 +193,26 @@ Links inside the page (pages, "View all") don't carry the flags, so type them ag
 
 ## Task 2
 
-### Decisions
+**Not built in this submission.** I chose to finish Task 1 to the standard I'd ship (every state, keyboard and screen reader, performance, tests) rather than hand in three half-done tasks. `/cart` says so and links here. The full plan, with the data audit, decisions and required tests, is in [docs/specs/task2-cart.md](docs/specs/task2-cart.md).
 
-### Data mistakes and what the customer sees
+How it would be built, on the same layers as Task 1 ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), section 4):
 
-### Trade-offs
-
-### Left out and next
-
-### Tests
+- **Mapping and money.** `mapCart` turns the API cart into lines whose price is `Money` or `'unknown'` (a facial with no duration chosen), so unknown can never be added as zero. `groupSubtotals` recomputes one subtotal per currency from the lines after every change, using `src/lib/money`, which already refuses to add two currencies.
+- **Quantity.** A small pure queue per line: the screen shows the latest tap at once, one request is in flight, each request sends the absolute quantity with a sequence number, and stale replies are ignored. A 409 (more than 10) rolls back to the last confirmed quantity and says why.
+- **Checkout.** One state machine per group (`idle`, `submitting`, `succeeded`, `declined`, `conflict`, `unknown`). An idempotency key is saved to `localStorage` before each request and reused after a 500, timeout or network error, so a retry returns the same order instead of charging twice. A new key only after a definite 402 or 409 and a change by the customer. On reload, unfinished attempts are re-sent with their saved key ([ADR 0007](docs/adr/0007-idempotent-checkout-and-saved-attempts.md)).
+- **Guest cart merge.** A pure `mergeCarts` for the four overlap cases in the data, returning a plain-language list of what changed.
+- **Already in place:** the money library, the fetch layer with typed results, the `checkout@package:500:once` flag form for "the second of three groups fails", the shared states and the live region.
 
 ## Task 3
 
-### Decisions
+**Not built in this submission,** for the same reason as Task 2. `/booking` says so and links here. The full plan is in [docs/specs/task3-booking.md](docs/specs/task3-booking.md).
 
-### Data mistakes and what the customer sees
+How it would be built:
 
-### Trade-offs
-
-### Left out and next
-
-### Tests
+- **Time zones.** `resolveTimeZone(raw, country)` turns each stored value (`" UTC+05:45"`, `"Nepal Standard Time"`, `"Asia/Katmandu "`, an empty string) into an IANA zone and records how it got there; nothing unresolved reaches Luxon or `Intl` ([ADR 0005](docs/adr/0005-time-zones-with-luxon-and-a-resolver.md)).
+- **Slots.** A pure `generateSlots` works in the provider's wall-clock time and keeps only slots inside both the specialist's hours and the clinic's opening hours, with a note when they differ ("the hospital closes at 20:00 on Thursdays, so the last appointment is 19:40"). It takes `now` as an argument, so "already started" is judged by the clinic's clock and tested without the real one.
+- **Groups and conflicts.** For N people, a start time is offered only when N consecutive slots with the same specialist are free. A 409 keeps every choice and offers the 3 closest free times.
+- **Screen.** Provider time first, the customer's own time beneath it ("next day" in words when the date differs), a keyboard calendar and slot grid following the APG grid pattern, and a reschedule step that shows from and to side by side. `?tz=Asia/Kathmandu` replays the Kathmandu story from anywhere.
 
 ## Mock API flags
 
