@@ -9,6 +9,7 @@ Project configuration for Claude Code, committed so the AI workflow is visible t
 | `skills/wbs/` | `/wbs 3.2` starts one work package: reads the docs, plans, waits for "go" | https://code.claude.com/docs/en/skills |
 | `skills/review-package/` | `/review-package` checks the diff against the hard rules and writes the summary, proposed commits and AI_LOG entry | |
 | `skills/adr/` | `/adr <title>` writes a new ADR from the template | |
+| `skills/quiz/` | `/quiz task1` asks 8 questions on one area's code, then sets a practice task to do by hand without AI | |
 | `agents/package-reviewer.md` | Read-only reviewer subagent used by `/review-package` | https://code.claude.com/docs/en/sub-agents |
 
 Personal overrides go in `.claude/settings.local.json`, which stays out of git.

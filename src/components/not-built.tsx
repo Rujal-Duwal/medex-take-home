@@ -5,8 +5,8 @@ import Link from "next/link";
 export const NOT_BUILT_LABEL = "Not built in this submission";
 
 // The README explains why and how each task would be built. The repo is private, so the link
-// works for anyone it has been shared with. Anchors are GitHub's slugs for "## Task 2" and
-// "## Task 3"; rename a heading there and the link must change here.
+// works for anyone it has been shared with. Anchors are GitHub's slugs for the "### Task 2" and
+// "### Task 3" headings; rename a heading there and the link must change here.
 const README_URL = "https://github.com/Rujal-Duwal/medex-take-home#";
 
 export function NotBuiltBadge() {
