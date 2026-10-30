@@ -238,7 +238,7 @@ One line per decision. D5 to D10 are the plan's defaults; the rest were made whi
 - **The bench runs on the real data** (`scripts/engine.bench.ts`) and works out p95 itself (nearest rank). Vitest's module getters make it run slightly high.
 - **Timings are recorded, not logged:** a `filter-change` `performance.measure` from the change reaching the explorer to the commit that shows it. Rujal chose no console output on the customer's side.
 - **INP and CLS come from DevTools live metrics**, not the `web-vitals` library: no new dependency, nothing shipped to customers.
-- **The server runs in Mumbai (`bom1`, in `vercel.json`)**, not Vercel's default Washington, since the providers are in Thailand, Nepal and India and the service list is a large download. The filters stay disabled until it arrives: 2.0 to 3.1 s over three live loads before the move, not measured since.
+- **The server runs in Mumbai (`bom1`, in `vercel.json`)**, not Vercel's default Washington, since the providers are in Thailand, Nepal and India and the service list is a large download. The filters stay disabled until it arrives: 2.0 to 3.1 s over three live loads before the move; about 2.5 s on the first load after it and under 1.2 s on the next two.
 
 ### Compare
 
