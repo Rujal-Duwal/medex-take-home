@@ -2,7 +2,7 @@
 
 How the MedEx take-home looks and speaks, and the rules that keep the three routes consistent.
 
-**Where the values come from.** The exact colours, type sizes, spacing and the ready-made `globals.css` are in `design/HANDOFF.md` and `design/Tokens.dc.html`, made in Claude Design. This file holds the rules. When a value here and the handoff disagree, the handoff wins for values and this file wins for rules. Tokens are ported into `src/app/globals.css` in WBS 2.4.
+**Where the values come from.** The exact colours, type sizes, spacing and the ready-made `globals.css` are in `design/HANDOFF.md` and `design/Tokens.dc.html`, made in Claude Design. This file holds the rules. When a value here and the handoff disagree, the handoff wins for values and this file wins for rules. The tokens live in `src/app/globals.css`.
 
 References: Tailwind v4 theme variables (https://tailwindcss.com/docs/theme), shadcn/ui with Tailwind v4 (https://ui.shadcn.com/docs/tailwind-v4), Design Tokens Community Group (https://www.designtokens.org/), WCAG 2.2 (https://www.w3.org/TR/WCAG22/).
 
@@ -44,9 +44,9 @@ Rules:
 | Need | Component | Notes |
 |---|---|---|
 | Buttons | shadcn `Button` | One primary per area; destructive only for remove or cancel |
-| Filters: multi-select | shadcn `Checkbox` | Option label, count in a fixed-width slot, disabled at 0 |
-| Provider filter | shadcn `Command` in a `Popover` (Radix) | Follows the APG combobox pattern |
-| Mobile filters | shadcn `Drawer` or `Sheet` | Focus trapped; "Show N results" button at the bottom |
+| Filters: multi-select | shadcn `Checkbox` | Option label, count in a fixed-width slot; at 0 muted and `aria-disabled`, still focusable (Task 1 D5) |
+| Provider filter | A name box over the checkbox list | Narrows the list on screen; not a popup, so no combobox pattern needed |
+| Mobile filters | Radix `Dialog`, full screen | Focus trapped; "Show N results" button at the bottom |
 | Compare view, confirm steps | shadcn `Dialog` | Focus moves to the heading on open, back to the trigger on close |
 | Notices (merge changes, 409, offline) | shadcn `Alert` | Also announced through the live region |
 | Loading | shadcn `Skeleton` | Same size as the content it stands in for |
