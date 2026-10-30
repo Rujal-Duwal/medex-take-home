@@ -2,6 +2,8 @@
 
 One Next.js app for all three tasks: `/services` (service explorer), `/cart` (cart and split checkout) and `/booking` (booking across time zones).
 
+Live: https://medex.rujalduwal.com.np (Vercel Hobby, deployed from `main`).
+
 ## How to run
 
 You need Node 24 (the version is pinned in `.nvmrc`) and npm.
