@@ -32,7 +32,7 @@ I built Task 1 completely, plus a shared foundation that Tasks 2 and 3 would reu
 - **Live announcer** (`src/lib/a11y`): one polite region that every result change is announced through.
 - **States** (`src/components/states`, `src/components/ui/skeleton.tsx`): skeleton, empty with a way out, error with "Try again", offline banner.
 
-MedEx's email described one brief and 6 to 8 hours, so I chose one task done properly over three half-finished ones. Task 1 has every state, works by keyboard and screen reader, is measured for speed, and has 366 tests.
+I asked MedEx whether to build one task or all three; on 29 October they confirmed that any one task is fine, so I chose one task done properly over three half-finished ones. Task 1 has every state, works by keyboard and screen reader, is measured for speed, and has 366 tests.
 
 ## Architecture
 
@@ -255,15 +255,15 @@ How it works (ADR 0011): the browser reads these flags, decides whether each cal
 
 Hours. Planned is from the plan I made on 22 Oct. I didn't keep a timesheet, so actual is an estimate from the Claude Code session logs (25 to 30 Oct): the time between one event and the next, leaving out any gap over 20 minutes. It misses work done away from Claude Code, such as some browser checks, so treat it as a floor. Counting gaps up to 10 or 30 minutes instead gives 16 to 22 hours for the three phases it covers.
 
-| Phase                                                | Planned | Actual (estimate)   |
-| ---------------------------------------------------- | ------- | ------------------- |
-| Planning: plan, specs, ADRs, design screens          | TODO    | TODO                |
-| Foundation: WBS 2.1 to 2.5 (2.3, the dev panel, cut) | 3.0     | about 5             |
-| Task 1: WBS 3.1 to 3.10                              | 11.5    | about 11.5          |
-| Closing: acceptance, README, deploy                  | TODO    | about 2.5 (so far)  |
-| Total                                                | TODO    | about 19 + planning |
+| Phase                                                | Planned | Actual (estimate)  |
+| ---------------------------------------------------- | ------- | ------------------ |
+| Planning: plan, specs, ADRs, design screens          | 1.0     | about 2.5          |
+| Foundation: WBS 2.1 to 2.5 (2.3, the dev panel, cut) | 3.0     | about 5            |
+| Task 1: WBS 3.1 to 3.10                              | 11.5    | about 11.5         |
+| Closing: acceptance, README, deploy                  | 1.75    | about 2.5 (so far) |
+| Total                                                | 17.25   | about 21.5         |
 
-Tasks 2 and 3 were planned at 8.25 and 7.25 hours and not built. Foundation ran over mostly on WBS 2.2, the mock API kit (about 2 hours against 1).
+Planning happened before Claude Code, in claude.ai and Claude Design, so it isn't in those logs: 1.0 on 22 Oct for the plan, and about 1.5 on 25 Oct for the design screens, handover and setup pack. Tasks 2 and 3 were planned at 8.25 and 7.25 hours and not built. Foundation ran over mostly on WBS 2.2, the mock API kit (about 2 hours against 1).
 
 ## Where AI was used
 
